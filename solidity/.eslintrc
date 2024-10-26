@@ -1,0 +1,28 @@
+{
+  "root": true,
+  "extends": ["@thesis-co"],
+  "rules": {
+    "no-plusplus": "off",
+    "no-await-in-loop": "off",
+    "import/no-extraneous-dependencies": [
+      "error",
+      {
+        "devDependencies": [
+          "hardhat.config.ts",
+          "deploy/**",
+          "scripts/**",
+          "helpers/**",
+          "test/**"
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["test/helpers/debugging.ts"], // Specify the path to the file
+      "rules": {
+        "no-console": "off" // Disable the no-console rule for this file
+      }
+    }
+  ]
+}
