@@ -14,5 +14,5 @@ interface IAutoCompounderFactory {
     error AmountSame();
     error AmountOutOfAcceptableRange();
 
-    function rewardAmount() external returns (uint256) {}
+    function rewardAmount() external returns (uint256);
 }
