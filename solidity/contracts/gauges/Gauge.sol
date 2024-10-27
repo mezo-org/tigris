@@ -11,7 +11,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import {MezodromeTimeLibrary} from "../libraries/MezodromeTimeLibrary.sol";
+import {TimeLibrary} from "../libraries/TimeLibrary.sol";
 
 /// @title Gauge contract for distribution of emissions by address
 contract Gauge is IGauge, ERC2771Context, ReentrancyGuard {
@@ -178,7 +178,7 @@ contract Gauge is IGauge, ERC2771Context, ReentrancyGuard {
         _claimFees();
         rewardPerTokenStored = rewardPerToken();
         uint256 timestamp = block.timestamp;
-        uint256 timeUntilNext = MezodromeTimeLibrary.epochNext(timestamp) - timestamp;
+        uint256 timeUntilNext = TimeLibrary.epochNext(timestamp) - timestamp;
 
         if (timestamp >= periodFinish) {
             IERC20(rewardToken).safeTransferFrom(sender, address(this), _amount);
@@ -189,7 +189,7 @@ contract Gauge is IGauge, ERC2771Context, ReentrancyGuard {
             IERC20(rewardToken).safeTransferFrom(sender, address(this), _amount);
             rewardRate = (_amount + _leftover) / timeUntilNext;
         }
-        rewardRateByEpoch[MezodromeTimeLibrary.epochStart(timestamp)] = rewardRate;
+        rewardRateByEpoch[TimeLibrary.epochStart(timestamp)] = rewardRate;
         if (rewardRate == 0) revert ZeroRewardRate();
 
         // Ensure the provided reward amount is not more than the balance in the contract.

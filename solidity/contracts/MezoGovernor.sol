@@ -27,7 +27,7 @@ contract MezoGovernor is VetoGovernor, VetoGovernorCountingSimple, VetoGovernorV
     constructor(
         IVotes _ve
     )
-        VetoGovernor("Mezodrome Governor")
+        VetoGovernor("Mezo Governor")
         VetoGovernorVotes(_ve)
         VetoGovernorVotesQuorumFraction(4) // 4%
     {

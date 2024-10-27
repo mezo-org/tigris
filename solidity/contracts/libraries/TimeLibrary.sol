@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-library MezodromeTimeLibrary {
+library TimeLibrary {
     uint256 internal constant WEEK = 7 days;
 
     /// @dev Returns start of epoch based on current timestamp
