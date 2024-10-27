@@ -22,11 +22,6 @@ contract PoolFactory is IPoolFactory {
     /// @dev used to change the name/symbol of the pool by calling emergencyCouncil
     address public voter;
 
-    /// @dev used to enable Router conversion of v1 => v2 VEL0
-    address public mezo;
-    address public mezoV2;
-    address public sinkConverter;
-
     mapping(address => mapping(address => mapping(bool => address))) private _getPool;
     address[] public allPools;
     mapping(address => bool) private _isPool; // simplified check if its a pool, given that `stable` flag might not be available in peripherals
@@ -41,7 +36,6 @@ contract PoolFactory is IPoolFactory {
         voter = msg.sender;
         pauser = msg.sender;
         feeManager = msg.sender;
-        sinkConverter = msg.sender;
         isPaused = false;
         stableFee = 2; // 0.02%
         volatileFee = 2;
@@ -82,28 +76,6 @@ contract PoolFactory is IPoolFactory {
         if (msg.sender != voter) revert NotVoter();
         voter = _voter;
         emit SetVoter(_voter);
-    }
-
-    /// @inheritdoc IPoolFactory
-    function setSinkConverter(address _sinkConverter, address _mezo, address _mezoV2) external {
-        if (msg.sender != sinkConverter) revert NotSinkConverter();
-        sinkConverter = _sinkConverter;
-        mezo = _mezo;
-        mezoV2 = _mezoV2;
-
-        // Follow logic of createPool() - except add getPool values for both volatile
-        // and stable so there is no way to create an additional mezo => mezoV2 pool
-        (address token0, address token1) = _mezo < _mezoV2 ? (_mezo, _mezoV2) : (_mezoV2, _mezo);
-        _getPool[token0][token1][true] = sinkConverter;
-        _getPool[token1][token0][true] = sinkConverter;
-        _getPool[token0][token1][false] = sinkConverter;
-        _getPool[token1][token0][false] = sinkConverter;
-        allPools.push(sinkConverter);
-        _isPool[sinkConverter] = true;
-
-        // emit two events - for both the "stable" and "volatile" pool being created
-        emit PoolCreated(token0, token1, true, sinkConverter, allPools.length);
-        emit PoolCreated(token0, token1, false, sinkConverter, allPools.length);
     }
 
     function setPauser(address _pauser) external {

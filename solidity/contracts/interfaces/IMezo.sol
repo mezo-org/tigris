@@ -6,8 +6,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 interface IMezo is IERC20 {
     error NotMinter();
     error NotOwner();
-    error NotMinterOrSinkManager();
-    error SinkManagerAlreadySet();
 
     function mint(address, uint256) external returns (bool);
 

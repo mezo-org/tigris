@@ -21,7 +21,6 @@ interface IPoolFactory {
     error ZeroFee();
     error NotPauser();
     error NotVoter();
-    error NotSinkConverter();
 
     function getPair(address token1, address token2, bool stable) external returns (address);
     function voter() external returns (address);
