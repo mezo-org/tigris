@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity 0.8.24;
 
 import {IVotingRewardsFactory} from "../interfaces/factories/IVotingRewardsFactory.sol";
 import {FeesVotingReward} from "../rewards/FeesVotingReward.sol";

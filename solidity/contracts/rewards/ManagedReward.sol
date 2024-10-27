@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity 0.8.24;
 
 import {Reward} from "./Reward.sol";
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";

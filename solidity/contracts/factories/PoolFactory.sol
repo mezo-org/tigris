@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity 0.8.24;
 
 import {IPoolFactory} from "../interfaces/factories/IPoolFactory.sol";
 import {IPool} from "../interfaces/IPool.sol";

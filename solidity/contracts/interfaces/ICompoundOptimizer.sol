@@ -1,4 +1,4 @@
-pragma ^0.8.4;
+pragma ^0.8.24;
 
 import { IRouter } from "./IRouter.sol";
 
