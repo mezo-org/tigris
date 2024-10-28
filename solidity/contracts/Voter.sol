@@ -7,4 +7,4 @@ import {IVoter} from "./interfaces/IVoter.sol";
 import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract Voter is IVoter, ERC2771Context, ReentrancyGuard {}
+abstract contract Voter is IVoter, ERC2771Context, ReentrancyGuard {}

@@ -22,8 +22,19 @@ interface IPoolFactory {
     error NotPauser();
     error NotVoter();
 
-    function getPair(address token1, address token2, bool stable) external returns (address);
+    function getPair(address tokenA, address tokenB, bool stable) external view returns (address);
     function voter() external returns (address);
     function isPaused() external returns (bool);
-    function getFee(address pool, bool stable) external returns (uint256);
+    function getFee(address pool, bool stable) external view returns (uint256);
+    function getPool(address tokenA, address tokenB, uint24 fee) external view returns (address);
+    function getPool(address tokenA, address tokenB, bool stable) external view returns (address);
+    function createPair(address tokenA, address tokenB, bool stable) external returns (address pool);
+    function createPool(address tokenA, address tokenB, bool stable) external returns (address pool);
+    function allPoolsLength() external view returns (uint256);
+    function isPool(address pool) external view returns (bool);
+    function isPair(address pool) external view returns (bool);
+    function setVoter(address voter) external;
+    function setFee(bool stable, uint256 fee) external;
+    function setCustomFee(address pool, uint256 fee) external;
+    function createPool(address tokenA, address tokenB, uint24 fee) external returns (address pool);
 }
