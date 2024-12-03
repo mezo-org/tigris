@@ -22,3 +22,7 @@ tmp/
 
 # Code Coverage
 **/coverage/
+
+# Next
+
+.next
