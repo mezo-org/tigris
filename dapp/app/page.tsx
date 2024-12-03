@@ -22,10 +22,11 @@ export default function Home() {
         <main>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <Tabs defaultValue="swap" className="mt-4">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="swap">Swap</TabsTrigger>
                 <TabsTrigger value="lock">Lock</TabsTrigger>
                 <TabsTrigger value="musd">mUSD</TabsTrigger>
+                <TabsTrigger value="bridge">Bridge</TabsTrigger>
               </TabsList>
               <TabsContent value="swap">
                 <SwapInterface tokens={mockTokens} />
@@ -35,6 +36,9 @@ export default function Home() {
               </TabsContent>
               <TabsContent value="musd">
                 mUSD
+              </TabsContent>
+              <TabsContent value="bridge">
+                Bridge
               </TabsContent>
             </Tabs>
           </div>
