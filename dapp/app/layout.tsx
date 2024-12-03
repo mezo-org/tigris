@@ -14,8 +14,8 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Mezodrome",
-  description: "Mezo's liquidity engine",
+  title: "Mezo",
+  description: "The Economic Layer for Bitcoin",
 };
 
 export default function RootLayout({
