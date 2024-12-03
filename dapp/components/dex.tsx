@@ -1,12 +1,10 @@
 import React, { useState } from 'react'
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { default as ConnectButton } from "@/components/connect-wallet"
 import { default as ProtectedButton } from "@/components/protected-button"
-import { Pool, Lock } from "./types"
 import { PoolLabel } from "./labels"
 import { default as IncentivizeInterface } from "./incentivize"
 import { default as SwapInterface } from "./swap"

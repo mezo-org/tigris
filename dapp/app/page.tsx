@@ -4,7 +4,7 @@ import { Providers } from '@/components/providers'
 import SwapInterface from '@/components/swap'
 import {LockInterface} from '@/components/ui/lock'
 import {mockTokens} from '@/mocks'
-import {Tabs, TabsContent, TabsList, TabsTrigger} from '@radix-ui/react-tabs'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import {ConnectButton} from '@rainbow-me/rainbowkit'
 
 export default function Home() {
@@ -14,7 +14,7 @@ export default function Home() {
         <header className="border-b bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex h-16 items-center justify-between">
-              <span className="text-2xl font-bold text-blue-600">MEZODROME</span>
+              <span className="text-2xl font-bold text-[#FF004D]">Mezo</span>
               <ConnectButton />
             </div>
           </div>
