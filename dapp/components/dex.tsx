@@ -123,11 +123,11 @@ const VoteInterface = () => {
 
 const Dex = () => {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="border-b bg-white">
+    <div className="min-h-screen bg-[rgb(36,20,27)]">
+      <header className="border-b bg-[rgb(195,66,87)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
-            <span className="text-2xl font-bold text-blue-600">MEZODROME</span>
+            <span className="text-2xl font-bold text-white">MEZODROME</span>
             <ConnectButton />
           </div>
         </div>
