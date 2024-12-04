@@ -6,6 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import {ConnectButton} from '@rainbow-me/rainbowkit'
 import {default as StakeInterface} from '@/components/stake'
 import { default as SimpleBorrowInterface } from "@/components/simple-borrow"
+import { default as DepositInterface } from "@/components/deposit"
 import { mockTokens } from '@/mocks'
 
 export default function Cathedral() {
@@ -39,7 +40,7 @@ export default function Cathedral() {
                 <SimpleBorrowInterface />
               </TabsContent>
               <TabsContent value="deposit">
-                Deposit
+                <DepositInterface />
               </TabsContent>
             </Tabs>
           </div>
