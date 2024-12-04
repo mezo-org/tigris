@@ -2,10 +2,10 @@
 
 import { Providers } from '@/components/providers'
 import SwapInterface from '@/components/swap'
-import {LockInterface} from '@/components/ui/lock'
-import {mockTokens} from '@/mocks'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import {ConnectButton} from '@rainbow-me/rainbowkit'
+import {default as LockInterface} from '@/components/lock'
+import {mockTokens} from '@/mocks'
 
 export default function Home() {
   return (

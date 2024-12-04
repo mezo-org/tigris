@@ -9,7 +9,7 @@ import { PoolLabel } from "./labels"
 import { default as IncentivizeInterface } from "./incentivize"
 import { default as SwapInterface } from "./swap"
 import { default as LiquidityInterface } from "./liquidity"
-import {LockInterface, mockLocks} from './ui/lock'
+import {default as LockInterface, mockLocks} from './lock'
 import {mockPools, mockTokens} from '@/mocks'
 
 const VoteInterface = () => {
