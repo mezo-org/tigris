@@ -8,6 +8,7 @@ import { default as SwapInterface } from "@/components/swap"
 import { default as LiquidityInterface } from "@/components/liquidity"
 import { default as LockInterface } from '@/components/lock'
 import { default as VoteInterface } from "@/components/vote"
+import { default as BorrowInterface } from "@/components/borrow"
 import { mockLocks, mockPools, mockTokens } from '@/mocks'
 import { Providers } from "@/components/providers"
 
@@ -40,7 +41,7 @@ export default function Bazaar() {
                 <LockInterface locks={mockLocks} />
               </TabsContent>
               <TabsContent value="borrow">
-                Borrow
+                <BorrowInterface />
               </TabsContent>
               <TabsContent value="vote">
                 <VoteInterface />
