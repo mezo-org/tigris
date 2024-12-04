@@ -25,25 +25,25 @@ export default function Bazaar() {
         </header>
         <main>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <Tabs defaultValue="swap" className="mt-4">
+            <Tabs defaultValue="liquidity" className="mt-4">
               <TabsList className="grid w-full grid-cols-5">
-                <TabsTrigger value="swap">Swap</TabsTrigger>
                 <TabsTrigger value="liquidity">Liquidity</TabsTrigger>
+                <TabsTrigger value="stake">Stake</TabsTrigger>
+                <TabsTrigger value="borrow">Borrow</TabsTrigger>
                 <TabsTrigger value="vote">Vote</TabsTrigger>
-                <TabsTrigger value="lock">Lock</TabsTrigger>
                 <TabsTrigger value="incentivize">Incentivize</TabsTrigger>
               </TabsList>
-              <TabsContent value="swap">
-                <SwapInterface tokens={mockTokens} />
-              </TabsContent>
               <TabsContent value="liquidity">
                 <LiquidityInterface pools={mockPools} tokens={mockTokens} />
               </TabsContent>
+             <TabsContent value="stake">
+                <LockInterface locks={mockLocks} />
+              </TabsContent>
+              <TabsContent value="borrow">
+                Borrow
+              </TabsContent>
               <TabsContent value="vote">
                 <VoteInterface />
-              </TabsContent>
-              <TabsContent value="lock">
-                <LockInterface locks={mockLocks} />
               </TabsContent>
               <TabsContent value="incentivize">
                 <IncentivizeInterface pools={mockPools} />

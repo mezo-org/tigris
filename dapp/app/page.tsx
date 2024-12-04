@@ -25,8 +25,8 @@ export default function Cathedral() {
               <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="swap">Swap</TabsTrigger>
                 <TabsTrigger value="stake">Stake</TabsTrigger>
-                <TabsTrigger value="musd">mUSD</TabsTrigger>
-                <TabsTrigger value="bridge">Bridge</TabsTrigger>
+                <TabsTrigger value="borrow">Borrow</TabsTrigger>
+                <TabsTrigger value="deposit">Deposit</TabsTrigger>
               </TabsList>
               <TabsContent value="swap">
                 <SwapInterface tokens={mockTokens} />
@@ -34,11 +34,11 @@ export default function Cathedral() {
               <TabsContent value="stake">
                 <StakeInterface />
               </TabsContent>
-              <TabsContent value="musd">
-                mUSD
+              <TabsContent value="borrow">
+                Borrow
               </TabsContent>
-              <TabsContent value="bridge">
-                Bridge
+              <TabsContent value="deposit">
+                Deposit
               </TabsContent>
             </Tabs>
           </div>
