@@ -7,16 +7,6 @@ import {Input} from "./ui/input"
 import {Button} from "./ui/button"
 import ProtectedButton from "./protected-button"
 
-export const mockLocks: Lock[] = [
-  {
-    id: 'veBTC-1',
-    amount: 1.5,
-    endTime: Date.now() + 365 * 24 * 60 * 60 * 1000,
-    votingPower: 1.5,
-    estimatedAPR: 15.5,
-  },
-]
-
 // Mock lock duration data
 const lockData = [
   { duration: '1 week', btcLocked: 25 },
@@ -103,7 +93,7 @@ const DelegationCard = ({
   )
 }
 
-export const LockInterface = () => {
+export const LockInterface = ({ locks } : { locks: Lock[] }) => {
   const [votingDelegate, setVotingDelegate] = useState<string | null>(null)
   const [stakingDelegate, setStakingDelegate] = useState<string | null>(null)
 
@@ -137,10 +127,10 @@ export const LockInterface = () => {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {mockLocks.reduce((acc, lock) => acc + lock.votingPower, 0)} veBTC
+              {locks.reduce((acc, lock) => acc + lock.votingPower, 0)} veBTC
             </div>
             <p className="text-sm text-gray-500">
-              From {mockLocks.reduce((acc, lock) => acc + lock.amount, 0)} BTC locked
+              From {locks.reduce((acc, lock) => acc + lock.amount, 0)} BTC locked
             </p>
           </CardContent>
         </Card>
@@ -164,7 +154,7 @@ export const LockInterface = () => {
                 </tr>
               </thead>
               <tbody>
-                {mockLocks.map(lock => (
+                {locks.map(lock => (
                   <tr key={lock.id} className="border-b">
                     <td className="py-3">{lock.id}</td>
                     <td className="py-3">{lock.amount} BTC</td>

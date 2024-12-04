@@ -4,10 +4,10 @@ import { Providers } from '@/components/providers'
 import SwapInterface from '@/components/swap'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import {ConnectButton} from '@rainbow-me/rainbowkit'
-import {default as LockInterface} from '@/components/lock'
-import {mockTokens} from '@/mocks'
+import {default as StakeInterface} from '@/components/stake'
+import { mockTokens } from '@/mocks'
 
-export default function Home() {
+export default function Cathedral() {
   return (
     <Providers>
       <div className="min-h-screen bg-gray-50">
@@ -24,15 +24,15 @@ export default function Home() {
             <Tabs defaultValue="swap" className="mt-4">
               <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="swap">Swap</TabsTrigger>
-                <TabsTrigger value="lock">Lock</TabsTrigger>
+                <TabsTrigger value="stake">Stake</TabsTrigger>
                 <TabsTrigger value="musd">mUSD</TabsTrigger>
                 <TabsTrigger value="bridge">Bridge</TabsTrigger>
               </TabsList>
               <TabsContent value="swap">
                 <SwapInterface tokens={mockTokens} />
               </TabsContent>
-              <TabsContent value="lock">
-                <LockInterface />
+              <TabsContent value="stake">
+                <StakeInterface />
               </TabsContent>
               <TabsContent value="musd">
                 mUSD

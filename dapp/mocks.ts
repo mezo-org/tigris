@@ -214,3 +214,12 @@ export const mockPools: Pool[] = [
   },
 ]
 
+export const mockLocks: Lock[] = [
+  {
+    id: 'veBTC-1',
+    amount: 1.5,
+    endTime: Date.now() + 365 * 24 * 60 * 60 * 1000,
+    votingPower: 1.5,
+    estimatedAPR: 15.5,
+  },
+]
