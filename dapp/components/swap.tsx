@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { default as ProtectedButton } from "./protected-button"
 import { TokenOption } from "./labels"
 import { Token } from "./types"
-import { mockTokens } from "../mocks"
 
 const SLIPPAGE_PRESETS = [0.1, 0.5, 1.0]
 
@@ -78,9 +77,9 @@ const SwapSettings = ({
   )
 }
 
-const SwapInterface = () => {
-  const [fromToken, setFromToken] = useState<Token>(mockTokens[0])
-  const [toToken, setToToken] = useState<Token>(mockTokens[1])
+const SwapInterface = ({ tokens } : { tokens: Token []} ) => {
+  const [fromToken, setFromToken] = useState<Token>(tokens[0])
+  const [toToken, setToToken] = useState<Token>(tokens[1])
   const [fromAmount, setFromAmount] = useState('')
   const [slippage, setSlippage] = useState(0.5)
 
@@ -119,7 +118,7 @@ const SwapInterface = () => {
               <div className="flex gap-2">
                 <Select
                   value={fromToken.address}
-                  onValueChange={(value) => setFromToken(mockTokens.find(t => t.address === value) || mockTokens[0])}
+                  onValueChange={(value) => setFromToken(tokens.find(t => t.address === value) || tokens[0])}
                 >
                   <SelectTrigger className="w-[180px]">
                     <SelectValue>
@@ -127,7 +126,7 @@ const SwapInterface = () => {
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    {mockTokens.map(token => (
+                    {tokens.map(token => (
                       <SelectItem key={token.address} value={token.address} className="py-2">
                         <TokenOption token={token} />
                       </SelectItem>
@@ -159,7 +158,7 @@ const SwapInterface = () => {
               <div className="flex gap-2">
                 <Select
                   value={toToken.address}
-                  onValueChange={(value) => setToToken(mockTokens.find(t => t.address === value) || mockTokens[1])}
+                  onValueChange={(value) => setToToken(tokens.find(t => t.address === value) || tokens[1])}
                 >
                   <SelectTrigger className="w-[180px]">
                     <SelectValue>
@@ -167,7 +166,7 @@ const SwapInterface = () => {
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    {mockTokens.map(token => (
+                    {tokens.map(token => (
                       <SelectItem key={token.address} value={token.address} className="py-2">
                         <TokenOption token={token} />
                       </SelectItem>

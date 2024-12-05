@@ -4,7 +4,6 @@ import React, { useState } from 'react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { default as ConnectButton } from "@/components/connect-wallet"
 import { default as IncentivizeInterface } from "@/components/incentivize"
-import { default as SwapInterface } from "@/components/swap"
 import { default as LiquidityInterface } from "@/components/liquidity"
 import { default as LockInterface } from '@/components/lock'
 import { default as VoteInterface } from "@/components/vote"
@@ -26,22 +25,22 @@ export default function Bazaar() {
         </header>
         <main>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <Tabs defaultValue="liquidity" className="mt-4">
+            <Tabs defaultValue="borrow" className="mt-4">
               <TabsList className="grid w-full grid-cols-5">
-                <TabsTrigger value="liquidity">Liquidity</TabsTrigger>
-                <TabsTrigger value="stake">Stake</TabsTrigger>
                 <TabsTrigger value="borrow">Borrow</TabsTrigger>
+                <TabsTrigger value="stake">Stake</TabsTrigger>
+                <TabsTrigger value="liquidity">Liquidity</TabsTrigger>
                 <TabsTrigger value="vote">Vote</TabsTrigger>
                 <TabsTrigger value="incentivize">Incentivize</TabsTrigger>
               </TabsList>
-              <TabsContent value="liquidity">
-                <LiquidityInterface pools={mockPools} tokens={mockTokens} />
+              <TabsContent value="borrow">
+                <BorrowInterface />
               </TabsContent>
              <TabsContent value="stake">
                 <LockInterface locks={mockLocks} />
               </TabsContent>
-              <TabsContent value="borrow">
-                <BorrowInterface />
+              <TabsContent value="liquidity">
+                <LiquidityInterface pools={mockPools} tokens={mockTokens} />
               </TabsContent>
               <TabsContent value="vote">
                 <VoteInterface />

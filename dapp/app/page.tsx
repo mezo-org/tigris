@@ -23,11 +23,11 @@ export default function Cathedral() {
         </header>
         <main>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <Tabs defaultValue="swap" className="mt-4">
+            <Tabs defaultValue="borrow" className="mt-4">
               <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="swap">Swap</TabsTrigger>
-                <TabsTrigger value="stake">Stake</TabsTrigger>
                 <TabsTrigger value="borrow">Borrow</TabsTrigger>
+                <TabsTrigger value="stake">Stake</TabsTrigger>
+                <TabsTrigger value="swap">Swap</TabsTrigger>
                 <TabsTrigger value="deposit">Deposit</TabsTrigger>
               </TabsList>
               <TabsContent value="swap">
