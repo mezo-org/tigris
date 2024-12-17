@@ -144,7 +144,7 @@ const IncentivizeInterface = ({ pools } : { pools: Pool[] }) => {
             </Button>
           ) : (
             <div className="space-y-4">
-              <Alert variant="warning">
+              <Alert variant="destructive">
                 <AlertDescription>
                   <p className="font-medium mb-1">Please confirm your incentive:</p>
                   <ul className="text-sm space-y-1">
