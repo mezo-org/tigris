@@ -22,6 +22,7 @@ interface IPoolFactory {
     error NotPauser();
     error NotVoter();
 
+    function getImplementation() external view returns (address);
     function getPair(address tokenA, address tokenB, bool stable) external view returns (address);
     function voter() external returns (address);
     function isPaused() external returns (bool);
