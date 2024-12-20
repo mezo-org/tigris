@@ -11,10 +11,27 @@ interface IReward {
     error NotWhitelisted();
     error ZeroAmount();
 
-    event Deposit(address indexed from, uint256 indexed tokenId, uint256 amount);
-    event Withdraw(address indexed from, uint256 indexed tokenId, uint256 amount);
-    event NotifyReward(address indexed from, address indexed reward, uint256 indexed epoch, uint256 amount);
-    event ClaimRewards(address indexed from, address indexed reward, uint256 amount);
+    event Deposit(
+        address indexed from,
+        uint256 indexed tokenId,
+        uint256 amount
+    );
+    event Withdraw(
+        address indexed from,
+        uint256 indexed tokenId,
+        uint256 amount
+    );
+    event NotifyReward(
+        address indexed from,
+        address indexed reward,
+        uint256 indexed epoch,
+        uint256 amount
+    );
+    event ClaimRewards(
+        address indexed from,
+        address indexed reward,
+        uint256 amount
+    );
 
     /// @notice Deposit an amount into the rewards contract to earn future rewards associated to a veNFT
     /// @dev Internal notation used as only callable internally by `authorized`.
@@ -43,17 +60,25 @@ interface IReward {
     /// @param tokenId      The token of the NFT to check
     /// @param timestamp    The timestamp to get the balance at
     /// @return The balance the account had as of the given block
-    function getPriorBalanceIndex(uint256 tokenId, uint256 timestamp) external view returns (uint256);
+    function getPriorBalanceIndex(
+        uint256 tokenId,
+        uint256 timestamp
+    ) external view returns (uint256);
 
     /// @notice Determine the prior index of supply staked by of a timestamp
     /// @dev Timestamp must be <= current timestamp
     /// @param timestamp The timestamp to get the index at
     /// @return Index of supply checkpoint
-    function getPriorSupplyIndex(uint256 timestamp) external view returns (uint256);
+    function getPriorSupplyIndex(
+        uint256 timestamp
+    ) external view returns (uint256);
 
     /// @notice Calculate how much in rewards are earned for a specific token and veNFT
     /// @param token Address of token to fetch rewards of
     /// @param tokenId Unique identifier of the veNFT
     /// @return Amount of token earned in rewards
-    function earned(address token, uint256 tokenId) external view returns (uint256);
+    function earned(
+        address token,
+        uint256 tokenId
+    ) external view returns (uint256);
 }

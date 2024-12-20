@@ -1,10 +1,22 @@
-import React, { useState } from 'react'
-import { Cog, ArrowDown } from 'lucide-react'
+import React, { useState } from "react"
+import { Cog, ArrowDown } from "lucide-react"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { Card, CardContent } from "./ui/card"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select"
 import { default as ProtectedButton } from "./protected-button"
 import { TokenOption } from "./labels"
 import { Token } from "./types"
@@ -13,12 +25,12 @@ const SLIPPAGE_PRESETS = [0.1, 0.5, 1.0]
 
 const SwapSettings = ({
   slippage,
-  setSlippage
+  setSlippage,
 }: {
   slippage: number
   setSlippage: (value: number) => void
 }) => {
-  const [customSlippage, setCustomSlippage] = useState('')
+  const [customSlippage, setCustomSlippage] = useState("")
 
   const handleCustomSlippage = (value: string) => {
     setCustomSlippage(value)
@@ -42,7 +54,7 @@ const SwapSettings = ({
               className="flex-1"
               onClick={() => {
                 setSlippage(preset)
-                setCustomSlippage('')
+                setCustomSlippage("")
               }}
             >
               {preset}%
@@ -77,17 +89,17 @@ const SwapSettings = ({
   )
 }
 
-const SwapInterface = ({ tokens } : { tokens: Token []} ) => {
+const SwapInterface = ({ tokens }: { tokens: Token[] }) => {
   const [fromToken, setFromToken] = useState<Token>(tokens[0])
   const [toToken, setToToken] = useState<Token>(tokens[1])
-  const [fromAmount, setFromAmount] = useState('')
+  const [fromAmount, setFromAmount] = useState("")
   const [slippage, setSlippage] = useState(0.5)
 
   const handleSwitch = () => {
     const tempToken = fromToken
     setFromToken(toToken)
     setToToken(tempToken)
-    setFromAmount('')
+    setFromAmount("")
   }
 
   return (
@@ -118,7 +130,11 @@ const SwapInterface = ({ tokens } : { tokens: Token []} ) => {
               <div className="flex gap-2">
                 <Select
                   value={fromToken.address}
-                  onValueChange={(value) => setFromToken(tokens.find(t => t.address === value) || tokens[0])}
+                  onValueChange={(value) =>
+                    setFromToken(
+                      tokens.find((t) => t.address === value) || tokens[0],
+                    )
+                  }
                 >
                   <SelectTrigger className="w-[180px]">
                     <SelectValue>
@@ -126,8 +142,12 @@ const SwapInterface = ({ tokens } : { tokens: Token []} ) => {
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    {tokens.map(token => (
-                      <SelectItem key={token.address} value={token.address} className="py-2">
+                    {tokens.map((token) => (
+                      <SelectItem
+                        key={token.address}
+                        value={token.address}
+                        className="py-2"
+                      >
                         <TokenOption token={token} />
                       </SelectItem>
                     ))}
@@ -158,7 +178,11 @@ const SwapInterface = ({ tokens } : { tokens: Token []} ) => {
               <div className="flex gap-2">
                 <Select
                   value={toToken.address}
-                  onValueChange={(value) => setToToken(tokens.find(t => t.address === value) || tokens[1])}
+                  onValueChange={(value) =>
+                    setToToken(
+                      tokens.find((t) => t.address === value) || tokens[1],
+                    )
+                  }
                 >
                   <SelectTrigger className="w-[180px]">
                     <SelectValue>
@@ -166,15 +190,22 @@ const SwapInterface = ({ tokens } : { tokens: Token []} ) => {
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    {tokens.map(token => (
-                      <SelectItem key={token.address} value={token.address} className="py-2">
+                    {tokens.map((token) => (
+                      <SelectItem
+                        key={token.address}
+                        value={token.address}
+                        className="py-2"
+                      >
                         <TokenOption token={token} />
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 <div className="flex-1 p-2 bg-gray-100 rounded-md text-sm flex items-center">
-                  {fromAmount ? `≈ ${(Number(fromAmount) * 20000).toFixed(2)}` : '0.0'} {toToken.symbol}
+                  {fromAmount
+                    ? `≈ ${(Number(fromAmount) * 20000).toFixed(2)}`
+                    : "0.0"}{" "}
+                  {toToken.symbol}
                 </div>
               </div>
             </div>

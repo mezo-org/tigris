@@ -69,7 +69,11 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
 
     constructor() ERC20("", "") ERC20Permit("") {}
 
-    function initialize(address _token0, address _token1, bool _stable) external {
+    function initialize(
+        address _token0,
+        address _token1,
+        bool _stable
+    ) external {
         if (factory != address(0)) revert FactoryAlreadySet();
         factory = _msgSender();
         _voter = IPoolFactory(factory).voter();
@@ -78,11 +82,19 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         string memory symbol0 = ERC20(_token0).symbol();
         string memory symbol1 = ERC20(_token1).symbol();
         if (_stable) {
-            _name = string(abi.encodePacked("StableV2 AMM - ", symbol0, "/", symbol1));
-            _symbol = string(abi.encodePacked("sAMMV2-", symbol0, "/", symbol1));
+            _name = string(
+                abi.encodePacked("StableV2 AMM - ", symbol0, "/", symbol1)
+            );
+            _symbol = string(
+                abi.encodePacked("sAMMV2-", symbol0, "/", symbol1)
+            );
         } else {
-            _name = string(abi.encodePacked("VolatileV2 AMM - ", symbol0, "/", symbol1));
-            _symbol = string(abi.encodePacked("vAMMV2-", symbol0, "/", symbol1));
+            _name = string(
+                abi.encodePacked("VolatileV2 AMM - ", symbol0, "/", symbol1)
+            );
+            _symbol = string(
+                abi.encodePacked("vAMMV2-", symbol0, "/", symbol1)
+            );
         }
 
         decimals0 = 10 ** ERC20(_token0).decimals();
@@ -92,12 +104,14 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
     }
 
     function setName(string calldata __name) external {
-        if (msg.sender != IVoter(_voter).emergencyCouncil()) revert NotEmergencyCouncil();
+        if (msg.sender != IVoter(_voter).emergencyCouncil())
+            revert NotEmergencyCouncil();
         _name = __name;
     }
 
     function setSymbol(string calldata __symbol) external {
-        if (msg.sender != IVoter(_voter).emergencyCouncil()) revert NotEmergencyCouncil();
+        if (msg.sender != IVoter(_voter).emergencyCouncil())
+            revert NotEmergencyCouncil();
         _symbol = __symbol;
     }
 
@@ -112,9 +126,25 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
     function metadata()
         external
         view
-        returns (uint256 dec0, uint256 dec1, uint256 r0, uint256 r1, bool st, address t0, address t1)
+        returns (
+            uint256 dec0,
+            uint256 dec1,
+            uint256 r0,
+            uint256 r1,
+            bool st,
+            address t0,
+            address t1
+        )
     {
-        return (decimals0, decimals1, reserve0, reserve1, stable, token0, token1);
+        return (
+            decimals0,
+            decimals1,
+            reserve0,
+            reserve1,
+            stable,
+            token0,
+            token1
+        );
     }
 
     function tokens() external view returns (address, address) {
@@ -190,14 +220,27 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         }
     }
 
-    function getReserves() public view returns (uint256 _reserve0, uint256 _reserve1, uint256 _blockTimestampLast) {
+    function getReserves()
+        public
+        view
+        returns (
+            uint256 _reserve0,
+            uint256 _reserve1,
+            uint256 _blockTimestampLast
+        )
+    {
         _reserve0 = reserve0;
         _reserve1 = reserve1;
         _blockTimestampLast = blockTimestampLast;
     }
 
     // update reserves and, on the first call per block, price accumulators
-    function _update(uint256 balance0, uint256 balance1, uint256 _reserve0, uint256 _reserve1) internal {
+    function _update(
+        uint256 balance0,
+        uint256 balance1,
+        uint256 _reserve0,
+        uint256 _reserve1
+    ) internal {
         uint256 blockTimestamp = block.timestamp;
         uint256 timeElapsed = blockTimestamp - blockTimestampLast;
         if (timeElapsed > 0 && _reserve0 != 0 && _reserve1 != 0) {
@@ -208,7 +251,13 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         Observation memory _point = lastObservation();
         timeElapsed = blockTimestamp - _point.timestamp; // compare the last observation with current timestamp, if greater than 30 minutes, record a new event
         if (timeElapsed > periodSize) {
-            observations.push(Observation(blockTimestamp, reserve0CumulativeLast, reserve1CumulativeLast));
+            observations.push(
+                Observation(
+                    blockTimestamp,
+                    reserve0CumulativeLast,
+                    reserve1CumulativeLast
+                )
+            );
         }
         reserve0 = balance0;
         reserve1 = balance1;
@@ -220,14 +269,22 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
     function currentCumulativePrices()
         public
         view
-        returns (uint256 reserve0Cumulative, uint256 reserve1Cumulative, uint256 blockTimestamp)
+        returns (
+            uint256 reserve0Cumulative,
+            uint256 reserve1Cumulative,
+            uint256 blockTimestamp
+        )
     {
         blockTimestamp = block.timestamp;
         reserve0Cumulative = reserve0CumulativeLast;
         reserve1Cumulative = reserve1CumulativeLast;
 
         // if time has elapsed since the last update on the pool, mock the accumulated price values
-        (uint256 _reserve0, uint256 _reserve1, uint256 _blockTimestampLast) = getReserves();
+        (
+            uint256 _reserve0,
+            uint256 _reserve1,
+            uint256 _blockTimestampLast
+        ) = getReserves();
         if (_blockTimestampLast != blockTimestamp) {
             // subtraction overflow is desired
             uint256 timeElapsed = blockTimestamp - _blockTimestampLast;
@@ -237,7 +294,11 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
     }
 
     // provides twap price with user configured granularity, up to the full window size
-    function quote(address tokenIn, uint256 amountIn, uint256 granularity) external view returns (uint256 amountOut) {
+    function quote(
+        address tokenIn,
+        uint256 amountIn,
+        uint256 granularity
+    ) external view returns (uint256 amountOut) {
         uint256[] memory _prices = sample(tokenIn, amountIn, granularity, 1);
         uint256 priceAverageCumulative;
         uint256 _length = _prices.length;
@@ -248,7 +309,11 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
     }
 
     // returns a memory set of twap prices
-    function prices(address tokenIn, uint256 amountIn, uint256 points) external view returns (uint256[] memory) {
+    function prices(
+        address tokenIn,
+        uint256 amountIn,
+        uint256 points
+    ) external view returns (uint256[] memory) {
         return sample(tokenIn, amountIn, points, 1);
     }
 
@@ -267,12 +332,18 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
 
         for (; i < length; i += window) {
             nextIndex = i + window;
-            uint256 timeElapsed = observations[nextIndex].timestamp - observations[i].timestamp;
-            uint256 _reserve0 = (observations[nextIndex].reserve0Cumulative - observations[i].reserve0Cumulative) /
-                timeElapsed;
-            uint256 _reserve1 = (observations[nextIndex].reserve1Cumulative - observations[i].reserve1Cumulative) /
-                timeElapsed;
-            _prices[index] = _getAmountOut(amountIn, tokenIn, _reserve0, _reserve1);
+            uint256 timeElapsed = observations[nextIndex].timestamp -
+                observations[i].timestamp;
+            uint256 _reserve0 = (observations[nextIndex].reserve0Cumulative -
+                observations[i].reserve0Cumulative) / timeElapsed;
+            uint256 _reserve1 = (observations[nextIndex].reserve1Cumulative -
+                observations[i].reserve1Cumulative) / timeElapsed;
+            _prices[index] = _getAmountOut(
+                amountIn,
+                tokenIn,
+                _reserve0,
+                _reserve1
+            );
             // index < length; length cannot overflow
             unchecked {
                 index = index + 1;
@@ -283,7 +354,9 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
 
     // this low-level function should be called by addLiquidity functions in Router.sol, which performs important safety checks
     // standard uniswap v2 implementation
-    function mint(address to) external nonReentrant returns (uint256 liquidity) {
+    function mint(
+        address to
+    ) external nonReentrant returns (uint256 liquidity) {
         (uint256 _reserve0, uint256 _reserve1) = (reserve0, reserve1);
         uint256 _balance0 = IERC20(token0).balanceOf(address(this));
         uint256 _balance1 = IERC20(token1).balanceOf(address(this));
@@ -295,11 +368,17 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
             liquidity = Math.sqrt(_amount0 * _amount1) - MINIMUM_LIQUIDITY;
             _mint(address(1), MINIMUM_LIQUIDITY); // permanently lock the first MINIMUM_LIQUIDITY tokens - cannot be address(0)
             if (stable) {
-                if ((_amount0 * 1e18) / decimals0 != (_amount1 * 1e18) / decimals1) revert DepositsNotEqual();
+                if (
+                    (_amount0 * 1e18) / decimals0 !=
+                    (_amount1 * 1e18) / decimals1
+                ) revert DepositsNotEqual();
                 if (_k(_amount0, _amount1) <= MINIMUM_K) revert BelowMinimumK();
             }
         } else {
-            liquidity = Math.min((_amount0 * _totalSupply) / _reserve0, (_amount1 * _totalSupply) / _reserve1);
+            liquidity = Math.min(
+                (_amount0 * _totalSupply) / _reserve0,
+                (_amount1 * _totalSupply) / _reserve1
+            );
         }
         if (liquidity == 0) revert InsufficientLiquidityMinted();
         _mint(to, liquidity);
@@ -310,7 +389,9 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
 
     // this low-level function should be called from a contract which performs important safety checks
     // standard uniswap v2 implementation
-    function burn(address to) external nonReentrant returns (uint256 amount0, uint256 amount1) {
+    function burn(
+        address to
+    ) external nonReentrant returns (uint256 amount0, uint256 amount1) {
         (uint256 _reserve0, uint256 _reserve1) = (reserve0, reserve1);
         (address _token0, address _token1) = (token0, token1);
         uint256 _balance0 = IERC20(_token0).balanceOf(address(this));
@@ -332,11 +413,18 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
     }
 
     // this low-level function should be called from a contract which performs important safety checks
-    function swap(uint256 amount0Out, uint256 amount1Out, address to, bytes calldata data) external nonReentrant {
+    function swap(
+        uint256 amount0Out,
+        uint256 amount1Out,
+        address to,
+        bytes calldata data
+    ) external nonReentrant {
         if (IPoolFactory(factory).isPaused()) revert IsPaused();
-        if (amount0Out == 0 && amount1Out == 0) revert InsufficientOutputAmount();
+        if (amount0Out == 0 && amount1Out == 0)
+            revert InsufficientOutputAmount();
         (uint256 _reserve0, uint256 _reserve1) = (reserve0, reserve1);
-        if (amount0Out >= _reserve0 || amount1Out >= _reserve1) revert InsufficientLiquidity();
+        if (amount0Out >= _reserve0 || amount1Out >= _reserve1)
+            revert InsufficientLiquidity();
 
         uint256 _balance0;
         uint256 _balance1;
@@ -346,18 +434,38 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
             if (to == _token0 || to == _token1) revert InvalidTo();
             if (amount0Out > 0) IERC20(_token0).safeTransfer(to, amount0Out); // optimistically transfer tokens
             if (amount1Out > 0) IERC20(_token1).safeTransfer(to, amount1Out); // optimistically transfer tokens
-            if (data.length > 0) IPoolCallee(to).hook(_msgSender(), amount0Out, amount1Out, data); // callback, used for flash loans
+            if (data.length > 0)
+                IPoolCallee(to).hook(
+                    _msgSender(),
+                    amount0Out,
+                    amount1Out,
+                    data
+                ); // callback, used for flash loans
             _balance0 = IERC20(_token0).balanceOf(address(this));
             _balance1 = IERC20(_token1).balanceOf(address(this));
         }
-        uint256 amount0In = _balance0 > _reserve0 - amount0Out ? _balance0 - (_reserve0 - amount0Out) : 0;
-        uint256 amount1In = _balance1 > _reserve1 - amount1Out ? _balance1 - (_reserve1 - amount1Out) : 0;
+        uint256 amount0In = _balance0 > _reserve0 - amount0Out
+            ? _balance0 - (_reserve0 - amount0Out)
+            : 0;
+        uint256 amount1In = _balance1 > _reserve1 - amount1Out
+            ? _balance1 - (_reserve1 - amount1Out)
+            : 0;
         if (amount0In == 0 && amount1In == 0) revert InsufficientInputAmount();
         {
             // scope for reserve{0,1}Adjusted, avoids stack too deep errors
             (address _token0, address _token1) = (token0, token1);
-            if (amount0In > 0) _update0((amount0In * IPoolFactory(factory).getFee(address(this), stable)) / 10000); // accrue fees for token0 and move them out of pool
-            if (amount1In > 0) _update1((amount1In * IPoolFactory(factory).getFee(address(this), stable)) / 10000); // accrue fees for token1 and move them out of pool
+            if (amount0In > 0)
+                _update0(
+                    (amount0In *
+                        IPoolFactory(factory).getFee(address(this), stable)) /
+                        10000
+                ); // accrue fees for token0 and move them out of pool
+            if (amount1In > 0)
+                _update1(
+                    (amount1In *
+                        IPoolFactory(factory).getFee(address(this), stable)) /
+                        10000
+                ); // accrue fees for token1 and move them out of pool
             _balance0 = IERC20(_token0).balanceOf(address(this)); // since we removed tokens, we need to reconfirm balances, can also simply use previous balance - amountIn/ 10000, but doing balanceOf again as safety check
             _balance1 = IERC20(_token1).balanceOf(address(this));
             // The curve, either x3y+y3x for stable pools, or x*y for volatile pools
@@ -365,19 +473,37 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         }
 
         _update(_balance0, _balance1, _reserve0, _reserve1);
-        emit Swap(_msgSender(), to, amount0In, amount1In, amount0Out, amount1Out);
+        emit Swap(
+            _msgSender(),
+            to,
+            amount0In,
+            amount1In,
+            amount0Out,
+            amount1Out
+        );
     }
 
     // force balances to match reserves
     function skim(address to) external nonReentrant {
         (address _token0, address _token1) = (token0, token1);
-        IERC20(_token0).safeTransfer(to, IERC20(_token0).balanceOf(address(this)) - (reserve0));
-        IERC20(_token1).safeTransfer(to, IERC20(_token1).balanceOf(address(this)) - (reserve1));
+        IERC20(_token0).safeTransfer(
+            to,
+            IERC20(_token0).balanceOf(address(this)) - (reserve0)
+        );
+        IERC20(_token1).safeTransfer(
+            to,
+            IERC20(_token1).balanceOf(address(this)) - (reserve1)
+        );
     }
 
     // force reserves to match balances
     function sync() external nonReentrant {
-        _update(IERC20(token0).balanceOf(address(this)), IERC20(token1).balanceOf(address(this)), reserve0, reserve1);
+        _update(
+            IERC20(token0).balanceOf(address(this)),
+            IERC20(token1).balanceOf(address(this)),
+            reserve0,
+            reserve1
+        );
     }
 
     function _f(uint256 x0, uint256 y) internal pure returns (uint256) {
@@ -387,10 +513,17 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
     }
 
     function _d(uint256 x0, uint256 y) internal pure returns (uint256) {
-        return (3 * x0 * ((y * y) / 1e18)) / 1e18 + ((((x0 * x0) / 1e18) * x0) / 1e18);
+        return
+            (3 * x0 * ((y * y) / 1e18)) /
+            1e18 +
+            ((((x0 * x0) / 1e18) * x0) / 1e18);
     }
 
-    function _get_y(uint256 x0, uint256 xy, uint256 y) internal view returns (uint256) {
+    function _get_y(
+        uint256 x0,
+        uint256 xy,
+        uint256 y
+    ) internal view returns (uint256) {
         for (uint256 i = 0; i < 255; i++) {
             uint256 k = _f(x0, y);
             if (k < xy) {
@@ -432,9 +565,14 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         revert("!y");
     }
 
-    function getAmountOut(uint256 amountIn, address tokenIn) external view returns (uint256) {
+    function getAmountOut(
+        uint256 amountIn,
+        address tokenIn
+    ) external view returns (uint256) {
         (uint256 _reserve0, uint256 _reserve1) = (reserve0, reserve1);
-        amountIn -= (amountIn * IPoolFactory(factory).getFee(address(this), stable)) / 10000; // remove fee from amount received
+        amountIn -=
+            (amountIn * IPoolFactory(factory).getFee(address(this), stable)) /
+            10000; // remove fee from amount received
         return _getAmountOut(amountIn, tokenIn, _reserve0, _reserve1);
     }
 
@@ -448,12 +586,18 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
             uint256 xy = _k(_reserve0, _reserve1);
             _reserve0 = (_reserve0 * 1e18) / decimals0;
             _reserve1 = (_reserve1 * 1e18) / decimals1;
-            (uint256 reserveA, uint256 reserveB) = tokenIn == token0 ? (_reserve0, _reserve1) : (_reserve1, _reserve0);
-            amountIn = tokenIn == token0 ? (amountIn * 1e18) / decimals0 : (amountIn * 1e18) / decimals1;
+            (uint256 reserveA, uint256 reserveB) = tokenIn == token0
+                ? (_reserve0, _reserve1)
+                : (_reserve1, _reserve0);
+            amountIn = tokenIn == token0
+                ? (amountIn * 1e18) / decimals0
+                : (amountIn * 1e18) / decimals1;
             uint256 y = reserveB - _get_y(amountIn + reserveA, xy, reserveB);
             return (y * (tokenIn == token0 ? decimals1 : decimals0)) / 1e18;
         } else {
-            (uint256 reserveA, uint256 reserveB) = tokenIn == token0 ? (_reserve0, _reserve1) : (_reserve1, _reserve0);
+            (uint256 reserveA, uint256 reserveB) = tokenIn == token0
+                ? (_reserve0, _reserve1)
+                : (_reserve1, _reserve0);
             return (amountIn * reserveB) / (reserveA + amountIn);
         }
     }
@@ -483,7 +627,11 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         return _symbol;
     }
 
-    function _beforeTokenTransfer(address from, address to, uint256) internal override {
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256
+    ) internal override {
         _updateFor(from);
         _updateFor(to);
     }

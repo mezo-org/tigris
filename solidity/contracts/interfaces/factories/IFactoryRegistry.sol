@@ -8,8 +8,16 @@ interface IFactoryRegistry {
     error SameAddress();
     error ZeroAddress();
 
-    event Approve(address indexed poolFactory, address indexed votingRewardsFactory, address indexed gaugeFactory);
-    event Unapprove(address indexed poolFactory, address indexed votingRewardsFactory, address indexed gaugeFactory);
+    event Approve(
+        address indexed poolFactory,
+        address indexed votingRewardsFactory,
+        address indexed gaugeFactory
+    );
+    event Unapprove(
+        address indexed poolFactory,
+        address indexed votingRewardsFactory,
+        address indexed gaugeFactory
+    );
     event SetManagedRewardsFactory(address indexed _newRewardsFactory);
 
     /// @notice Approve a set of factories used in Mezodrome Protocol.  Router is now able to swap with pools created
@@ -18,7 +26,11 @@ interface IFactoryRegistry {
     /// @param poolFactory .
     /// @param votingRewardsFactory .
     /// @param gaugeFactory .
-    function approve(address poolFactory, address votingRewardsFactory, address gaugeFactory) external;
+    function approve(
+        address poolFactory,
+        address votingRewardsFactory,
+        address gaugeFactory
+    ) external;
 
     /// @notice Unapprove a set of factories used in Mezodrome Protocol. Router is no longer able to swap with pools
     ///         created by the poolFactory
@@ -26,7 +38,11 @@ interface IFactoryRegistry {
     /// @param poolFactory .
     /// @param votingRewardsFactory .
     /// @param gaugeFactory .
-    function unapprove(address poolFactory, address votingRewardsFactory, address gaugeFactory) external;
+    function unapprove(
+        address poolFactory,
+        address votingRewardsFactory,
+        address gaugeFactory
+    ) external;
 
     /// @notice Check if a set of factories are approved for use in Mezodrome Protocol
     /// @param poolFactory .
@@ -45,7 +61,9 @@ interface IFactoryRegistry {
     /// @notice Set the rewards factory address
     /// @dev Callable by onlyOwner
     /// @param _newManagedRewardsFactory address of new managedRewardsFactory
-    function setManagedRewardsFactory(address _newManagedRewardsFactory) external;
+    function setManagedRewardsFactory(
+        address _newManagedRewardsFactory
+    ) external;
 
     /// @notice Get all PoolFactories used by the registry
     /// @dev The same PoolFactory address cannot be used twice
@@ -56,7 +74,9 @@ interface IFactoryRegistry {
     ///         ensure a pool swapped from is approved.
     /// @param poolFactory .
     /// @return True if PoolFactory is approved, else false
-    function poolFactoryExists(address poolFactory) external view returns (bool);
+    function poolFactoryExists(
+        address poolFactory
+    ) external view returns (bool);
 
     /// @notice Get the length of the poolFactories array
     function poolFactoriesLength() external view returns (uint256);

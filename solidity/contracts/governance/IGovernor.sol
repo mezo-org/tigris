@@ -139,7 +139,9 @@ abstract contract IGovernor is IERC165, IERC6372 {
      * @notice module:core
      * @dev Current state of a proposal, following Compound's convention
      */
-    function state(uint256 proposalId) public view virtual returns (ProposalState);
+    function state(
+        uint256 proposalId
+    ) public view virtual returns (ProposalState);
 
     /**
      * @notice module:core
@@ -147,14 +149,18 @@ abstract contract IGovernor is IERC165, IERC6372 {
      * snapshot is performed at the end of this block. Hence, voting for this proposal starts at the beginning of the
      * following block.
      */
-    function proposalSnapshot(uint256 proposalId) public view virtual returns (uint256);
+    function proposalSnapshot(
+        uint256 proposalId
+    ) public view virtual returns (uint256);
 
     /**
      * @notice module:core
      * @dev Timepoint at which votes close. If using block number, votes close at the end of this block, so it is
      * possible to cast a vote during this block.
      */
-    function proposalDeadline(uint256 proposalId) public view virtual returns (uint256);
+    function proposalDeadline(
+        uint256 proposalId
+    ) public view virtual returns (uint256);
 
     /**
      * @notice module:user-config
@@ -192,7 +198,11 @@ abstract contract IGovernor is IERC165, IERC6372 {
      * Note: this can be implemented in a number of ways, for example by reading the delegated balance from one (or
      * multiple), {ERC20Votes} tokens.
      */
-    function getVotes(address account, uint256 tokenId, uint256 timepoint) public view virtual returns (uint256);
+    function getVotes(
+        address account,
+        uint256 tokenId,
+        uint256 timepoint
+    ) public view virtual returns (uint256);
 
     /**
      * @notice module:reputation
@@ -209,7 +219,10 @@ abstract contract IGovernor is IERC165, IERC6372 {
      * @notice module:voting
      * @dev Returns whether `tokenId` has cast a vote on `proposalId`.
      */
-    function hasVoted(uint256 proposalId, uint256 tokenId) public view virtual returns (bool);
+    function hasVoted(
+        uint256 proposalId,
+        uint256 tokenId
+    ) public view virtual returns (bool);
 
     /**
      * @dev Create a new proposal. Vote start after a delay specified by {IGovernor-votingDelay} and lasts for a
@@ -245,7 +258,11 @@ abstract contract IGovernor is IERC165, IERC6372 {
      *
      * Emits a {VoteCast} event.
      */
-    function castVote(uint256 proposalId, uint256 tokenId, uint8 support) public virtual returns (uint256 balance);
+    function castVote(
+        uint256 proposalId,
+        uint256 tokenId,
+        uint8 support
+    ) public virtual returns (uint256 balance);
 
     /**
      * @dev Cast a vote with a reason

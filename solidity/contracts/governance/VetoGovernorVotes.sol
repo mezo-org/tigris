@@ -35,7 +35,9 @@ abstract contract VetoGovernorVotes is VetoGovernor {
      */
     // solhint-disable-next-line func-name-mixedcase
     function CLOCK_MODE() public view virtual override returns (string memory) {
-        try IERC6372(address(token)).CLOCK_MODE() returns (string memory clockmode) {
+        try IERC6372(address(token)).CLOCK_MODE() returns (
+            string memory clockmode
+        ) {
             return clockmode;
         } catch {
             return "mode=blocknumber&from=default";

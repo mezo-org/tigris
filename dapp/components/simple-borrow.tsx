@@ -1,21 +1,21 @@
-import React, { useState } from 'react'
+import React, { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { default as ProtectedButton } from "@/components/protected-button"
 
 const SimpleBorrowInterface = () => {
-  const [btcAmount, setBtcAmount] = useState('')
-  const [musdAmount, setMusdAmount] = useState('')
+  const [btcAmount, setBtcAmount] = useState("")
+  const [musdAmount, setMusdAmount] = useState("")
 
   // Example user stats
-  const userCollateral = 0.5; // BTC
-  const userDebt = 7800; // mUSD
+  const userCollateral = 0.5 // BTC
+  const userDebt = 7800 // mUSD
 
   // Constants
   const interestRate = 4.3
   const maxLTV = 0.78
-  const btcPrice = 20000; // Mock price
+  const btcPrice = 20000 // Mock price
 
   const maxBorrow = Number(btcAmount) * btcPrice * maxLTV
 
@@ -38,9 +38,7 @@ const SimpleBorrowInterface = () => {
                 <div className="text-xl font-medium">
                   ${userDebt.toLocaleString()} mUSD
                 </div>
-                <div className="text-sm text-gray-500">
-                  {interestRate}% APR
-                </div>
+                <div className="text-sm text-gray-500">{interestRate}% APR</div>
               </div>
             </div>
           </CardContent>
@@ -74,7 +72,9 @@ const SimpleBorrowInterface = () => {
             {/* Input fields */}
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Deposit BTC</label>
+                <label className="block text-sm font-medium mb-1">
+                  Deposit BTC
+                </label>
                 <div className="relative">
                   <Input
                     type="number"
@@ -94,7 +94,9 @@ const SimpleBorrowInterface = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Borrow mUSD</label>
+                <label className="block text-sm font-medium mb-1">
+                  Borrow mUSD
+                </label>
                 <div className="relative">
                   <Input
                     type="number"
@@ -115,15 +117,15 @@ const SimpleBorrowInterface = () => {
             </div>
 
             {/* Action button */}
-            <ProtectedButton className="w-full">
-              Borrow mUSD
-            </ProtectedButton>
+            <ProtectedButton className="w-full">Borrow mUSD</ProtectedButton>
 
             {/* Link to advanced */}
             <div className="text-center">
               <Button
                 variant="link"
-                onClick={() => {/* Navigate to advanced borrow tab */}}
+                onClick={() => {
+                  /* Navigate to advanced borrow tab */
+                }}
               >
                 View advanced options →
               </Button>

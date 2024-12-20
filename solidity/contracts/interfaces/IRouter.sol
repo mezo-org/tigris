@@ -81,7 +81,10 @@ interface IRouter {
         address factory
     ) external view returns (uint256 reserveA, uint256 reserveB);
 
-    function getAmountsOut(uint256 amountIn, Route[] memory routes) external view returns (uint256[] memory amounts);
+    function getAmountsOut(
+        uint256 amountIn,
+        Route[] memory routes
+    ) external view returns (uint256[] memory amounts);
 
     // **** ADD LIQUIDITY ****
 
@@ -92,7 +95,10 @@ interface IRouter {
         address _factory,
         uint256 amountADesired,
         uint256 amountBDesired
-    ) external view returns (uint256 amountA, uint256 amountB, uint256 liquidity);
+    )
+        external
+        view
+        returns (uint256 amountA, uint256 amountB, uint256 liquidity);
 
     function quoteRemoveLiquidity(
         address tokenA,
@@ -122,7 +128,10 @@ interface IRouter {
         uint256 amountETHMin,
         address to,
         uint256 deadline
-    ) external payable returns (uint256 amountToken, uint256 amountETH, uint256 liquidity);
+    )
+        external
+        payable
+        returns (uint256 amountToken, uint256 amountETH, uint256 liquidity);
 
     // **** REMOVE LIQUIDITY ****
 
@@ -281,7 +290,15 @@ interface IRouter {
         uint256 amountInB,
         Route[] calldata routesA,
         Route[] calldata routesB
-    ) external view returns (uint256 amountOutMinA, uint256 amountOutMinB, uint256 amountAMin, uint256 amountBMin);
+    )
+        external
+        view
+        returns (
+            uint256 amountOutMinA,
+            uint256 amountOutMinB,
+            uint256 amountAMin,
+            uint256 amountBMin
+        );
 
     /// @notice Used to generate params required for zapping out.
     ///         Zap out => swap then add liquidity.
@@ -306,7 +323,15 @@ interface IRouter {
         uint256 liquidity,
         Route[] calldata routesA,
         Route[] calldata routesB
-    ) external view returns (uint256 amountOutMinA, uint256 amountOutMinB, uint256 amountAMin, uint256 amountBMin);
+    )
+        external
+        view
+        returns (
+            uint256 amountOutMinA,
+            uint256 amountOutMinB,
+            uint256 amountAMin,
+            uint256 amountBMin
+        );
 
     /// @notice Used by zapper to determine appropriate ratio of A to B to deposit liquidity. Assumes stable pool.
     /// @dev Returns stable liquidity ratio of B to (A + B).

@@ -21,7 +21,13 @@ import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Hol
 /// @title AutoCompounder for Managed veNFTs
 /// @author Carter Carlson (@pegahcarter)
 /// @notice Auto-Compound voting rewards earned from a Managed veNFT back into the veNFT through call incentivization
-contract AutoCompounder is IAutoCompounder, ERC721Holder, ERC2771Context, ReentrancyGuard, AccessControl {
+contract AutoCompounder is
+    IAutoCompounder,
+    ERC721Holder,
+    ERC2771Context,
+    ReentrancyGuard,
+    AccessControl
+{
     using SafeERC20 for IERC20;
     bytes32 public constant ALLOWED_CALLER = keccak256("ALLOWED_CALLER");
 
@@ -99,14 +105,17 @@ contract AutoCompounder is IAutoCompounder, ERC721Holder, ERC2771Context, Reentr
         _swapTokensToMEZOAndCompound(_tokensToSwap);
     }
 
-    function _swapTokensToMEZOAndCompound(address[] memory _tokensToSwap) internal {
+    function _swapTokensToMEZOAndCompound(
+        address[] memory _tokensToSwap
+    ) internal {
         for (uint256 i = 0; i < _tokensToSwap.length; i++) {
             address token = _tokensToSwap[i];
             if (token == address(mezo)) continue; // Do not need to swap from mezo => mezo
             uint256 balance = IERC20(token).balanceOf(address(this));
             if (balance == 0) continue; // only swap if there is a balance
 
-            IRouter.Route[] memory routes = optimizer.getOptimalTokenToMezoRoute(token, balance);
+            IRouter.Route[] memory routes = optimizer
+                .getOptimalTokenToMezoRoute(token, balance);
 
             // swap
             _handleRouterApproval(IERC20(token), balance);
@@ -138,8 +147,11 @@ contract AutoCompounder is IAutoCompounder, ERC721Holder, ERC2771Context, Reentr
                 // - 1% of the MEZO designated for compounding
                 // - The constant MEZO reward set by team in AutoCompounderFactory
                 uint256 compoundRewardAmount = balance / 100;
-                uint256 factoryRewardAmount = IAutoCompounderFactory(factory).rewardAmount();
-                reward = compoundRewardAmount < factoryRewardAmount ? compoundRewardAmount : factoryRewardAmount;
+                uint256 factoryRewardAmount = IAutoCompounderFactory(factory)
+                    .rewardAmount();
+                reward = compoundRewardAmount < factoryRewardAmount
+                    ? compoundRewardAmount
+                    : factoryRewardAmount;
 
                 if (reward > 0) {
                     mezo.transfer(sender, reward);
@@ -167,7 +179,10 @@ contract AutoCompounder is IAutoCompounder, ERC721Holder, ERC2771Context, Reentr
 
     /// @notice Vote for Mezodrome pools with the given weights
     /// @dev Refer to IVoter.vote()
-    function vote(address[] calldata _poolVote, uint256[] calldata _weights) external onlyRole(ALLOWED_CALLER) {
+    function vote(
+        address[] calldata _poolVote,
+        uint256[] calldata _weights
+    ) external onlyRole(ALLOWED_CALLER) {
         voter.vote(tokenId, _poolVote, _weights);
     }
 
@@ -187,7 +202,13 @@ contract AutoCompounder is IAutoCompounder, ERC721Holder, ERC2771Context, Reentr
         uint256 balance = IERC20(from).balanceOf(address(this));
         if (balance > 0) {
             _handleRouterApproval(IERC20(from), balance);
-            router.swapExactTokensForTokens(balance, 0, routes, address(this), block.timestamp);
+            router.swapExactTokensForTokens(
+                balance,
+                0,
+                routes,
+                address(this),
+                block.timestamp
+            );
         }
         _rewardAndCompound();
     }
@@ -199,7 +220,8 @@ contract AutoCompounder is IAutoCompounder, ERC721Holder, ERC2771Context, Reentr
     /// @dev resets approval if needed then approves transfer of tokens to router
     function _handleRouterApproval(IERC20 token, uint256 amount) internal {
         uint256 allowance = token.allowance(address(this), address(router));
-        if (allowance > 0) token.safeDecreaseAllowance(address(router), allowance);
+        if (allowance > 0)
+            token.safeDecreaseAllowance(address(router), allowance);
         token.safeIncreaseAllowance(address(router), amount);
     }
 
@@ -207,11 +229,21 @@ contract AutoCompounder is IAutoCompounder, ERC721Holder, ERC2771Context, Reentr
     // Overrides
     // -------------------------------------------------
 
-    function _msgData() internal view override(ERC2771Context, Context) returns (bytes calldata) {
+    function _msgData()
+        internal
+        view
+        override(ERC2771Context, Context)
+        returns (bytes calldata)
+    {
         return ERC2771Context._msgData();
     }
 
-    function _msgSender() internal view override(ERC2771Context, Context) returns (address) {
+    function _msgSender()
+        internal
+        view
+        override(ERC2771Context, Context)
+        returns (address)
+    {
         return ERC2771Context._msgSender();
     }
 }

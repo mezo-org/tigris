@@ -14,8 +14,14 @@ const ProtectedButton = ({
   children: React.ReactNode
   onClick?: () => void
   className?: string
-  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"
-  size?: "default" | "sm" | "lg" | "icon",
+  variant?:
+    | "default"
+    | "destructive"
+    | "outline"
+    | "secondary"
+    | "ghost"
+    | "link"
+  size?: "default" | "sm" | "lg" | "icon"
   disabled?: boolean
 }) => {
   const { isConnected } = useAccount()

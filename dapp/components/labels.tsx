@@ -1,8 +1,20 @@
 import { Token, Pool } from "./types"
 
-export const TokenIcon = ({ token, className }: { token: Token, className?: string }) => (
-  <div className={`w-6 h-6 flex-shrink-0 overflow-hidden rounded-full bg-white shadow-sm ${className}`}>
-    <div dangerouslySetInnerHTML={{ __html: decodeURIComponent(token.logoURI.split(',')[1]) }} />
+export const TokenIcon = ({
+  token,
+  className,
+}: {
+  token: Token
+  className?: string
+}) => (
+  <div
+    className={`w-6 h-6 flex-shrink-0 overflow-hidden rounded-full bg-white shadow-sm ${className}`}
+  >
+    <div
+      dangerouslySetInnerHTML={{
+        __html: decodeURIComponent(token.logoURI.split(",")[1]),
+      }}
+    />
   </div>
 )
 
@@ -16,7 +28,13 @@ export const TokenOption = ({ token }: { token: Token }) => (
   </div>
 )
 
-export const TokenPair = ({ token0, token1 }: { token0: Token; token1: Token }) => (
+export const TokenPair = ({
+  token0,
+  token1,
+}: {
+  token0: Token
+  token1: Token
+}) => (
   <div className="flex items-center">
     <TokenIcon token={token0} />
     <TokenIcon token={token1} className="-ml-2" />
@@ -27,11 +45,13 @@ export const TokenPair = ({ token0, token1 }: { token0: Token; token1: Token }) 
 )
 
 export const StabilityBadge = ({ isStable }: { isStable: boolean }) => (
-  <span className={`
+  <span
+    className={`
     inline-flex px-2 py-1 rounded-full text-xs font-medium
-    ${isStable ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'}
-  `}>
-    {isStable ? 'Stable' : 'Volatile'}
+    ${isStable ? "bg-emerald-100 text-emerald-800" : "bg-blue-100 text-blue-800"}
+  `}
+  >
+    {isStable ? "Stable" : "Volatile"}
   </span>
 )
 

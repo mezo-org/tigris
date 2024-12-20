@@ -30,13 +30,23 @@ import {TimeLibrary} from "../libraries/TimeLibrary.sol";
  *
  * propose(...) creates a proposal for the following epoch. This proposal can only be executed during that epoch.
  */
-abstract contract GovernorSimple is ERC2771Context, ERC165, EIP712, IGovernor, IERC721Receiver, IERC1155Receiver {
+abstract contract GovernorSimple is
+    ERC2771Context,
+    ERC165,
+    EIP712,
+    IGovernor,
+    IERC721Receiver,
+    IERC1155Receiver
+{
     using DoubleEndedQueue for DoubleEndedQueue.Bytes32Deque;
     using SafeCast for uint256;
 
-    bytes32 public constant BALLOT_TYPEHASH = keccak256("Ballot(uint256 proposalId,uint8 support)");
+    bytes32 public constant BALLOT_TYPEHASH =
+        keccak256("Ballot(uint256 proposalId,uint8 support)");
     bytes32 public constant EXTENDED_BALLOT_TYPEHASH =
-        keccak256("ExtendedBallot(uint256 proposalId,uint8 support,string reason,bytes params)");
+        keccak256(
+            "ExtendedBallot(uint256 proposalId,uint8 support,string reason,bytes params)"
+        );
 
     // solhint-disable var-name-mixedcase
     struct ProposalCore {
@@ -110,7 +120,9 @@ abstract contract GovernorSimple is ERC2771Context, ERC165, EIP712, IGovernor, I
     /**
      * @dev See {IERC165-supportsInterface}.
      */
-    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, ERC165) returns (bool) {
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(IERC165, ERC165) returns (bool) {
         // In addition to the current interfaceId, also support previous version of the interfaceId that did not
         // include the castVoteWithReasonAndParams() function as standard
         return
@@ -121,7 +133,8 @@ abstract contract GovernorSimple is ERC2771Context, ERC165, EIP712, IGovernor, I
                 this.castVoteWithReasonAndParamsBySig.selector ^
                 this.getVotesWithParams.selector) ||
             // Previous interface for backwards compatibility
-            interfaceId == (type(IGovernor).interfaceId ^ type(IERC6372).interfaceId) ||
+            interfaceId ==
+            (type(IGovernor).interfaceId ^ type(IERC6372).interfaceId) ||
             interfaceId == type(IERC1155Receiver).interfaceId ||
             super.supportsInterface(interfaceId);
     }
@@ -162,13 +175,18 @@ abstract contract GovernorSimple is ERC2771Context, ERC165, EIP712, IGovernor, I
         bytes[] memory calldatas,
         bytes32 epochStart
     ) public pure virtual override returns (uint256) {
-        return uint256(keccak256(abi.encode(targets, values, calldatas, epochStart)));
+        return
+            uint256(
+                keccak256(abi.encode(targets, values, calldatas, epochStart))
+            );
     }
 
     /**
      * @dev See {IGovernor-state}.
      */
-    function state(uint256 proposalId) public view virtual override returns (ProposalState) {
+    function state(
+        uint256 proposalId
+    ) public view virtual override returns (ProposalState) {
         ProposalCore storage proposal = _proposals[proposalId];
 
         if (proposal.executed) {
@@ -210,26 +228,34 @@ abstract contract GovernorSimple is ERC2771Context, ERC165, EIP712, IGovernor, I
     /**
      * @dev Select winner of majority vote.
      */
-    function _selectWinner(uint256 proposalId) internal view virtual returns (ProposalState);
+    function _selectWinner(
+        uint256 proposalId
+    ) internal view virtual returns (ProposalState);
 
     /**
      * @dev See {IGovernor-proposalSnapshot}.
      */
-    function proposalSnapshot(uint256 proposalId) public view virtual override returns (uint256) {
+    function proposalSnapshot(
+        uint256 proposalId
+    ) public view virtual override returns (uint256) {
         return _proposals[proposalId].voteStart;
     }
 
     /**
      * @dev See {IGovernor-proposalDeadline}.
      */
-    function proposalDeadline(uint256 proposalId) public view virtual override returns (uint256) {
+    function proposalDeadline(
+        uint256 proposalId
+    ) public view virtual override returns (uint256) {
         return _proposals[proposalId].voteEnd;
     }
 
     /**
      * @dev Address of the proposer
      */
-    function _proposalProposer(uint256 proposalId) internal view virtual returns (address) {
+    function _proposalProposer(
+        uint256 proposalId
+    ) internal view virtual returns (address) {
         return _proposals[proposalId].proposer;
     }
 
@@ -281,19 +307,39 @@ abstract contract GovernorSimple is ERC2771Context, ERC165, EIP712, IGovernor, I
         uint256 currentTimepoint = clock();
 
         require(
-            getVotes(proposer, tokenId, currentTimepoint - 1) >= proposalThreshold(),
+            getVotes(proposer, tokenId, currentTimepoint - 1) >=
+                proposalThreshold(),
             "GovernorSimple: proposer votes below proposal threshold"
         );
         require(targets.length == 1, "GovernorSimple: only one target allowed");
-        require(address(targets[0]) == minter, "GovernorSimple: only minter allowed");
-        require(calldatas.length == 1, "GovernorSimple: only one calldata allowed");
-        require(bytes4(calldatas[0]) == IMinter.nudge.selector, "GovernorSimple: only nudge allowed");
+        require(
+            address(targets[0]) == minter,
+            "GovernorSimple: only minter allowed"
+        );
+        require(
+            calldatas.length == 1,
+            "GovernorSimple: only one calldata allowed"
+        );
+        require(
+            bytes4(calldatas[0]) == IMinter.nudge.selector,
+            "GovernorSimple: only nudge allowed"
+        );
 
-        bytes32 epochStart = bytes32(TimeLibrary.epochStart(block.timestamp) + (1 weeks));
-        uint256 proposalId = hashProposal(targets, values, calldatas, epochStart);
+        bytes32 epochStart = bytes32(
+            TimeLibrary.epochStart(block.timestamp) + (1 weeks)
+        );
+        uint256 proposalId = hashProposal(
+            targets,
+            values,
+            calldatas,
+            epochStart
+        );
 
         require(targets.length > 0, "GovernorSimple: empty proposal");
-        require(_proposals[proposalId].proposer == address(0), "GovernorSimple: proposal already exists");
+        require(
+            _proposals[proposalId].proposer == address(0),
+            "GovernorSimple: proposal already exists"
+        );
 
         uint256 snapshot = currentTimepoint + votingDelay();
         uint256 deadline = snapshot + votingPeriod();
@@ -334,11 +380,18 @@ abstract contract GovernorSimple is ERC2771Context, ERC165, EIP712, IGovernor, I
         bytes32 descriptionHash
     ) public payable virtual override returns (uint256) {
         bytes32 epochStart = bytes32(TimeLibrary.epochStart(block.timestamp));
-        uint256 proposalId = hashProposal(targets, values, calldatas, epochStart);
+        uint256 proposalId = hashProposal(
+            targets,
+            values,
+            calldatas,
+            epochStart
+        );
 
         ProposalState status = state(proposalId);
         require(
-            status == ProposalState.Succeeded || status == ProposalState.Defeated || status == ProposalState.Expired,
+            status == ProposalState.Succeeded ||
+                status == ProposalState.Defeated ||
+                status == ProposalState.Expired,
             "GovernorSimple: proposal not successful"
         );
         _proposals[proposalId].executed = true;
@@ -367,7 +420,9 @@ abstract contract GovernorSimple is ERC2771Context, ERC165, EIP712, IGovernor, I
         string memory errorMessage = "Governor: call reverted without message";
         uint256 _length = targets.length;
         for (uint256 i = 0; i < _length; ++i) {
-            (bool success, bytes memory returndata) = targets[i].call{value: values[i]}(calldatas[i]);
+            (bool success, bytes memory returndata) = targets[i].call{
+                value: values[i]
+            }(calldatas[i]);
             Address.verifyCallResult(success, returndata, errorMessage);
         }
     }
@@ -435,7 +490,11 @@ abstract contract GovernorSimple is ERC2771Context, ERC165, EIP712, IGovernor, I
     /**
      * @dev See {IGovernor-castVote}.
      */
-    function castVote(uint256 proposalId, uint256 tokenId, uint8 support) public virtual override returns (uint256) {
+    function castVote(
+        uint256 proposalId,
+        uint256 tokenId,
+        uint8 support
+    ) public virtual override returns (uint256) {
         address voter = _msgSender();
         return _castVote(proposalId, voter, tokenId, support, "");
     }
@@ -479,7 +538,9 @@ abstract contract GovernorSimple is ERC2771Context, ERC165, EIP712, IGovernor, I
         bytes32 s
     ) public virtual override returns (uint256) {
         address voter = ECDSA.recover(
-            _hashTypedDataV4(keccak256(abi.encode(BALLOT_TYPEHASH, proposalId, support))),
+            _hashTypedDataV4(
+                keccak256(abi.encode(BALLOT_TYPEHASH, proposalId, support))
+            ),
             v,
             r,
             s
@@ -533,7 +594,15 @@ abstract contract GovernorSimple is ERC2771Context, ERC165, EIP712, IGovernor, I
         uint8 support,
         string memory reason
     ) internal virtual returns (uint256) {
-        return _castVote(proposalId, account, tokenId, support, reason, _defaultParams());
+        return
+            _castVote(
+                proposalId,
+                account,
+                tokenId,
+                support,
+                reason,
+                _defaultParams()
+            );
     }
 
     /**
@@ -551,15 +620,38 @@ abstract contract GovernorSimple is ERC2771Context, ERC165, EIP712, IGovernor, I
         bytes memory params
     ) internal virtual returns (uint256) {
         ProposalCore storage proposal = _proposals[proposalId];
-        require(state(proposalId) == ProposalState.Active, "GovernorSimple: vote not currently active");
+        require(
+            state(proposalId) == ProposalState.Active,
+            "GovernorSimple: vote not currently active"
+        );
 
-        uint256 weight = _getVotes(account, tokenId, proposal.voteStart, params);
+        uint256 weight = _getVotes(
+            account,
+            tokenId,
+            proposal.voteStart,
+            params
+        );
         _countVote(proposalId, tokenId, support, weight, params);
 
         if (params.length == 0) {
-            emit VoteCast(account, tokenId, proposalId, support, weight, reason);
+            emit VoteCast(
+                account,
+                tokenId,
+                proposalId,
+                support,
+                weight,
+                reason
+            );
         } else {
-            emit VoteCastWithParams(account, tokenId, proposalId, support, weight, reason, params);
+            emit VoteCastWithParams(
+                account,
+                tokenId,
+                proposalId,
+                support,
+                weight,
+                reason,
+                params
+            );
         }
 
         return weight;
@@ -576,7 +668,12 @@ abstract contract GovernorSimple is ERC2771Context, ERC165, EIP712, IGovernor, I
     /**
      * @dev See {IERC721Receiver-onERC721Received}.
      */
-    function onERC721Received(address, address, uint256, bytes memory) public virtual override returns (bytes4) {
+    function onERC721Received(
+        address,
+        address,
+        uint256,
+        bytes memory
+    ) public virtual override returns (bytes4) {
         return this.onERC721Received.selector;
     }
 
@@ -609,7 +706,9 @@ abstract contract GovernorSimple is ERC2771Context, ERC165, EIP712, IGovernor, I
     /**
      * @dev Dummy quorum function to comply with IGovernor as quorum is not used.
      */
-    function quorum(uint256 blockNumber) public view override returns (uint256) {
+    function quorum(
+        uint256 blockNumber
+    ) public view override returns (uint256) {
         return 0;
     }
 }

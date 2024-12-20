@@ -12,7 +12,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 
 abstract contract Router is IRouter {
-
     address public factoryRegistry;
     address public immutable weth;
 
@@ -23,10 +22,7 @@ abstract contract Router is IRouter {
 
     error FactoryNotApproved();
 
-    constructor(
-        address _factoryRegistry,
-        address _weth
-    ) {
+    constructor(address _factoryRegistry, address _weth) {
         factoryRegistry = _factoryRegistry;
         weth = _weth;
     }
@@ -46,8 +42,17 @@ abstract contract Router is IRouter {
         address _factory
     ) public view returns (address pool) {
         // XXX: underspecified _votingRewardsFactory, _gaugeFactory
-        if (!IFactoryRegistry(factoryRegistry).isApproved(_factory, _votingRewardsFactory, _gaugeFactory)) revert FactoryNotApproved();
-        (address token0, address token1, bool swapped) = orderedAddresses(tokenA, tokenB);
+        if (
+            !IFactoryRegistry(factoryRegistry).isApproved(
+                _factory,
+                _votingRewardsFactory,
+                _gaugeFactory
+            )
+        ) revert FactoryNotApproved();
+        (address token0, address token1, bool swapped) = orderedAddresses(
+            tokenA,
+            tokenB
+        );
         bytes32 salt = keccak256(abi.encodePacked(token0, token1, stable));
         address implementation = IPoolFactory(_factory).getImplementation();
         return Clones.predictDeterministicAddress(implementation, salt);
@@ -63,9 +68,7 @@ abstract contract Router is IRouter {
         return poolFor(tokenA, tokenB, stable, _factory);
     }
 
-    function poolFor(
-        Route memory route
-    ) public view returns (address pool) {
+    function poolFor(Route memory route) public view returns (address pool) {
         return poolFor(route.from, route.to, route.stable, route.factory);
     }
 
@@ -77,8 +80,14 @@ abstract contract Router is IRouter {
     ) public view returns (uint256 reserveA, uint256 reserveB) {
         address pool = poolFor(tokenA, tokenB, stable, factory);
         bool swapped = addressesNotOrdered(tokenA, tokenB);
-        (uint256 reserve0, uint256 reserve1, uint256 _blockTimestampLast) = IPool(pool).getReserves();
-        (reserveA, reserveB) = swapped ? (reserve1, reserve0) : (reserve0, reserve1);
+        (
+            uint256 reserve0,
+            uint256 reserve1,
+            uint256 _blockTimestampLast
+        ) = IPool(pool).getReserves();
+        (reserveA, reserveB) = swapped
+            ? (reserve1, reserve0)
+            : (reserve0, reserve1);
         return (reserveA, reserveB);
     }
 
@@ -94,7 +103,10 @@ abstract contract Router is IRouter {
             address tokenIn = currentRoute.from;
             address tokenOut = currentRoute.to;
             address pool = poolFor(currentRoute);
-            uint256 amountOut = IPool(pool).getAmountOut(previousAmount, tokenIn);
+            uint256 amountOut = IPool(pool).getAmountOut(
+                previousAmount,
+                tokenIn
+            );
             amounts[i] = amountOut;
             previousAmount = amountOut;
         }
@@ -110,8 +122,17 @@ abstract contract Router is IRouter {
         address _factory,
         uint256 amountADesired,
         uint256 amountBDesired
-    ) public view returns (uint256 amountA, uint256 amountB, uint256 liquidity) {
-        (uint256 reserveA, uint256 reserveB) = getReserves(tokenA, tokenB, stable, _factory);
+    )
+        public
+        view
+        returns (uint256 amountA, uint256 amountB, uint256 liquidity)
+    {
+        (uint256 reserveA, uint256 reserveB) = getReserves(
+            tokenA,
+            tokenB,
+            stable,
+            _factory
+        );
         address pool = poolFor(tokenA, tokenB, stable, _factory);
         uint256 totalSupply = IERC20(pool).totalSupply();
         // Logic in the contract itself:
@@ -145,14 +166,19 @@ abstract contract Router is IRouter {
         address _factory,
         uint256 liquidity
     ) public view returns (uint256 amountA, uint256 amountB) {
-        (uint256 reserveA, uint256 reserveB) = getReserves(tokenA, tokenB, stable, _factory);
+        (uint256 reserveA, uint256 reserveB) = getReserves(
+            tokenA,
+            tokenB,
+            stable,
+            _factory
+        );
         address pool = poolFor(tokenA, tokenB, stable, _factory);
         // Use same logic as in the contract itself
         uint256 totalSupply = IERC20(pool).totalSupply();
         uint256 balanceA = IERC20(tokenA).balanceOf(pool);
         uint256 balanceB = IERC20(tokenB).balanceOf(pool);
-        amountA = liquidity * reserveA / totalSupply;
-        amountB = liquidity * reserveB / totalSupply;
+        amountA = (liquidity * reserveA) / totalSupply;
+        amountB = (liquidity * reserveB) / totalSupply;
         return (amountA, amountB);
     }
 
@@ -166,7 +192,11 @@ abstract contract Router is IRouter {
         uint256 amountBMin,
         address to,
         uint256 deadline
-    ) external expires(deadline) returns (uint256 amountA, uint256 amountB, uint256 liquidity) {
+    )
+        external
+        expires(deadline)
+        returns (uint256 amountA, uint256 amountB, uint256 liquidity)
+    {
         // XXX: Underspecified factory
         address pool = poolFor(tokenA, tokenB, stable, _defaultFactory);
         // XXX: more expensive this way. Optimisations possible.
@@ -199,7 +229,12 @@ abstract contract Router is IRouter {
         uint256 amountETHMin,
         address to,
         uint256 deadline
-    ) external payable expires(deadline) returns (uint256 amountToken, uint256 amountETH, uint256 liquidity) {
+    )
+        external
+        payable
+        expires(deadline)
+        returns (uint256 amountToken, uint256 amountETH, uint256 liquidity)
+    {
         // XXX: Underspecified factory
         address pool = poolFor(token, weth, stable, _defaultFactory);
         uint256 amountETHDesired = msg.value;
@@ -249,7 +284,11 @@ abstract contract Router is IRouter {
         {
             if (quotedAmountA < amountAMin) revert InsufficientAmountA();
             if (quotedAmountB < amountBMin) revert InsufficientAmountB();
-            bool liquidityTransferSuccessful = IERC20(pool).transferFrom(msg.sender, pool, liquidity);
+            bool liquidityTransferSuccessful = IERC20(pool).transferFrom(
+                msg.sender,
+                pool,
+                liquidity
+            );
             if (!liquidityTransferSuccessful) revert InsufficientLiquidity();
         }
         if (addressesNotOrdered(tokenA, tokenB)) {
@@ -269,21 +308,34 @@ abstract contract Router is IRouter {
         uint256 amountETHMin,
         address to,
         uint256 deadline
-    ) external expires(deadline) returns (uint256 amountToken, uint256 amountETH) {
+    )
+        external
+        expires(deadline)
+        returns (uint256 amountToken, uint256 amountETH)
+    {
         address pool = poolFor(token, weth, stable, _defaultFactory);
-        (uint256 quotedAmountToken, uint256 quotedAmountETH) = quoteRemoveLiquidity(
-            token,
-            weth,
-            stable,
-            _defaultFactory,
-            liquidity
-        );
+        (
+            uint256 quotedAmountToken,
+            uint256 quotedAmountETH
+        ) = quoteRemoveLiquidity(
+                token,
+                weth,
+                stable,
+                _defaultFactory,
+                liquidity
+            );
         if (quotedAmountToken < amountTokenMin) revert InsufficientAmountA();
         if (quotedAmountETH < amountETHMin) revert InsufficientAmountB();
-        bool liquidityTransferSuccessful = IERC20(pool).transferFrom(msg.sender, pool, liquidity);
+        bool liquidityTransferSuccessful = IERC20(pool).transferFrom(
+            msg.sender,
+            pool,
+            liquidity
+        );
         if (!liquidityTransferSuccessful) revert InsufficientLiquidity();
         (uint256 amount0, uint256 amount1) = IPool(pool).burn(address(this));
-        (amountToken, amountETH) = addressesNotOrdered(token, weth) ? (amount1, amount0) : (amount0, amount1);
+        (amountToken, amountETH) = addressesNotOrdered(token, weth)
+            ? (amount1, amount0)
+            : (amount0, amount1);
         IWETH(weth).withdraw(amountETH);
         IERC20(token).transfer(to, amountToken);
         payable(to).send(amountETH);
@@ -298,10 +350,16 @@ abstract contract Router is IRouter {
         Route[] calldata routes,
         address to,
         uint256 deadline
-    ) external validPath(routes) expires(deadline) returns (uint256[] memory amounts) {
+    )
+        external
+        validPath(routes)
+        expires(deadline)
+        returns (uint256[] memory amounts)
+    {
         amounts = getAmountsOut(amountIn, routes);
         uint256 steps = routes.length;
-        if (amounts[steps - 1] < amountOutMin) revert InsufficientOutputAmount();
+        if (amounts[steps - 1] < amountOutMin)
+            revert InsufficientOutputAmount();
 
         uint256 previousAmount = amountIn;
         for (uint256 i = 0; i < steps; i++) {
@@ -309,10 +367,19 @@ abstract contract Router is IRouter {
             // address tokenIn = currentRoute.from;
             // address tokenOut = currentRoute.to;
             address pool = poolFor(currentRoute);
-            bool swapped = addressesNotOrdered(currentRoute.from, currentRoute.to);
-            (uint256 amount0Out, uint256 amount1Out) = swapped ? (amounts[i], uint256(0)) : (uint256(0), amounts[i]);
-            (address tokenSender) = i == 0 ? msg.sender : address(this);
-            IERC20(currentRoute.from).transferFrom(tokenSender, pool, previousAmount);
+            bool swapped = addressesNotOrdered(
+                currentRoute.from,
+                currentRoute.to
+            );
+            (uint256 amount0Out, uint256 amount1Out) = swapped
+                ? (amounts[i], uint256(0))
+                : (uint256(0), amounts[i]);
+            address tokenSender = i == 0 ? msg.sender : address(this);
+            IERC20(currentRoute.from).transferFrom(
+                tokenSender,
+                pool,
+                previousAmount
+            );
             IPool(pool).swap(amount0Out, amount1Out, address(this), bytes(""));
             previousAmount = amounts[i];
             if (i == steps - 1) {
@@ -346,7 +413,12 @@ abstract contract Router is IRouter {
         bool stable,
         address factory
     ) internal view returns (uint256 ratio) {
-        (uint256 reserveA, uint256 reserveB) = getReserves(tokenA, tokenB, stable, factory);
+        (uint256 reserveA, uint256 reserveB) = getReserves(
+            tokenA,
+            tokenB,
+            stable,
+            factory
+        );
         return (reserveA * 1e18) / reserveB;
     }
 
@@ -355,7 +427,8 @@ abstract contract Router is IRouter {
         address tokenA,
         address tokenB
     ) internal pure returns (address token0, address token1, bool swap) {
-        return tokenA < tokenB ? (tokenA, tokenB, false) : (tokenB, tokenA, true);
+        return
+            tokenA < tokenB ? (tokenA, tokenB, false) : (tokenB, tokenA, true);
     }
 
     function addressesNotOrdered(
@@ -365,15 +438,14 @@ abstract contract Router is IRouter {
         return tokenB <= tokenA;
     }
 
-    function validatePair(
-        address tokenA,
-        address tokenB
-    ) internal pure {
+    function validatePair(address tokenA, address tokenB) internal pure {
         if (tokenA == tokenB) revert SameAddresses();
         if (tokenA == address(0) || tokenB == address(0)) revert ZeroAddress();
     }
 
-    function validateRoute(Route[] calldata routes) internal view returns (bool) {
+    function validateRoute(
+        Route[] calldata routes
+    ) internal view returns (bool) {
         uint256 steps = routes.length;
         if (steps == 0) return false;
         address previousToken = routes[0].from;

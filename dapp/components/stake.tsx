@@ -1,24 +1,24 @@
-import React, { useState } from 'react'
+import React, { useState } from "react"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { Card, CardContent } from "./ui/card"
 import { default as ProtectedButton } from "@/components/protected-button"
 
 const StakeInterface = () => {
-  const [amount, setAmount] = useState('')
-  const [duration, setDuration] = useState<'1' | '2' | '3' | '4'>('1')
+  const [amount, setAmount] = useState("")
+  const [duration, setDuration] = useState<"1" | "2" | "3" | "4">("1")
 
   // Calculate estimated APY based on duration
   const getEstimatedAPY = (years: string) => {
     const baseAPY = 15
-    const boost = Number(years) / 4; // Full boost at 4 years
+    const boost = Number(years) / 4 // Full boost at 4 years
     return baseAPY * (1 + boost)
   }
 
   // Calculate voting power based on amount and duration
   const getVotingPower = (btcAmount: string, years: string) => {
-    if (!btcAmount) return '0'
-    const multiplier = Number(years) / 4; // Full power at 4 years
+    if (!btcAmount) return "0"
+    const multiplier = Number(years) / 4 // Full power at 4 years
     return (Number(btcAmount) * multiplier).toFixed(2)
   }
 
@@ -30,8 +30,8 @@ const StakeInterface = () => {
           <div className="space-y-4 text-center">
             <h2 className="text-2xl font-bold">Stake BTC for veBTC</h2>
             <p className="text-gray-500">
-              Lock your BTC to receive veBTC and earn protocol rewards.
-              The longer you lock, the more voting power you receive.
+              Lock your BTC to receive veBTC and earn protocol rewards. The
+              longer you lock, the more voting power you receive.
             </p>
           </div>
         </CardContent>
@@ -64,15 +64,17 @@ const StakeInterface = () => {
             <label className="block text-sm font-medium">Lock Duration</label>
             <div className="grid grid-cols-4 gap-2">
               {[
-                { value: '1', label: '1 Year' },
-                { value: '2', label: '2 Years' },
-                { value: '3', label: '3 Years' },
-                { value: '4', label: '4 Years' },
-              ].map(option => (
+                { value: "1", label: "1 Year" },
+                { value: "2", label: "2 Years" },
+                { value: "3", label: "3 Years" },
+                { value: "4", label: "4 Years" },
+              ].map((option) => (
                 <Button
                   key={option.value}
-                  variant={duration === option.value ? 'default' : 'outline'}
-                  onClick={() => setDuration(option.value as '1' | '2' | '3' | '4')}
+                  variant={duration === option.value ? "default" : "outline"}
+                  onClick={() =>
+                    setDuration(option.value as "1" | "2" | "3" | "4")
+                  }
                   className="w-full"
                 >
                   {option.label}
@@ -105,14 +107,16 @@ const StakeInterface = () => {
 
           {/* Action button */}
           <ProtectedButton className="w-full">
-            Lock BTC for {duration} Year{duration !== '1' ? 's' : ''}
+            Lock BTC for {duration} Year{duration !== "1" ? "s" : ""}
           </ProtectedButton>
 
           {/* Advanced link */}
           <div className="text-center">
             <Button
               variant="link"
-              onClick={() => {/* Navigate to Lock tab */}}
+              onClick={() => {
+                /* Navigate to Lock tab */
+              }}
             >
               Advanced options →
             </Button>

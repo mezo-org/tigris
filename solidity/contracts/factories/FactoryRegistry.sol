@@ -20,7 +20,8 @@ contract FactoryRegistry is IFactoryRegistry, Ownable {
     EnumerableSet.AddressSet private _poolFactories;
 
     /// @dev poolFactory => votingRewardsFactory => gaugeFactory => true if path exists, else false
-    mapping(address => mapping(address => mapping(address => bool))) private _approved;
+    mapping(address => mapping(address => mapping(address => bool)))
+        private _approved;
 
     constructor(
         address _fallbackPoolFactory,
@@ -37,17 +38,28 @@ contract FactoryRegistry is IFactoryRegistry, Ownable {
     }
 
     /// @inheritdoc IFactoryRegistry
-    function approve(address poolFactory, address votingRewardsFactory, address gaugeFactory) public onlyOwner {
-        if (_approved[poolFactory][votingRewardsFactory][gaugeFactory]) revert PathAlreadyApproved();
-        if (_poolFactories.contains(poolFactory)) revert PoolFactoryAlreadyApproved();
+    function approve(
+        address poolFactory,
+        address votingRewardsFactory,
+        address gaugeFactory
+    ) public onlyOwner {
+        if (_approved[poolFactory][votingRewardsFactory][gaugeFactory])
+            revert PathAlreadyApproved();
+        if (_poolFactories.contains(poolFactory))
+            revert PoolFactoryAlreadyApproved();
         _approved[poolFactory][votingRewardsFactory][gaugeFactory] = true;
         _poolFactories.add(poolFactory);
         emit Approve(poolFactory, votingRewardsFactory, gaugeFactory);
     }
 
     /// @inheritdoc IFactoryRegistry
-    function unapprove(address poolFactory, address votingRewardsFactory, address gaugeFactory) external onlyOwner {
-        if (!_approved[poolFactory][votingRewardsFactory][gaugeFactory]) revert PathNotApproved();
+    function unapprove(
+        address poolFactory,
+        address votingRewardsFactory,
+        address gaugeFactory
+    ) external onlyOwner {
+        if (!_approved[poolFactory][votingRewardsFactory][gaugeFactory])
+            revert PathNotApproved();
         delete _approved[poolFactory][votingRewardsFactory][gaugeFactory];
         _poolFactories.remove(poolFactory);
         emit Unapprove(poolFactory, votingRewardsFactory, gaugeFactory);
@@ -73,8 +85,11 @@ contract FactoryRegistry is IFactoryRegistry, Ownable {
     }
 
     /// @inheritdoc IFactoryRegistry
-    function setManagedRewardsFactory(address _newManagedRewardsFactory) public onlyOwner {
-        if (_newManagedRewardsFactory == _managedRewardsFactory) revert SameAddress();
+    function setManagedRewardsFactory(
+        address _newManagedRewardsFactory
+    ) public onlyOwner {
+        if (_newManagedRewardsFactory == _managedRewardsFactory)
+            revert SameAddress();
         if (_newManagedRewardsFactory == address(0)) revert ZeroAddress();
         _managedRewardsFactory = _newManagedRewardsFactory;
         emit SetManagedRewardsFactory(_newManagedRewardsFactory);
@@ -85,7 +100,9 @@ contract FactoryRegistry is IFactoryRegistry, Ownable {
         return _poolFactories.values();
     }
 
-    function poolFactoryExists(address _poolFactory) external view returns (bool) {
+    function poolFactoryExists(
+        address _poolFactory
+    ) external view returns (bool) {
         return _poolFactories.contains(_poolFactory);
     }
 

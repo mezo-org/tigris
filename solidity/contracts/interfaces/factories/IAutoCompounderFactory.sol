@@ -3,9 +3,12 @@
 pragma solidity 0.8.24;
 
 interface IAutoCompounderFactory {
-
     event SetRewardAmount(uint256 amount);
-    event CreateAutoCompounder(address created, address admin, address autoCompounder);
+    event CreateAutoCompounder(
+        address created,
+        address admin,
+        address autoCompounder
+    );
 
     error TokenIdZero();
     error TokenIdNotApproved();

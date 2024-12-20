@@ -12,6 +12,15 @@ contract GaugeFactory is IGaugeFactory {
         address _rewardToken,
         bool isPool
     ) external returns (address gauge) {
-        gauge = address(new Gauge(_forwarder, _pool, _feesVotingReward, _rewardToken, msg.sender, isPool));
+        gauge = address(
+            new Gauge(
+                _forwarder,
+                _pool,
+                _feesVotingReward,
+                _rewardToken,
+                msg.sender,
+                isPool
+            )
+        );
     }
 }

@@ -22,7 +22,8 @@ contract PoolFactory is IPoolFactory {
     /// @dev used to change the name/symbol of the pool by calling emergencyCouncil
     address public voter;
 
-    mapping(address => mapping(address => mapping(bool => address))) private _getPool;
+    mapping(address => mapping(address => mapping(bool => address)))
+        private _getPool;
     address[] public allPools;
     mapping(address => bool) private _isPool; // simplified check if its a pool, given that `stable` flag might not be available in peripherals
     mapping(address => uint256) public customFee; // override for custom fees
@@ -51,17 +52,34 @@ contract PoolFactory is IPoolFactory {
     }
 
     /// @inheritdoc IPoolFactory
-    function getPool(address tokenA, address tokenB, uint24 fee) external view returns (address) {
-        return fee > 1 ? address(0) : fee == 1 ? _getPool[tokenA][tokenB][true] : _getPool[tokenA][tokenB][false];
+    function getPool(
+        address tokenA,
+        address tokenB,
+        uint24 fee
+    ) external view returns (address) {
+        return
+            fee > 1
+                ? address(0)
+                : fee == 1
+                    ? _getPool[tokenA][tokenB][true]
+                    : _getPool[tokenA][tokenB][false];
     }
 
     /// @inheritdoc IPoolFactory
-    function getPool(address tokenA, address tokenB, bool stable) external view returns (address) {
+    function getPool(
+        address tokenA,
+        address tokenB,
+        bool stable
+    ) external view returns (address) {
         return _getPool[tokenA][tokenB][stable];
     }
 
     /// @inheritdoc IPoolFactory
-    function getPair(address tokenA, address tokenB, bool stable) external view returns (address) {
+    function getPair(
+        address tokenA,
+        address tokenB,
+        bool stable
+    ) external view returns (address) {
         return _getPool[tokenA][tokenB][stable];
     }
 
@@ -127,22 +145,40 @@ contract PoolFactory is IPoolFactory {
     /// @inheritdoc IPoolFactory
     function getFee(address pool, bool _stable) public view returns (uint256) {
         uint256 fee = customFee[pool];
-        return fee == ZERO_FEE_INDICATOR ? 0 : fee != 0 ? fee : _stable ? stableFee : volatileFee;
+        return
+            fee == ZERO_FEE_INDICATOR
+                ? 0
+                : fee != 0
+                    ? fee
+                    : _stable
+                        ? stableFee
+                        : volatileFee;
     }
 
     /// @inheritdoc IPoolFactory
-    function createPool(address tokenA, address tokenB, uint24 fee) external returns (address pool) {
+    function createPool(
+        address tokenA,
+        address tokenB,
+        uint24 fee
+    ) external returns (address pool) {
         if (fee > 1) revert FeeInvalid();
         bool stable = fee == 1;
         return createPool(tokenA, tokenB, stable);
     }
 
     /// @inheritdoc IPoolFactory
-    function createPool(address tokenA, address tokenB, bool stable) public returns (address pool) {
+    function createPool(
+        address tokenA,
+        address tokenB,
+        bool stable
+    ) public returns (address pool) {
         if (tokenA == tokenB) revert SameAddress();
-        (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
+        (address token0, address token1) = tokenA < tokenB
+            ? (tokenA, tokenB)
+            : (tokenB, tokenA);
         if (token0 == address(0)) revert ZeroAddress();
-        if (_getPool[token0][token1][stable] != address(0)) revert PoolAlreadyExists();
+        if (_getPool[token0][token1][stable] != address(0))
+            revert PoolAlreadyExists();
         bytes32 salt = keccak256(abi.encodePacked(token0, token1, stable)); // salt includes stable as well, 3 parameters
         pool = Clones.cloneDeterministic(implementation, salt);
         IPool(pool).initialize(token0, token1, stable);
@@ -154,7 +190,11 @@ contract PoolFactory is IPoolFactory {
     }
 
     /// @inheritdoc IPoolFactory
-    function createPair(address tokenA, address tokenB, bool stable) external returns (address pool) {
+    function createPair(
+        address tokenA,
+        address tokenB,
+        bool stable
+    ) external returns (address pool) {
         return createPool(tokenA, tokenB, stable);
     }
 }

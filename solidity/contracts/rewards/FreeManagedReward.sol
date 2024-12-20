@@ -8,11 +8,18 @@ import {IVoter} from "../interfaces/IVoter.sol";
 /// @notice Stores rewards that are free to be distributed
 /// @dev Rewards are distributed based on weight contribution to managed nft
 contract FreeManagedReward is ManagedReward {
-    constructor(address _forwarder, address _voter) ManagedReward(_forwarder, _voter) {}
+    constructor(
+        address _forwarder,
+        address _voter
+    ) ManagedReward(_forwarder, _voter) {}
 
     /// @inheritdoc ManagedReward
-    function getReward(uint256 tokenId, address[] memory tokens) external override nonReentrant {
-        if (!IVotingEscrow(ve).isApprovedOrOwner(_msgSender(), tokenId)) revert NotAuthorized();
+    function getReward(
+        uint256 tokenId,
+        address[] memory tokens
+    ) external override nonReentrant {
+        if (!IVotingEscrow(ve).isApprovedOrOwner(_msgSender(), tokenId))
+            revert NotAuthorized();
 
         address owner = IVotingEscrow(ve).ownerOf(tokenId);
 
@@ -20,10 +27,14 @@ contract FreeManagedReward is ManagedReward {
     }
 
     /// @inheritdoc ManagedReward
-    function notifyRewardAmount(address token, uint256 amount) external override nonReentrant {
+    function notifyRewardAmount(
+        address token,
+        uint256 amount
+    ) external override nonReentrant {
         address sender = _msgSender();
         if (!isReward[token]) {
-            if (!IVoter(voter).isWhitelistedToken(token)) revert NotWhitelisted();
+            if (!IVoter(voter).isWhitelistedToken(token))
+                revert NotWhitelisted();
             isReward[token] = true;
             rewards.push(token);
         }

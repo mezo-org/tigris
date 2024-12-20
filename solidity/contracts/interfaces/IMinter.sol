@@ -6,7 +6,12 @@ interface IMinter {
     error NotEpochGovernor();
     error TailEmissionsInactive();
 
-    event Mint(address indexed _sender, uint256 _weekly, uint256 _circulating_supply, bool indexed _tail);
+    event Mint(
+        address indexed _sender,
+        uint256 _weekly,
+        uint256 _circulating_supply,
+        bool indexed _tail
+    );
     event Nudge(uint256 indexed _period, uint256 _oldRate, uint256 _newRate);
 
     /// @notice Allows epoch governor to modify the tail emission rate by at most 1 basis point
@@ -27,7 +32,9 @@ interface IMinter {
     ///         mezo.totalSupply is the total ve supply minted
     /// @param _minted Amount of MEZO minted this epoch
     /// @return _growth Rebases
-    function calculateGrowth(uint256 _minted) external view returns (uint256 _growth);
+    function calculateGrowth(
+        uint256 _minted
+    ) external view returns (uint256 _growth);
 
     /// @notice Processes emissions and rebases. Callable once per epoch (1 week).
     /// @return _period Start of current epoch.

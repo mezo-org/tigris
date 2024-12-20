@@ -7,7 +7,12 @@ interface IAutoCompounder {
     error NotFactory();
     error TokenIdAlreadySet();
 
-    event RewardAndCompound(uint256 _tokenId, address _claimer, uint256 balanceRewarded, uint256 balanceCompounded);
+    event RewardAndCompound(
+        uint256 _tokenId,
+        address _claimer,
+        uint256 balanceRewarded,
+        uint256 balanceCompounded
+    );
     event SetRoute(address _from);
     event SetTokenId(uint256 _tokenId);
 }
