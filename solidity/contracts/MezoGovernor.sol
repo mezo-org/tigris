@@ -10,7 +10,12 @@ import {VetoGovernorCountingSimple} from "./governance/VetoGovernorCountingSimpl
 import {VetoGovernorVotes} from "./governance/VetoGovernorVotes.sol";
 import {VetoGovernorVotesQuorumFraction} from "./governance/VetoGovernorVotesQuorumFraction.sol";
 
-contract MezoGovernor is VetoGovernor, VetoGovernorCountingSimple, VetoGovernorVotes, VetoGovernorVotesQuorumFraction {
+contract MezoGovernor is
+    VetoGovernor,
+    VetoGovernorCountingSimple,
+    VetoGovernorVotes,
+    VetoGovernorVotesQuorumFraction
+{
     address public immutable ve;
     address public vetoer;
     address public pendingVetoer;
@@ -35,22 +40,40 @@ contract MezoGovernor is VetoGovernor, VetoGovernorCountingSimple, VetoGovernorV
         vetoer = msg.sender;
     }
 
-    function votingDelay() public pure override(IVetoGovernor) returns (uint256) {
+    function votingDelay()
+        public
+        pure
+        override(IVetoGovernor)
+        returns (uint256)
+    {
         return (15 minutes);
     }
 
-    function votingPeriod() public pure override(IVetoGovernor) returns (uint256) {
+    function votingPeriod()
+        public
+        pure
+        override(IVetoGovernor)
+        returns (uint256)
+    {
         return (1 weeks);
     }
 
     function setProposalNumerator(uint256 numerator) external {
         if (msg.sender != IVotingEscrow(ve).team()) revert NotTeam();
-        if (numerator > MAX_PROPOSAL_NUMERATOR) revert ProposalNumeratorTooHigh();
+        if (numerator > MAX_PROPOSAL_NUMERATOR)
+            revert ProposalNumeratorTooHigh();
         proposalNumerator = numerator;
     }
 
-    function proposalThreshold() public view override(VetoGovernor) returns (uint256) {
-        return (token.getPastTotalSupply(block.timestamp - 1) * proposalNumerator) / PROPOSAL_DENOMINATOR;
+    function proposalThreshold()
+        public
+        view
+        override(VetoGovernor)
+        returns (uint256)
+    {
+        return
+            (token.getPastTotalSupply(block.timestamp - 1) *
+                proposalNumerator) / PROPOSAL_DENOMINATOR;
     }
 
     /// @dev Vetoer can be removed once the risk of a 51% attack becomes unfeasible.

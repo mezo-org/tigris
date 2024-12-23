@@ -14,12 +14,19 @@ import {GovernorSimpleVotes} from "./governance/GovernorSimpleVotes.sol";
  *      may be allowed any number of times. It is best to use EpochGovernor with a function that accepts
  *      no values.
  */
-contract EpochGovernor is GovernorSimple, GovernorCountingMajority, GovernorSimpleVotes {
+contract EpochGovernor is
+    GovernorSimple,
+    GovernorCountingMajority,
+    GovernorSimpleVotes
+{
     constructor(
         address _forwarder,
         IVotes _ve,
         address _minter
-    ) GovernorSimple(_forwarder, "Epoch Governor", _minter) GovernorSimpleVotes(_ve) {}
+    )
+        GovernorSimple(_forwarder, "Epoch Governor", _minter)
+        GovernorSimpleVotes(_ve)
+    {}
 
     function votingDelay() public pure override(IGovernor) returns (uint256) {
         return (15 minutes);

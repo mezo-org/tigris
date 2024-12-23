@@ -30,14 +30,23 @@ abstract contract GovernorCountingMajority is GovernorSimple {
      * @dev See {IGovernor-COUNTING_MODE}.
      */
     // solhint-disable-next-line func-name-mixedcase
-    function COUNTING_MODE() public pure virtual override returns (string memory) {
+    function COUNTING_MODE()
+        public
+        pure
+        virtual
+        override
+        returns (string memory)
+    {
         return "support=bravo&quorum=for,abstain";
     }
 
     /**
      * @dev See {IGovernor-hasVoted}.
      */
-    function hasVoted(uint256 proposalId, uint256 tokenId) public view virtual override returns (bool) {
+    function hasVoted(
+        uint256 proposalId,
+        uint256 tokenId
+    ) public view virtual override returns (bool) {
         return _proposalVotes[proposalId].hasVoted[tokenId];
     }
 
@@ -46,15 +55,26 @@ abstract contract GovernorCountingMajority is GovernorSimple {
      */
     function proposalVotes(
         uint256 proposalId
-    ) public view virtual returns (uint256 againstVotes, uint256 forVotes, uint256 abstainVotes) {
+    )
+        public
+        view
+        virtual
+        returns (uint256 againstVotes, uint256 forVotes, uint256 abstainVotes)
+    {
         ProposalVote storage proposalVote = _proposalVotes[proposalId];
-        return (proposalVote.againstVotes, proposalVote.forVotes, proposalVote.abstainVotes);
+        return (
+            proposalVote.againstVotes,
+            proposalVote.forVotes,
+            proposalVote.abstainVotes
+        );
     }
 
     /**
      * @dev Select winner of majority vote.
      */
-    function _selectWinner(uint256 proposalId) internal view override returns (ProposalState) {
+    function _selectWinner(
+        uint256 proposalId
+    ) internal view override returns (ProposalState) {
         ProposalVote storage proposalVote = _proposalVotes[proposalId];
         uint256 againstVotes = proposalVote.againstVotes;
         uint256 forVotes = proposalVote.forVotes;
@@ -80,7 +100,10 @@ abstract contract GovernorCountingMajority is GovernorSimple {
     ) internal virtual override {
         ProposalVote storage proposalVote = _proposalVotes[proposalId];
 
-        require(!proposalVote.hasVoted[tokenId], "GovernorVotingSimple: vote already cast");
+        require(
+            !proposalVote.hasVoted[tokenId],
+            "GovernorVotingSimple: vote already cast"
+        );
         require(weight > 0, "GovernorVotingSimple: zero voting weight");
         proposalVote.hasVoted[tokenId] = true;
 

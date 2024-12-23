@@ -35,13 +35,33 @@ contract CompoundOptimizer is ICompoundOptimizer {
         // from <> USDC <> MEZO
 
         // from <stable v1> USDC <> MEZO
-        routesTokenToMezo[0][0] = IRouter.Route(address(0), _usdc, true, _factoryV1);
+        routesTokenToMezo[0][0] = IRouter.Route(
+            address(0),
+            _usdc,
+            true,
+            _factoryV1
+        );
         // from <volatile v1> USDC <> MEZO
-        routesTokenToMezo[1][0] = IRouter.Route(address(0), _usdc, false, _factoryV1);
+        routesTokenToMezo[1][0] = IRouter.Route(
+            address(0),
+            _usdc,
+            false,
+            _factoryV1
+        );
         // from <stable v2> USDC <> MEZO
-        routesTokenToMezo[2][0] = IRouter.Route(address(0), _usdc, true, _factory);
+        routesTokenToMezo[2][0] = IRouter.Route(
+            address(0),
+            _usdc,
+            true,
+            _factory
+        );
         // from <volatile v2> USDC <> MEZO
-        routesTokenToMezo[3][0] = IRouter.Route(address(0), _usdc, false, _factory);
+        routesTokenToMezo[3][0] = IRouter.Route(
+            address(0),
+            _usdc,
+            false,
+            _factory
+        );
 
         routesTokenToMezo[0][1] = IRouter.Route(_usdc, mezo, false, _factory);
         routesTokenToMezo[1][1] = IRouter.Route(_usdc, _mezo, false, _factory);
@@ -51,13 +71,33 @@ contract CompoundOptimizer is ICompoundOptimizer {
         // from <> WETH <> MEZO
 
         // from <stable v1> WETH <> MEZO
-        routesTokenToMezo[4][0] = IRouter.Route(address(0), _weth, true, _factoryV1);
+        routesTokenToMezo[4][0] = IRouter.Route(
+            address(0),
+            _weth,
+            true,
+            _factoryV1
+        );
         // from <volatile v1> WETH <> MEZO
-        routesTokenToMezo[5][0] = IRouter.Route(address(0), _weth, false, _factoryV1);
+        routesTokenToMezo[5][0] = IRouter.Route(
+            address(0),
+            _weth,
+            false,
+            _factoryV1
+        );
         // from <stable v2> WETH <> MEZO
-        routesTokenToMezo[6][0] = IRouter.Route(address(0), _weth, true, _factory);
+        routesTokenToMezo[6][0] = IRouter.Route(
+            address(0),
+            _weth,
+            true,
+            _factory
+        );
         // from <volatile v2> WETH <> MEZO
-        routesTokenToMezo[7][0] = IRouter.Route(address(0), _weth, false, _factory);
+        routesTokenToMezo[7][0] = IRouter.Route(
+            address(0),
+            _weth,
+            false,
+            _factory
+        );
 
         routesTokenToMezo[4][1] = IRouter.Route(_weth, _mezo, false, _factory);
         routesTokenToMezo[5][1] = IRouter.Route(_weth, _mezo, false, _factory);
@@ -67,9 +107,19 @@ contract CompoundOptimizer is ICompoundOptimizer {
         // from <> OP <> MEZO
 
         // from <volatile v1> OP <> MEZO
-        routesTokenToMezo[8][0] = IRouter.Route(address(0), _op, false, _factoryV1);
+        routesTokenToMezo[8][0] = IRouter.Route(
+            address(0),
+            _op,
+            false,
+            _factoryV1
+        );
         // from <volatile v2> OP <> MEZO
-        routesTokenToMezo[9][0] = IRouter.Route(address(0), _op, false, _factory);
+        routesTokenToMezo[9][0] = IRouter.Route(
+            address(0),
+            _op,
+            false,
+            _factory
+        );
 
         routesTokenToMezo[8][1] = IRouter.Route(_op, _mezo, false, _factory);
         routesTokenToMezo[9][1] = IRouter.Route(_op, _mezo, false, _factory);
@@ -91,7 +141,13 @@ contract CompoundOptimizer is ICompoundOptimizer {
             routes[0] = routesTokenToMezo[i][0];
 
             // Go to next route if a trading pool does not exist
-            if (IPoolFactory(routes[0].factory).getPair(token, routes[0].to, routes[0].stable) == address(0)) continue;
+            if (
+                IPoolFactory(routes[0].factory).getPair(
+                    token,
+                    routes[0].to,
+                    routes[0].stable
+                ) == address(0)
+            ) continue;
 
             routes[1] = routesTokenToMezo[i][1];
             // Set the from token as storage does not have an address set
@@ -117,7 +173,8 @@ contract CompoundOptimizer is ICompoundOptimizer {
         amountsOut = router.getAmountsOut(amountIn, route);
         uint256 singleSwapAmountOut = amountsOut[1];
 
-        if (singleSwapAmountOut == 0 && optimalAmountOut == 0) revert NoRouteFound();
+        if (singleSwapAmountOut == 0 && optimalAmountOut == 0)
+            revert NoRouteFound();
 
         // compare output and return the best result
         return singleSwapAmountOut > optimalAmountOut ? route : routes;

@@ -1,21 +1,21 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Copy } from 'lucide-react'
+import { Copy } from "lucide-react"
 import { toast } from "sonner"
-import QRCode from 'qrcode'
+import QRCode from "qrcode"
 import { default as ProtectedButton } from "@/components/protected-button"
 
 // Bitcoin address validation
 const validateBech32 = (address: string) => {
   // Basic bech32 validation
-  if (!address.startsWith('bc1')) return false
+  if (!address.startsWith("bc1")) return false
   if (address.length < 14 || address.length > 74) return false
 
   // Check characters are valid
-  const CHARSET = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l'
+  const CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
   const rest = address.slice(3)
-  return rest.split('').every(char => CHARSET.includes(char.toLowerCase()))
+  return rest.split("").every((char) => CHARSET.includes(char.toLowerCase()))
 }
 
 const DepositInterface = () => {
@@ -30,11 +30,11 @@ const DepositInterface = () => {
         width: 200,
         margin: 2,
         color: {
-          dark: '#000000',
-          light: '#ffffff',
+          dark: "#000000",
+          light: "#ffffff",
         },
       })
-        .then(url => setQrCode(url))
+        .then((url) => setQrCode(url))
         .catch(() => {
           toast.error("Failed to generate QR code")
           setQrCode(null)
@@ -46,7 +46,7 @@ const DepositInterface = () => {
 
   const generateAddress = () => {
     // Mock address generation - in production this would come from the backend
-    const mockAddress = 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh'
+    const mockAddress = "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
 
     // Validate address before setting
     if (validateBech32(mockAddress)) {
@@ -76,10 +76,7 @@ const DepositInterface = () => {
             </p>
 
             {!depositAddress ? (
-              <ProtectedButton
-                className="w-full"
-                onClick={generateAddress}
-              >
+              <ProtectedButton className="w-full" onClick={generateAddress}>
                 Generate Deposit Address
               </ProtectedButton>
             ) : (
@@ -103,17 +100,15 @@ const DepositInterface = () => {
                     Your deposit address:
                   </div>
                   <div className="flex items-center justify-center gap-2">
-                    <code className={`px-3 py-2 rounded text-sm break-all ${
-                      isValid ? 'bg-gray-100' : 'bg-red-50 text-red-600'
-                    }`}>
+                    <code
+                      className={`px-3 py-2 rounded text-sm break-all ${
+                        isValid ? "bg-gray-100" : "bg-red-50 text-red-600"
+                      }`}
+                    >
                       {depositAddress}
                     </code>
                     {isValid && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={copyAddress}
-                      >
+                      <Button variant="ghost" size="icon" onClick={copyAddress}>
                         <Copy className="h-4 w-4" />
                       </Button>
                     )}
@@ -122,20 +117,19 @@ const DepositInterface = () => {
 
                 {isValid ? (
                   <div className="text-sm text-gray-500">
-                    Only send BTC to this address. Funds will appear in your account after 2 confirmations.
+                    Only send BTC to this address. Funds will appear in your
+                    account after 2 confirmations.
                   </div>
                 ) : (
                   <div className="text-sm text-red-600">
-                    Invalid address generated. Please try again or contact support.
+                    Invalid address generated. Please try again or contact
+                    support.
                   </div>
                 )}
 
                 {/* Regenerate button if invalid */}
                 {!isValid && (
-                  <ProtectedButton
-                    className="w-full"
-                    onClick={generateAddress}
-                  >
+                  <ProtectedButton className="w-full" onClick={generateAddress}>
                     Generate New Address
                   </ProtectedButton>
                 )}

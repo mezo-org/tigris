@@ -11,7 +11,11 @@ contract VotingRewardsFactory is IVotingRewardsFactory {
         address _forwarder,
         address[] memory _rewards
     ) external returns (address feesVotingReward, address bribeVotingReward) {
-        feesVotingReward = address(new FeesVotingReward(_forwarder, msg.sender, _rewards));
-        bribeVotingReward = address(new BribeVotingReward(_forwarder, msg.sender, _rewards));
+        feesVotingReward = address(
+            new FeesVotingReward(_forwarder, msg.sender, _rewards)
+        );
+        bribeVotingReward = address(
+            new BribeVotingReward(_forwarder, msg.sender, _rewards)
+        );
     }
 }

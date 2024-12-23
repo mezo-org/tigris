@@ -1,20 +1,32 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 import { Plus } from "lucide-react"
 import { default as ProtectedButton } from "@/components/protected-button"
 import { Token, Pool } from "./types"
 import { PoolLabel, TokenIcon, TokenOption, StabilityBadge } from "./labels"
 
-const AddLiquidityForm = ({ pools, tokens } : { pools: Pool[], tokens: Token[] }) => {
+const AddLiquidityForm = ({
+  pools,
+  tokens,
+}: {
+  pools: Pool[]
+  tokens: Token[]
+}) => {
   const [token0, setToken0] = useState<Token | null>(null)
   const [token1, setToken1] = useState<Token | null>(null)
-  const [poolName, setPoolName] = useState('')
+  const [poolName, setPoolName] = useState("")
   const [isStable, setIsStable] = useState(false)
-  const [fee, setFee] = useState('')
+  const [fee, setFee] = useState("")
 
   // Reset pool settings when tokens change
   useEffect(() => {
@@ -26,24 +38,27 @@ const AddLiquidityForm = ({ pools, tokens } : { pools: Pool[], tokens: Token[] }
   // Find existing pools for selected tokens
   const existingPools = useMemo(() => {
     if (!token0 || !token1) return []
-    return pools.filter(pool =>
-      (pool.token0.address === token0.address && pool.token1.address === token1.address) ||
-      (pool.token0.address === token1.address && pool.token1.address === token0.address)
+    return pools.filter(
+      (pool) =>
+        (pool.token0.address === token0.address &&
+          pool.token1.address === token1.address) ||
+        (pool.token0.address === token1.address &&
+          pool.token1.address === token0.address),
     )
   }, [token0, token1])
 
   // Fee options based on pool type
   const feeOptions = isStable
     ? [
-        { value: '0.0001', label: '0.01%' },
-        { value: '0.0005', label: '0.05%' },
-        { value: '0.001', label: '0.1%' },
+        { value: "0.0001", label: "0.01%" },
+        { value: "0.0005", label: "0.05%" },
+        { value: "0.001", label: "0.1%" },
       ]
     : [
-        { value: '0.001', label: '0.1%' },
-        { value: '0.0025', label: '0.25%' },
-        { value: '0.005', label: '0.5%' },
-        { value: '0.01', label: '1%' },
+        { value: "0.001", label: "0.1%" },
+        { value: "0.0025", label: "0.25%" },
+        { value: "0.005", label: "0.5%" },
+        { value: "0.01", label: "1%" },
       ]
 
   // Step 1: Token Selection
@@ -59,7 +74,7 @@ const AddLiquidityForm = ({ pools, tokens } : { pools: Pool[], tokens: Token[] }
             <Select
               value={token0?.address}
               onValueChange={(value) => {
-                const newToken = tokens.find(t => t.address === value)
+                const newToken = tokens.find((t) => t.address === value)
                 setToken0(newToken || null)
                 if (newToken && token1 && newToken.address === token1.address) {
                   setToken1(null)
@@ -72,7 +87,7 @@ const AddLiquidityForm = ({ pools, tokens } : { pools: Pool[], tokens: Token[] }
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {tokens.map(token => (
+                {tokens.map((token) => (
                   <SelectItem
                     key={token.address}
                     value={token.address}
@@ -91,7 +106,7 @@ const AddLiquidityForm = ({ pools, tokens } : { pools: Pool[], tokens: Token[] }
             <Select
               value={token1?.address}
               onValueChange={(value) => {
-                const newToken = tokens.find(t => t.address === value)
+                const newToken = tokens.find((t) => t.address === value)
                 setToken1(newToken || null)
                 if (newToken && token0 && newToken.address === token0.address) {
                   setToken0(null)
@@ -104,7 +119,7 @@ const AddLiquidityForm = ({ pools, tokens } : { pools: Pool[], tokens: Token[] }
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {tokens.map(token => (
+                {tokens.map((token) => (
                   <SelectItem
                     key={token.address}
                     value={token.address}
@@ -136,7 +151,10 @@ const AddLiquidityForm = ({ pools, tokens } : { pools: Pool[], tokens: Token[] }
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => { setToken0(null); setToken1(null); }}
+            onClick={() => {
+              setToken0(null)
+              setToken1(null)
+            }}
           >
             Change
           </Button>
@@ -147,7 +165,7 @@ const AddLiquidityForm = ({ pools, tokens } : { pools: Pool[], tokens: Token[] }
           <>
             <div className="space-y-4">
               <h3 className="font-medium">Existing Pools</h3>
-              {existingPools.map(pool => (
+              {existingPools.map((pool) => (
                 <div key={pool.id} className="p-4 border rounded-lg space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -159,9 +177,9 @@ const AddLiquidityForm = ({ pools, tokens } : { pools: Pool[], tokens: Token[] }
                     <ProtectedButton size="sm">New Deposit</ProtectedButton>
                   </div>
                   <div className="text-sm text-gray-500">
-                    TVL: ${pool.tvl.toLocaleString()} •
-                    Volume (24h): ${pool.volume24h.toLocaleString()} •
-                    APY: {(pool.baseAPY + pool.matsAPY).toFixed(2)}%
+                    TVL: ${pool.tvl.toLocaleString()} • Volume (24h): $
+                    {pool.volume24h.toLocaleString()} • APY:{" "}
+                    {(pool.baseAPY + pool.matsAPY).toFixed(2)}%
                   </div>
                 </div>
               ))}
@@ -172,7 +190,9 @@ const AddLiquidityForm = ({ pools, tokens } : { pools: Pool[], tokens: Token[] }
             <h3 className="font-medium">Create New Pool</h3>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Pool Name</label>
+              <label className="block text-sm font-medium mb-1">
+                Pool Name
+              </label>
               <Input
                 value={poolName}
                 onChange={(e) => setPoolName(e.target.value)}
@@ -181,18 +201,26 @@ const AddLiquidityForm = ({ pools, tokens } : { pools: Pool[], tokens: Token[] }
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Pool Type</label>
+              <label className="block text-sm font-medium mb-2">
+                Pool Type
+              </label>
               <div className="flex gap-2">
                 <Button
                   variant={isStable ? "default" : "outline"}
-                  onClick={() => { setIsStable(true); setFee(''); }}
+                  onClick={() => {
+                    setIsStable(true)
+                    setFee("")
+                  }}
                   className="flex-1"
                 >
                   Stable
                 </Button>
                 <Button
                   variant={!isStable ? "default" : "outline"}
-                  onClick={() => { setIsStable(false); setFee(''); }}
+                  onClick={() => {
+                    setIsStable(false)
+                    setFee("")
+                  }}
                   className="flex-1"
                 >
                   Volatile
@@ -207,7 +235,7 @@ const AddLiquidityForm = ({ pools, tokens } : { pools: Pool[], tokens: Token[] }
                   <SelectValue placeholder="Select fee rate" />
                 </SelectTrigger>
                 <SelectContent>
-                  {feeOptions.map(option => (
+                  {feeOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
@@ -217,9 +245,7 @@ const AddLiquidityForm = ({ pools, tokens } : { pools: Pool[], tokens: Token[] }
             </div>
 
             <div className="pt-4">
-              <ProtectedButton className="w-full">
-                Create Pool
-              </ProtectedButton>
+              <ProtectedButton className="w-full">Create Pool</ProtectedButton>
             </div>
           </div>
         )}
@@ -228,13 +254,19 @@ const AddLiquidityForm = ({ pools, tokens } : { pools: Pool[], tokens: Token[] }
   )
 }
 
-const LiquidityInterface = ({ pools, tokens } : { pools: Pool[], tokens: Token[] }) => {
-  const [filter, setFilter] = useState<'all' | 'stable' | 'volatile'>('all')
-  const [sortBy, setSortBy] = useState<'volume' | 'tvl' | 'apy'>('tvl')
+const LiquidityInterface = ({
+  pools,
+  tokens,
+}: {
+  pools: Pool[]
+  tokens: Token[]
+}) => {
+  const [filter, setFilter] = useState<"all" | "stable" | "volatile">("all")
+  const [sortBy, setSortBy] = useState<"volume" | "tvl" | "apy">("tvl")
 
-  const filteredPools = pools.filter(pool => {
-    if (filter === 'stable') return pool.isStable
-    if (filter === 'volatile') return !pool.isStable
+  const filteredPools = pools.filter((pool) => {
+    if (filter === "stable") return pool.isStable
+    if (filter === "volatile") return !pool.isStable
     return true
   })
 
@@ -255,20 +287,20 @@ const LiquidityInterface = ({ pools, tokens } : { pools: Pool[], tokens: Token[]
 
         <div className="space-x-2">
           <Button
-            variant={filter === 'all' ? "default" : "outline"}
-            onClick={() => setFilter('all')}
+            variant={filter === "all" ? "default" : "outline"}
+            onClick={() => setFilter("all")}
           >
             All
           </Button>
           <Button
-            variant={filter === 'stable' ? "default" : "outline"}
-            onClick={() => setFilter('stable')}
+            variant={filter === "stable" ? "default" : "outline"}
+            onClick={() => setFilter("stable")}
           >
             Stable
           </Button>
           <Button
-            variant={filter === 'volatile' ? "default" : "outline"}
-            onClick={() => setFilter('volatile')}
+            variant={filter === "volatile" ? "default" : "outline"}
+            onClick={() => setFilter("volatile")}
           >
             Volatile
           </Button>
@@ -309,7 +341,7 @@ const LiquidityInterface = ({ pools, tokens } : { pools: Pool[], tokens: Token[]
                 </tr>
               </thead>
               <tbody>
-                {filteredPools.map(pool => (
+                {filteredPools.map((pool) => (
                   <tr key={pool.id} className="border-b">
                     <td className="py-3">
                       <PoolLabel pool={pool} />
@@ -319,9 +351,12 @@ const LiquidityInterface = ({ pools, tokens } : { pools: Pool[], tokens: Token[]
                     <td className="py-3">${pool.tvl.toLocaleString()}</td>
                     <td className="py-3">
                       <div>
-                        <div className="font-medium">{(pool.baseAPY + pool.matsAPY).toFixed(2)}%</div>
+                        <div className="font-medium">
+                          {(pool.baseAPY + pool.matsAPY).toFixed(2)}%
+                        </div>
                         <div className="text-xs text-gray-500">
-                          Base: {pool.baseAPY.toFixed(2)}% + MATS: {pool.matsAPY.toFixed(2)}%
+                          Base: {pool.baseAPY.toFixed(2)}% + MATS:{" "}
+                          {pool.matsAPY.toFixed(2)}%
                         </div>
                       </div>
                     </td>

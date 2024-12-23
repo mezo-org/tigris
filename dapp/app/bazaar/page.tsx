@@ -1,14 +1,14 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState } from "react"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { default as ConnectButton } from "@/components/connect-wallet"
 import { default as IncentivizeInterface } from "@/components/incentivize"
 import { default as LiquidityInterface } from "@/components/liquidity"
-import { default as LockInterface } from '@/components/lock'
+import { default as LockInterface } from "@/components/lock"
 import { default as VoteInterface } from "@/components/vote"
 import { default as BorrowInterface } from "@/components/borrow"
-import { mockLocks, mockPools, mockTokens } from '@/mocks'
+import { mockLocks, mockPools, mockTokens } from "@/mocks"
 import { Providers } from "@/components/providers"
 
 export default function Bazaar() {
@@ -36,7 +36,7 @@ export default function Bazaar() {
               <TabsContent value="borrow">
                 <BorrowInterface />
               </TabsContent>
-             <TabsContent value="stake">
+              <TabsContent value="stake">
                 <LockInterface locks={mockLocks} />
               </TabsContent>
               <TabsContent value="liquidity">
@@ -52,7 +52,13 @@ export default function Bazaar() {
           </div>
         </main>
       </div>
-      <a id="bazaar" className="fixed rotate-[270deg] left-0 top-1/2 -translate-y-1/2 translate-x-[-25%] bg-slate-300 hover:bg-slate-200 py-1 px-2" href="/">Finance</a>
+      <a
+        id="bazaar"
+        className="fixed rotate-[270deg] left-0 top-1/2 -translate-y-1/2 translate-x-[-25%] bg-slate-300 hover:bg-slate-200 py-1 px-2"
+        href="/"
+      >
+        Finance
+      </a>
     </Providers>
   )
 }

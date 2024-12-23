@@ -1,4 +1,4 @@
-import { ConnectButton } from '@rainbow-me/rainbowkit'
+import { ConnectButton } from "@rainbow-me/rainbowkit"
 import { Button } from "./ui/button"
 
 const CustomConnectButton = ({
@@ -7,7 +7,13 @@ const CustomConnectButton = ({
   size = "default",
 }: {
   className?: string
-  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"
+  variant?:
+    | "default"
+    | "destructive"
+    | "outline"
+    | "secondary"
+    | "ghost"
+    | "link"
   size?: "default" | "sm" | "lg" | "icon"
 }) => {
   return (
@@ -26,11 +32,11 @@ const CustomConnectButton = ({
         return (
           <div
             {...(!ready && {
-              'aria-hidden': true,
+              "aria-hidden": true,
               style: {
                 opacity: 0,
-                pointerEvents: 'none',
-                userSelect: 'none',
+                pointerEvents: "none",
+                userSelect: "none",
               },
             })}
           >
@@ -41,7 +47,8 @@ const CustomConnectButton = ({
                     onClick={openConnectModal}
                     variant={variant}
                     size={size}
-                    className={className}>
+                    className={className}
+                  >
                     Connect Wallet
                   </Button>
                 )
@@ -66,7 +73,7 @@ const CustomConnectButton = ({
                       <div className="w-4 h-4">
                         {chain.iconUrl && (
                           <img
-                            alt={chain.name ?? 'Chain icon'}
+                            alt={chain.name ?? "Chain icon"}
                             src={chain.iconUrl}
                             className="w-4 h-4"
                           />
@@ -78,7 +85,9 @@ const CustomConnectButton = ({
 
                   <Button onClick={openAccountModal}>
                     {account.displayName}
-                    {account.displayBalance ? ` (${account.displayBalance})` : ''}
+                    {account.displayBalance
+                      ? ` (${account.displayBalance})`
+                      : ""}
                   </Button>
                 </div>
               )

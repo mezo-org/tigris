@@ -8,4 +8,9 @@ import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-abstract contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuard {}
+abstract contract VotingEscrow is
+    IVotingEscrow,
+    IERC6372,
+    ERC2771Context,
+    ReentrancyGuard
+{}

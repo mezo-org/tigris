@@ -56,7 +56,10 @@ abstract contract Reward is IReward, ERC2771Context, ReentrancyGuard {
     }
 
     /// @inheritdoc IReward
-    function getPriorBalanceIndex(uint256 tokenId, uint256 timestamp) public view returns (uint256) {
+    function getPriorBalanceIndex(
+        uint256 tokenId,
+        uint256 timestamp
+    ) public view returns (uint256) {
         uint256 nCheckpoints = numCheckpoints[tokenId];
         if (nCheckpoints == 0) {
             return 0;
@@ -89,7 +92,9 @@ abstract contract Reward is IReward, ERC2771Context, ReentrancyGuard {
     }
 
     /// @inheritdoc IReward
-    function getPriorSupplyIndex(uint256 timestamp) public view returns (uint256) {
+    function getPriorSupplyIndex(
+        uint256 timestamp
+    ) public view returns (uint256) {
         uint256 nCheckpoints = supplyNumCheckpoints;
         if (nCheckpoints == 0) {
             return 0;
@@ -127,12 +132,20 @@ abstract contract Reward is IReward, ERC2771Context, ReentrancyGuard {
 
         if (
             _nCheckPoints > 0 &&
-            TimeLibrary.epochStart(checkpoints[tokenId][_nCheckPoints - 1].timestamp) ==
+            TimeLibrary.epochStart(
+                checkpoints[tokenId][_nCheckPoints - 1].timestamp
+            ) ==
             TimeLibrary.epochStart(_timestamp)
         ) {
-            checkpoints[tokenId][_nCheckPoints - 1] = Checkpoint(_timestamp, balance);
+            checkpoints[tokenId][_nCheckPoints - 1] = Checkpoint(
+                _timestamp,
+                balance
+            );
         } else {
-            checkpoints[tokenId][_nCheckPoints] = Checkpoint(_timestamp, balance);
+            checkpoints[tokenId][_nCheckPoints] = Checkpoint(
+                _timestamp,
+                balance
+            );
             numCheckpoints[tokenId] = _nCheckPoints + 1;
         }
     }
@@ -143,12 +156,20 @@ abstract contract Reward is IReward, ERC2771Context, ReentrancyGuard {
 
         if (
             _nCheckPoints > 0 &&
-            TimeLibrary.epochStart(supplyCheckpoints[_nCheckPoints - 1].timestamp) ==
+            TimeLibrary.epochStart(
+                supplyCheckpoints[_nCheckPoints - 1].timestamp
+            ) ==
             TimeLibrary.epochStart(_timestamp)
         ) {
-            supplyCheckpoints[_nCheckPoints - 1] = SupplyCheckpoint(_timestamp, totalSupply);
+            supplyCheckpoints[_nCheckPoints - 1] = SupplyCheckpoint(
+                _timestamp,
+                totalSupply
+            );
         } else {
-            supplyCheckpoints[_nCheckPoints] = SupplyCheckpoint(_timestamp, totalSupply);
+            supplyCheckpoints[_nCheckPoints] = SupplyCheckpoint(
+                _timestamp,
+                totalSupply
+            );
             supplyNumCheckpoints = _nCheckPoints + 1;
         }
     }
@@ -158,7 +179,10 @@ abstract contract Reward is IReward, ERC2771Context, ReentrancyGuard {
     }
 
     /// @inheritdoc IReward
-    function earned(address token, uint256 tokenId) public view returns (uint256) {
+    function earned(
+        address token,
+        uint256 tokenId
+    ) public view returns (uint256) {
         if (numCheckpoints[tokenId] == 0) {
             return 0;
         }
@@ -173,7 +197,8 @@ abstract contract Reward is IReward, ERC2771Context, ReentrancyGuard {
         _currTs = Math.max(_currTs, TimeLibrary.epochStart(cp0.timestamp));
 
         // get epochs between current epoch and first checkpoint in same epoch as last claim
-        uint256 numEpochs = (TimeLibrary.epochStart(block.timestamp) - _currTs) / DURATION;
+        uint256 numEpochs = (TimeLibrary.epochStart(block.timestamp) -
+            _currTs) / DURATION;
 
         if (numEpochs > 0) {
             for (uint256 i = 0; i < numEpochs; i++) {
@@ -182,8 +207,15 @@ abstract contract Reward is IReward, ERC2771Context, ReentrancyGuard {
                 // get checkpoint in this epoch
                 cp0 = checkpoints[tokenId][_index];
                 // get supply of last checkpoint in this epoch
-                _supply = Math.max(supplyCheckpoints[getPriorSupplyIndex(_currTs + DURATION - 1)].supply, 1);
-                reward += (cp0.balanceOf * tokenRewardsPerEpoch[token][_currTs]) / _supply;
+                _supply = Math.max(
+                    supplyCheckpoints[
+                        getPriorSupplyIndex(_currTs + DURATION - 1)
+                    ].supply,
+                    1
+                );
+                reward +=
+                    (cp0.balanceOf * tokenRewardsPerEpoch[token][_currTs]) /
+                    _supply;
                 _currTs += DURATION;
             }
         }
@@ -220,10 +252,17 @@ abstract contract Reward is IReward, ERC2771Context, ReentrancyGuard {
     }
 
     /// @inheritdoc IReward
-    function getReward(uint256 tokenId, address[] memory tokens) external virtual nonReentrant {}
+    function getReward(
+        uint256 tokenId,
+        address[] memory tokens
+    ) external virtual nonReentrant {}
 
     /// @dev used with all getReward implementations
-    function _getReward(address recipient, uint256 tokenId, address[] memory tokens) internal {
+    function _getReward(
+        address recipient,
+        uint256 tokenId,
+        address[] memory tokens
+    ) internal {
         uint256 _length = tokens.length;
         for (uint256 i = 0; i < _length; i++) {
             uint256 _reward = earned(tokens[i], tokenId);
@@ -235,10 +274,17 @@ abstract contract Reward is IReward, ERC2771Context, ReentrancyGuard {
     }
 
     /// @inheritdoc IReward
-    function notifyRewardAmount(address token, uint256 amount) external virtual nonReentrant {}
+    function notifyRewardAmount(
+        address token,
+        uint256 amount
+    ) external virtual nonReentrant {}
 
     /// @dev used within all notifyRewardAmount implementations
-    function _notifyRewardAmount(address sender, address token, uint256 amount) internal {
+    function _notifyRewardAmount(
+        address sender,
+        address token,
+        uint256 amount
+    ) internal {
         if (amount == 0) revert ZeroAmount();
         IERC20(token).safeTransferFrom(sender, address(this), amount);
 

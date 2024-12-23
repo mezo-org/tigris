@@ -55,7 +55,10 @@ contract Gauge is IGauge, ERC2771Context, ReentrancyGuard {
         isPool = _isPool;
     }
 
-    function _claimFees() internal returns (uint256 claimed0, uint256 claimed1) {
+    function _claimFees()
+        internal
+        returns (uint256 claimed0, uint256 claimed1)
+    {
         if (!isPool) {
             return (0, 0);
         }
@@ -89,7 +92,9 @@ contract Gauge is IGauge, ERC2771Context, ReentrancyGuard {
         }
         return
             rewardPerTokenStored +
-            ((lastTimeRewardApplicable() - lastUpdateTime) * rewardRate * PRECISION) /
+            ((lastTimeRewardApplicable() - lastUpdateTime) *
+                rewardRate *
+                PRECISION) /
             totalSupply;
     }
 
@@ -115,7 +120,8 @@ contract Gauge is IGauge, ERC2771Context, ReentrancyGuard {
     /// @inheritdoc IGauge
     function earned(address _account) public view returns (uint256) {
         return
-            (balanceOf[_account] * (rewardPerToken() - userRewardPerTokenPaid[_account])) /
+            (balanceOf[_account] *
+                (rewardPerToken() - userRewardPerTokenPaid[_account])) /
             PRECISION +
             rewards[_account];
     }
@@ -130,7 +136,10 @@ contract Gauge is IGauge, ERC2771Context, ReentrancyGuard {
         _depositFor(_amount, _recipient);
     }
 
-    function _depositFor(uint256 _amount, address _recipient) internal nonReentrant {
+    function _depositFor(
+        uint256 _amount,
+        address _recipient
+    ) internal nonReentrant {
         if (_amount == 0) revert ZeroAmount();
         if (!IVoter(voter).isAlive(address(this))) revert NotAlive();
 
@@ -181,12 +190,20 @@ contract Gauge is IGauge, ERC2771Context, ReentrancyGuard {
         uint256 timeUntilNext = TimeLibrary.epochNext(timestamp) - timestamp;
 
         if (timestamp >= periodFinish) {
-            IERC20(rewardToken).safeTransferFrom(sender, address(this), _amount);
+            IERC20(rewardToken).safeTransferFrom(
+                sender,
+                address(this),
+                _amount
+            );
             rewardRate = _amount / timeUntilNext;
         } else {
             uint256 _remaining = periodFinish - timestamp;
             uint256 _leftover = _remaining * rewardRate;
-            IERC20(rewardToken).safeTransferFrom(sender, address(this), _amount);
+            IERC20(rewardToken).safeTransferFrom(
+                sender,
+                address(this),
+                _amount
+            );
             rewardRate = (_amount + _leftover) / timeUntilNext;
         }
         rewardRateByEpoch[TimeLibrary.epochStart(timestamp)] = rewardRate;

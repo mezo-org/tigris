@@ -1,13 +1,13 @@
-'use client'
+"use client"
 
-import { Providers } from '@/components/providers'
-import SwapInterface from '@/components/swap'
+import { Providers } from "@/components/providers"
+import SwapInterface from "@/components/swap"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import {ConnectButton} from '@rainbow-me/rainbowkit'
-import {default as StakeInterface} from '@/components/stake'
+import { ConnectButton } from "@rainbow-me/rainbowkit"
+import { default as StakeInterface } from "@/components/stake"
 import { default as SimpleBorrowInterface } from "@/components/simple-borrow"
 import { default as DepositInterface } from "@/components/deposit"
-import { mockTokens } from '@/mocks'
+import { mockTokens } from "@/mocks"
 
 export default function Cathedral() {
   return (
@@ -44,7 +44,13 @@ export default function Cathedral() {
               </TabsContent>
             </Tabs>
           </div>
-          <a id="bazaar" className="fixed rotate-[270deg] right-0 top-1/2 -translate-y-1/2 translate-x-[25%] bg-slate-300 hover:bg-slate-200 py-1 px-2" href="/bazaar">Bazaar</a>
+          <a
+            id="bazaar"
+            className="fixed rotate-[270deg] right-0 top-1/2 -translate-y-1/2 translate-x-[25%] bg-slate-300 hover:bg-slate-200 py-1 px-2"
+            href="/bazaar"
+          >
+            Bazaar
+          </a>
         </main>
       </div>
     </Providers>

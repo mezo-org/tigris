@@ -1,16 +1,31 @@
-import React, { useState } from 'react'
+import React, { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
-import { AlertCircle } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts"
+import { AlertCircle } from "lucide-react"
 import { default as ProtectedButton } from "@/components/protected-button"
 
 // Mock data
 const supplyData = Array.from({ length: 30 }, (_, i) => ({
-  date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-  supply: Math.floor(80000000 + Math.random() * 20000000)
+  date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split("T")[0],
+  supply: Math.floor(80000000 + Math.random() * 20000000),
 }))
 
 const mockLoans = [
@@ -19,31 +34,31 @@ const mockLoans = [
     collateral: 10,
     debt: 156000,
     interestRate: 4.3,
-    openedAt: '2023-12-01',
-    health: 85
+    openedAt: "2023-12-01",
+    health: 85,
   },
   {
     id: 2,
     collateral: 5,
     debt: 58000,
     interestRate: 4.1,
-    openedAt: '2023-12-15',
-    health: 55
+    openedAt: "2023-12-15",
+    health: 55,
   },
   {
     id: 3,
     collateral: 3,
     debt: 42000,
     interestRate: 4.2,
-    openedAt: '2024-01-01',
-    health: 35
-  }
+    openedAt: "2024-01-01",
+    health: 35,
+  },
 ]
 
 const getHealthColor = (health: number) => {
-  if (health >= 60) return 'text-green-500'
-  if (health >= 40) return 'text-yellow-500'
-  return 'text-red-500'
+  if (health >= 60) return "text-green-500"
+  if (health >= 40) return "text-yellow-500"
+  return "text-red-500"
 }
 
 const LoanHealth = ({ health }: { health: number }) => (
@@ -54,12 +69,12 @@ const LoanHealth = ({ health }: { health: number }) => (
 )
 
 const NewLoanForm = () => {
-  const [btcAmount, setBtcAmount] = useState('')
-  const [musdAmount, setMusdAmount] = useState('')
+  const [btcAmount, setBtcAmount] = useState("")
+  const [musdAmount, setMusdAmount] = useState("")
   const maxLTV = 0.78
   const interestRate = 4.3
 
-  const maxBorrow = Number(btcAmount) * 20000 * maxLTV; // Using $20k as BTC price
+  const maxBorrow = Number(btcAmount) * 20000 * maxLTV // Using $20k as BTC price
 
   return (
     <div className="space-y-6">
@@ -76,7 +91,9 @@ const NewLoanForm = () => {
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-1">BTC Collateral</label>
+          <label className="block text-sm font-medium mb-1">
+            BTC Collateral
+          </label>
           <Input
             type="number"
             value={btcAmount}
@@ -86,7 +103,9 @@ const NewLoanForm = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">mUSD to Borrow</label>
+          <label className="block text-sm font-medium mb-1">
+            mUSD to Borrow
+          </label>
           <Input
             type="number"
             value={musdAmount}
@@ -117,7 +136,9 @@ const BorrowInterface = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">2,000 BTC</div>
-            <p className="text-sm text-gray-500">${(2000 * 20000).toLocaleString()}</p>
+            <p className="text-sm text-gray-500">
+              ${(2000 * 20000).toLocaleString()}
+            </p>
           </CardContent>
         </Card>
 
@@ -163,10 +184,10 @@ const BorrowInterface = () => {
               <LineChart data={supplyData}>
                 <XAxis
                   dataKey="date"
-                  tickFormatter={(value) => value.split('-').slice(1).join('/')}
+                  tickFormatter={(value) => value.split("-").slice(1).join("/")}
                 />
                 <YAxis
-                  tickFormatter={(value) => `$${(value/1000000).toFixed(0)}M`}
+                  tickFormatter={(value) => `$${(value / 1000000).toFixed(0)}M`}
                 />
                 <Tooltip
                   formatter={(value: number) => `$${value.toLocaleString()}`}
@@ -215,7 +236,7 @@ const BorrowInterface = () => {
                 </tr>
               </thead>
               <tbody>
-                {mockLoans.map(loan => (
+                {mockLoans.map((loan) => (
                   <tr key={loan.id} className="border-b">
                     <td className="py-3">{loan.collateral} BTC</td>
                     <td className="py-3">${loan.debt.toLocaleString()} mUSD</td>

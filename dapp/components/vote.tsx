@@ -1,22 +1,37 @@
-import React, { useState } from 'react'
+import React, { useState } from "react"
 import { Button } from "./ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select"
 import { default as ProtectedButton } from "./protected-button"
 import { PoolLabel } from "./labels"
-import {  mockLocks, mockPools } from '../mocks'
+import { mockLocks, mockPools } from "../mocks"
 
 const VoteInterface = () => {
-  const [filter, setFilter] = useState<'all' | 'balance' | 'incentives'>('all')
-  const [poolTypeFilter, setPoolTypeFilter] = useState<'all' | 'stable' | 'volatile'>('all')
+  const [filter, setFilter] = useState<"all" | "balance" | "incentives">("all")
+  const [poolTypeFilter, setPoolTypeFilter] = useState<
+    "all" | "stable" | "volatile"
+  >("all")
   const [showVotedOnly, setShowVotedOnly] = useState(false)
 
-  const totalVotingPower = mockLocks.reduce((acc, lock) => acc + lock.votingPower, 0)
+  const totalVotingPower = mockLocks.reduce(
+    (acc, lock) => acc + lock.votingPower,
+    0,
+  )
 
-  const filteredPools = mockPools.filter(pool => {
-    if (poolTypeFilter !== 'all' && pool.isStable !== (poolTypeFilter === 'stable')) return false
-    if (filter === 'balance' && !pool.lpBalance) return false
-    if (filter === 'incentives' && !pool.hasIncentives) return false
+  const filteredPools = mockPools.filter((pool) => {
+    if (
+      poolTypeFilter !== "all" &&
+      pool.isStable !== (poolTypeFilter === "stable")
+    )
+      return false
+    if (filter === "balance" && !pool.lpBalance) return false
+    if (filter === "incentives" && !pool.hasIncentives) return false
     if (showVotedOnly && !pool.votes) return false
     return true
   })
@@ -35,27 +50,30 @@ const VoteInterface = () => {
       <div className="flex justify-between items-center">
         <div className="space-x-2">
           <Button
-            variant={poolTypeFilter === 'all' ? "default" : "outline"}
-            onClick={() => setPoolTypeFilter('all')}
+            variant={poolTypeFilter === "all" ? "default" : "outline"}
+            onClick={() => setPoolTypeFilter("all")}
           >
             All
           </Button>
           <Button
-            variant={poolTypeFilter === 'stable' ? "default" : "outline"}
-            onClick={() => setPoolTypeFilter('stable')}
+            variant={poolTypeFilter === "stable" ? "default" : "outline"}
+            onClick={() => setPoolTypeFilter("stable")}
           >
             Stable
           </Button>
           <Button
-            variant={poolTypeFilter === 'volatile' ? "default" : "outline"}
-            onClick={() => setPoolTypeFilter('volatile')}
+            variant={poolTypeFilter === "volatile" ? "default" : "outline"}
+            onClick={() => setPoolTypeFilter("volatile")}
           >
             Volatile
           </Button>
         </div>
 
         <div className="space-x-2">
-          <Select value={filter} onValueChange={(value: any) => setFilter(value)}>
+          <Select
+            value={filter}
+            onValueChange={(value: any) => setFilter(value)}
+          >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filter pools" />
             </SelectTrigger>
@@ -91,14 +109,18 @@ const VoteInterface = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredPools.map(pool => (
+                {filteredPools.map((pool) => (
                   <tr key={pool.id} className="border-b">
                     <td className="py-3">
                       <PoolLabel pool={pool} />
                     </td>
                     <td className="py-3">${pool.tvl.toLocaleString()}</td>
-                    <td className="py-3">{pool.lpBalance ? `${pool.lpBalance} LP` : '-'}</td>
-                    <td className="py-3">{pool.votes.toLocaleString()} veBTC</td>
+                    <td className="py-3">
+                      {pool.lpBalance ? `${pool.lpBalance} LP` : "-"}
+                    </td>
+                    <td className="py-3">
+                      {pool.votes.toLocaleString()} veBTC
+                    </td>
                     <td className="py-3">
                       <ProtectedButton size="sm">Vote</ProtectedButton>
                     </td>

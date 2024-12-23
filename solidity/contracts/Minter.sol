@@ -55,17 +55,24 @@ contract Minter is IMinter {
     }
 
     /// @inheritdoc IMinter
-    function calculateGrowth(uint256 _minted) public view returns (uint256 _growth) {
+    function calculateGrowth(
+        uint256 _minted
+    ) public view returns (uint256 _growth) {
         uint256 _veTotal = ve.totalSupplyAt(activePeriod - 1);
         uint256 _mezoTotal = mezo.totalSupply();
-        return (((((_minted * _veTotal) / _mezoTotal) * _veTotal) / _mezoTotal) * _veTotal) / _mezoTotal / 2;
+        return
+            (((((_minted * _veTotal) / _mezoTotal) * _veTotal) / _mezoTotal) *
+                _veTotal) /
+            _mezoTotal /
+            2;
     }
 
     /// @inheritdoc IMinter
     function nudge() external {
         address _epochGovernor = voter.epochGovernor();
         if (msg.sender != _epochGovernor) revert NotEpochGovernor();
-        IEpochGovernor.ProposalState _state = IEpochGovernor(_epochGovernor).result();
+        IEpochGovernor.ProposalState _state = IEpochGovernor(_epochGovernor)
+            .result();
         if (weekly >= TAIL_START) revert TailEmissionsInactive();
         uint256 _period = activePeriod;
         if (proposals[_period]) revert AlreadyNudged();
@@ -74,9 +81,13 @@ contract Minter is IMinter {
 
         if (_state != IEpochGovernor.ProposalState.Expired) {
             if (_state == IEpochGovernor.ProposalState.Succeeded) {
-                _newRate = _oldRate + NUDGE > MAXIMUM_TAIL_RATE ? MAXIMUM_TAIL_RATE : _oldRate + NUDGE;
+                _newRate = _oldRate + NUDGE > MAXIMUM_TAIL_RATE
+                    ? MAXIMUM_TAIL_RATE
+                    : _oldRate + NUDGE;
             } else {
-                _newRate = _oldRate - NUDGE < MINIMUM_TAIL_RATE ? MINIMUM_TAIL_RATE : _oldRate - NUDGE;
+                _newRate = _oldRate - NUDGE < MINIMUM_TAIL_RATE
+                    ? MINIMUM_TAIL_RATE
+                    : _oldRate - NUDGE;
             }
             tailEmissionRate = _newRate;
         }

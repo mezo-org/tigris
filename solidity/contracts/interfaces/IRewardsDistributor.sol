@@ -3,7 +3,12 @@ pragma solidity ^0.8.0;
 
 interface IRewardsDistributor {
     event CheckpointToken(uint256 time, uint256 tokens);
-    event Claimed(uint256 indexed tokenId, uint256 indexed epochStart, uint256 indexed epochEnd, uint256 amount);
+    event Claimed(
+        uint256 indexed tokenId,
+        uint256 indexed epochStart,
+        uint256 indexed epochEnd,
+        uint256 amount
+    );
 
     error NotDepositor();
 

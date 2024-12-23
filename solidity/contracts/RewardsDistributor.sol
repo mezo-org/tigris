@@ -56,14 +56,18 @@ contract RewardsDistributor is IRewardsDistributor {
                 if (sinceLast == 0 && timestamp == t) {
                     tokensPerWeek[thisWeek] += toDistribute;
                 } else {
-                    tokensPerWeek[thisWeek] += (toDistribute * (timestamp - t)) / sinceLast;
+                    tokensPerWeek[thisWeek] +=
+                        (toDistribute * (timestamp - t)) /
+                        sinceLast;
                 }
                 break;
             } else {
                 if (sinceLast == 0 && nextWeek == t) {
                     tokensPerWeek[thisWeek] += toDistribute;
                 } else {
-                    tokensPerWeek[thisWeek] += (toDistribute * (nextWeek - t)) / sinceLast;
+                    tokensPerWeek[thisWeek] +=
+                        (toDistribute * (nextWeek - t)) /
+                        sinceLast;
                 }
             }
             t = nextWeek;
@@ -78,8 +82,15 @@ contract RewardsDistributor is IRewardsDistributor {
         _checkpointToken();
     }
 
-    function _claim(uint256 _tokenId, uint256 _lastTokenTime) internal returns (uint256) {
-        (uint256 toDistribute, uint256 epochStart, uint256 weekCursor) = _claimable(_tokenId, _lastTokenTime);
+    function _claim(
+        uint256 _tokenId,
+        uint256 _lastTokenTime
+    ) internal returns (uint256) {
+        (
+            uint256 toDistribute,
+            uint256 epochStart,
+            uint256 weekCursor
+        ) = _claimable(_tokenId, _lastTokenTime);
         timeCursorOf[_tokenId] = weekCursor;
         if (toDistribute == 0) return 0;
 
@@ -90,7 +101,15 @@ contract RewardsDistributor is IRewardsDistributor {
     function _claimable(
         uint256 _tokenId,
         uint256 _lastTokenTime
-    ) internal view returns (uint256 toDistribute, uint256 weekCursorStart, uint256 weekCursor) {
+    )
+        internal
+        view
+        returns (
+            uint256 toDistribute,
+            uint256 weekCursorStart,
+            uint256 weekCursor
+        )
+    {
         uint256 _startTime = startTime;
         weekCursor = timeCursorOf[_tokenId];
         weekCursorStart = weekCursor;
@@ -101,11 +120,15 @@ contract RewardsDistributor is IRewardsDistributor {
 
         // case where token exists but has never been claimed
         if (weekCursor == 0) {
-            IVotingEscrow.UserPoint memory userPoint = ve.userPointHistory(_tokenId, 1);
+            IVotingEscrow.UserPoint memory userPoint = ve.userPointHistory(
+                _tokenId,
+                1
+            );
             weekCursor = ((userPoint.ts + WEEK - 1) / WEEK) * WEEK;
             weekCursorStart = weekCursor;
         }
-        if (weekCursor >= lastTokenTime) return (0, weekCursorStart, weekCursor);
+        if (weekCursor >= lastTokenTime)
+            return (0, weekCursorStart, weekCursor);
         if (weekCursor < _startTime) weekCursor = _startTime;
 
         for (uint256 i = 0; i < 50; i++) {
@@ -120,7 +143,9 @@ contract RewardsDistributor is IRewardsDistributor {
     }
 
     /// @inheritdoc IRewardsDistributor
-    function claimable(uint256 _tokenId) external view returns (uint256 claimable_) {
+    function claimable(
+        uint256 _tokenId
+    ) external view returns (uint256 claimable_) {
         uint256 _lastTokenTime = (lastTokenTime / WEEK) * WEEK;
         (claimable_, , ) = _claimable(_tokenId, _lastTokenTime);
     }
@@ -132,7 +157,8 @@ contract RewardsDistributor is IRewardsDistributor {
         _lastTokenTime = (_lastTokenTime / WEEK) * WEEK;
         uint256 amount = _claim(_tokenId, _lastTokenTime);
         if (amount != 0) {
-            IVotingEscrow.LockedBalance memory _locked = IVotingEscrow(ve).locked(_tokenId);
+            IVotingEscrow.LockedBalance memory _locked = IVotingEscrow(ve)
+                .locked(_tokenId);
             if (_timestamp > _locked.end && !_locked.isPermanent) {
                 address _owner = IVotingEscrow(ve).ownerOf(_tokenId);
                 IERC20(token).safeTransfer(_owner, amount);
@@ -157,7 +183,8 @@ contract RewardsDistributor is IRewardsDistributor {
             if (_tokenId == 0) break;
             uint256 amount = _claim(_tokenId, _lastTokenTime);
             if (amount != 0) {
-                IVotingEscrow.LockedBalance memory _locked = IVotingEscrow(ve).locked(_tokenId);
+                IVotingEscrow.LockedBalance memory _locked = IVotingEscrow(ve)
+                    .locked(_tokenId);
                 if (_timestamp > _locked.end && !_locked.isPermanent) {
                     address _owner = IVotingEscrow(ve).ownerOf(_tokenId);
                     IERC20(token).safeTransfer(_owner, amount);

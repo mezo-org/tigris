@@ -3,110 +3,110 @@ export const ROUTER_ADDRESS = "0x..." // TODO replace with actual router address
 // a quick ABI from IRouter.sol
 export const ROUTER_ABI = [
   {
-    "inputs": [
+    inputs: [
       {
-        "internalType": "uint256",
-        "name": "amountIn",
-        "type": "uint256"
+        internalType: "uint256",
+        name: "amountIn",
+        type: "uint256",
       },
       {
-        "components": [
+        components: [
           {
-            "internalType": "address",
-            "name": "from",
-            "type": "address"
+            internalType: "address",
+            name: "from",
+            type: "address",
           },
           {
-            "internalType": "address",
-            "name": "to",
-            "type": "address"
+            internalType: "address",
+            name: "to",
+            type: "address",
           },
           {
-            "internalType": "bool",
-            "name": "stable",
-            "type": "bool"
+            internalType: "bool",
+            name: "stable",
+            type: "bool",
           },
           {
-            "internalType": "address",
-            "name": "factory",
-            "type": "address"
-          }
+            internalType: "address",
+            name: "factory",
+            type: "address",
+          },
         ],
-        "internalType": "struct IRouter.Route[]",
-        "name": "routes",
-        "type": "tuple[]"
-      }
+        internalType: "struct IRouter.Route[]",
+        name: "routes",
+        type: "tuple[]",
+      },
     ],
-    "name": "getAmountsOut",
-    "outputs": [
+    name: "getAmountsOut",
+    outputs: [
       {
-        "internalType": "uint256[]",
-        "name": "amounts",
-        "type": "uint256[]"
-      }
+        internalType: "uint256[]",
+        name: "amounts",
+        type: "uint256[]",
+      },
     ],
-    "stateMutability": "view",
-    "type": "function"
+    stateMutability: "view",
+    type: "function",
   },
   {
-    "inputs": [
+    inputs: [
       {
-        "internalType": "uint256",
-        "name": "amountIn",
-        "type": "uint256"
+        internalType: "uint256",
+        name: "amountIn",
+        type: "uint256",
       },
       {
-        "internalType": "uint256",
-        "name": "amountOutMin",
-        "type": "uint256"
+        internalType: "uint256",
+        name: "amountOutMin",
+        type: "uint256",
       },
       {
-        "components": [
+        components: [
           {
-            "internalType": "address",
-            "name": "from",
-            "type": "address"
+            internalType: "address",
+            name: "from",
+            type: "address",
           },
           {
-            "internalType": "address",
-            "name": "to",
-            "type": "address"
+            internalType: "address",
+            name: "to",
+            type: "address",
           },
           {
-            "internalType": "bool",
-            "name": "stable",
-            "type": "bool"
+            internalType: "bool",
+            name: "stable",
+            type: "bool",
           },
           {
-            "internalType": "address",
-            "name": "factory",
-            "type": "address"
-          }
+            internalType: "address",
+            name: "factory",
+            type: "address",
+          },
         ],
-        "internalType": "struct IRouter.Route[]",
-        "name": "routes",
-        "type": "tuple[]"
+        internalType: "struct IRouter.Route[]",
+        name: "routes",
+        type: "tuple[]",
       },
       {
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
+        internalType: "address",
+        name: "to",
+        type: "address",
       },
       {
-        "internalType": "uint256",
-        "name": "deadline",
-        "type": "uint256"
-      }
+        internalType: "uint256",
+        name: "deadline",
+        type: "uint256",
+      },
     ],
-    "name": "swapExactTokensForTokens",
-    "outputs": [
+    name: "swapExactTokensForTokens",
+    outputs: [
       {
-        "internalType": "uint256[]",
-        "name": "amounts",
-        "type": "uint256[]"
-      }
+        internalType: "uint256[]",
+        name: "amounts",
+        type: "uint256[]",
+      },
     ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  }
+    stateMutability: "nonpayable",
+    type: "function",
+  },
 ]

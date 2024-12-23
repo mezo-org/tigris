@@ -1,0 +1,152 @@
+name: Solidity
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "solidity/**"
+      - ".github/workflows/solidity.yml"
+  pull_request:
+    paths:
+      - "solidity/**"
+      - ".github/workflows/solidity.yml"
+
+defaults:
+  run:
+    working-directory: ./solidity
+
+jobs:
+  solidity-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          cache: "pnpm"
+          node-version-file: ".nvmrc"
+
+      - name: Install dependencies
+        run: pnpm install --prefer-offline --frozen-lockfile
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: solidity-build
+          path: |
+            solidity/artifacts
+            solidity/cache
+            solidity/typechain
+          if-no-files-found: error
+          retention-days: 1
+
+  solidity-format:
+    needs: [solidity-build]
+    if: github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --prefer-offline --frozen-lockfile
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: solidity-build
+          path: ./solidity
+
+      - name: Check code formatting
+        run: pnpm run format
+
+  solidity-test:
+    needs: [solidity-build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --prefer-offline --frozen-lockfile
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: solidity-build
+          path: ./solidity
+
+      - name: Run tests
+        run: pnpm run test --no-compile
+
+  solidity-deploy-dry-run:
+    needs: [solidity-build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --prefer-offline --frozen-lockfile
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: solidity-build
+          path: solidity/
+
+      - name: Deploy contracts
+        run: pnpm run deploy --no-compile
+
+  solidity-deploy-testnet:
+    needs: [solidity-deploy-dry-run]
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --prefer-offline --frozen-lockfile
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: solidity-build
+          path: solidity/
