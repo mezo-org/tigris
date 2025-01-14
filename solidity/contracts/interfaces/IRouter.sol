@@ -10,7 +10,7 @@ interface IRouter {
     }
 
     error ConversionFromV2ToV1MezoProhibited();
-    error ETHTransferFailed();
+    error BTCTransferFailed();
     error Expired();
     error InsufficientAmount();
     error InsufficientAmountA();
@@ -20,12 +20,12 @@ interface IRouter {
     error InsufficientAmountAOptimal();
     error InsufficientLiquidity();
     error InsufficientOutputAmount();
-    error InvalidAmountInForETHDeposit();
-    error InvalidTokenInForETHDeposit();
+    error InvalidAmountInForBTCDeposit();
+    error InvalidTokenInForBTCDeposit();
     error InvalidPath();
     error InvalidRouteA();
     error InvalidRouteB();
-    error OnlyWETH();
+    error OnlyBTC();
     error PoolDoesNotExist();
     error PoolFactoryDoesNotExist();
     error SameAddresses();
@@ -66,13 +66,13 @@ interface IRouter {
         address _factory
     ) external view returns (address pool);
 
-    /// @notice Wraps around poolFor(tokenA,tokenB,stable,_factory) for backwards compatibility to Mezodrome v1
-    function pairFor(
-        address tokenA,
-        address tokenB,
-        bool stable,
-        address _factory
-    ) external view returns (address pool);
+    // /// @notice Wraps around poolFor(tokenA,tokenB,stable,_factory) for backwards compatibility to Mezodrome v1
+    // function pairFor(
+    //     address tokenA,
+    //     address tokenB,
+    //     bool stable,
+    //     address _factory
+    // ) external view returns (address pool);
 
     function getReserves(
         address tokenA,
@@ -114,15 +114,15 @@ interface IRouter {
         uint256 deadline
     ) external returns (uint256 amountA, uint256 amountB, uint256 liquidity);
 
-    function addLiquidityETH(
+    function addLiquidityBTC(
         address token,
         bool stable,
         uint256 amountTokenDesired,
         uint256 amountTokenMin,
-        uint256 amountETHMin,
+        uint256 amountBTCMin,
         address to,
         uint256 deadline
-    ) external payable returns (uint256 amountToken, uint256 amountETH, uint256 liquidity);
+    ) external payable returns (uint256 amountToken, uint256 amountBTC, uint256 liquidity);
 
     // **** REMOVE LIQUIDITY ****
 
@@ -137,25 +137,25 @@ interface IRouter {
         uint256 deadline
     ) external returns (uint256 amountA, uint256 amountB);
 
-    function removeLiquidityETH(
+    function removeLiquidityBTC(
         address token,
         bool stable,
         uint256 liquidity,
         uint256 amountTokenMin,
-        uint256 amountETHMin,
+        uint256 amountBTCMin,
         address to,
         uint256 deadline
-    ) external returns (uint256 amountToken, uint256 amountETH);
+    ) external returns (uint256 amountToken, uint256 amountBTC);
 
-    function removeLiquidityETHSupportingFeeOnTransferTokens(
+    function removeLiquidityBTCSupportingFeeOnTransferTokens(
         address token,
         bool stable,
         uint256 liquidity,
         uint256 amountTokenMin,
-        uint256 amountETHMin,
+        uint256 amountBTCMin,
         address to,
         uint256 deadline
-    ) external returns (uint256 amountETH);
+    ) external returns (uint256 amountBTC);
 
     // **** SWAP ****
 
@@ -167,14 +167,14 @@ interface IRouter {
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
-    function swapExactETHForTokens(
+    function swapExactBTCForTokens(
         uint256 amountOutMin,
         Route[] calldata routes,
         address to,
         uint256 deadline
     ) external payable returns (uint256[] memory amounts);
 
-    function swapExactTokensForETH(
+    function swapExactTokensForBTC(
         uint256 amountIn,
         uint256 amountOutMin,
         Route[] calldata routes,
@@ -198,14 +198,14 @@ interface IRouter {
         uint256 deadline
     ) external;
 
-    function swapExactETHForTokensSupportingFeeOnTransferTokens(
+    function swapExactBTCForTokensSupportingFeeOnTransferTokens(
         uint256 amountOutMin,
         Route[] calldata routes,
         address to,
         uint256 deadline
     ) external payable;
 
-    function swapExactTokensForETHSupportingFeeOnTransferTokens(
+    function swapExactTokensForBTCSupportingFeeOnTransferTokens(
         uint256 amountIn,
         uint256 amountOutMin,
         Route[] calldata routes,
