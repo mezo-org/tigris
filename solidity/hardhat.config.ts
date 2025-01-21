@@ -38,14 +38,6 @@ const config: HardhatUserConfig = {
       chainId: 31611,
       accounts: MATSNET_PRIVATE_KEY,
     },
-    hardhat: {
-      initialBaseFeePerGas: 0,
-      allowUnlimitedContractSize: true, // allow larger contracts for testing
-      gas: 12000000,
-      blockGasLimit: 0x1fffffffffffff,
-      accounts: [],
-      tags: ["allowStubs"],
-    },
   },
   external: {
     deployments: {
