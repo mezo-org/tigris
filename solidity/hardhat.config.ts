@@ -6,6 +6,8 @@ import "@openzeppelin/hardhat-upgrades"
 import "hardhat-deploy"
 import "hardhat-contract-sizer"
 import "hardhat-gas-reporter"
+import "@tenderly/hardhat-tenderly"
+
 import dotenv from "dotenv-safer"
 
 dotenv.config({
@@ -64,6 +66,10 @@ const config: HardhatUserConfig = {
   },
   gasReporter: {
     enabled: true,
+  },
+  tenderly: {
+    username: "thesis",
+    project: "",
   },
 }
 

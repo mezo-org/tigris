@@ -26,6 +26,7 @@
     "@nomicfoundation/hardhat-ethers": "^3.0.5",
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
     "@openzeppelin/hardhat-upgrades": "^3.0.1",
+    "@tenderly/hardhat-tenderly": "^2.5.2",
     "@thesis-co/eslint-config": "^0.6.1",
     "@types/mocha": "^10.0.7",
     "@typescript-eslint/eslint-plugin": "^6.17.0",
