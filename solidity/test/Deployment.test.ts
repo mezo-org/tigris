@@ -4,6 +4,7 @@
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { expect } from "chai"
 import {
+  FactoryRegistry,
   GaugeFactory,
   ManagedRewardsFactory,
   Pool,
@@ -18,14 +19,16 @@ describe("Mezodrome deployment", () => {
   let gaugeFactory: GaugeFactory
   let votingRewardsFactory: VotingRewardsFactory
   let managedRewardsFactory: ManagedRewardsFactory
+  let factoryRegistry: FactoryRegistry
 
   before(async () => {
-    ;({ 
+    ;({
       poolImplementation,
       poolFactory,
       gaugeFactory,
       votingRewardsFactory,
-      managedRewardsFactory
+      managedRewardsFactory,
+      factoryRegistry,
     } = await loadFixture(deployMezodrome))
   })
 
@@ -35,6 +38,12 @@ describe("Mezodrome deployment", () => {
 
   it("should deploy the PoolFactory", async () => {
     expect(await poolFactory.getAddress()).to.not.be.empty
+  })
+
+  it("should wire up the PoolFactory", async () => {
+    expect(await poolFactory.implementation()).to.equal(
+      await poolImplementation.getAddress(),
+    )
   })
 
   it("should deploy the GaugeFactory", async () => {
@@ -47,5 +56,21 @@ describe("Mezodrome deployment", () => {
 
   it("should deploy the ManagedRewardsFactory", async () => {
     expect(await managedRewardsFactory.getAddress()).to.not.be.empty
+  })
+
+  it("should deploy the FactoryRegistry", async () => {
+    expect(await factoryRegistry.getAddress()).to.not.be.empty
+  })
+
+  it("should wire up FactoryRegistry", async () => {
+    expect(await factoryRegistry.fallbackPoolFactory()).to.equal(
+      await poolFactory.getAddress(),
+    )
+    expect(await factoryRegistry.fallbackVotingRewardsFactory()).to.equal(
+      await votingRewardsFactory.getAddress(),
+    )
+    expect(await factoryRegistry.fallbackGaugeFactory()).to.equal(
+      await gaugeFactory.getAddress(),
+    )
   })
 })

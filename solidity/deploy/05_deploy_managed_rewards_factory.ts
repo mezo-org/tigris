@@ -10,7 +10,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     "ManagedRewardsFactory",
   )
   const isValidDeployment =
-  ManagedRewardsFactory &&
+    ManagedRewardsFactory &&
     helpers.address.isValid(ManagedRewardsFactory.address)
   if (isValidDeployment) {
     log(`Using ManagedRewardsFactory at ${ManagedRewardsFactory.address}`)
@@ -18,12 +18,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   }
 
   log("Deploying ManagedRewardsFactory contract...")
-  const managedRewardsFactoryDeployment = await deploy("ManagedRewardsFactory", {
-    from: deployer,
-    args: [],
-    log: true,
-    waitConfirmations: 1,
-  })
+  const managedRewardsFactoryDeployment = await deploy(
+    "ManagedRewardsFactory",
+    {
+      from: deployer,
+      args: [],
+      log: true,
+      waitConfirmations: 1,
+    },
+  )
 
   if (hre.network.tags.etherscan) {
     await helpers.etherscan.verify(managedRewardsFactoryDeployment)

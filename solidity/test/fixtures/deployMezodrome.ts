@@ -1,5 +1,6 @@
 import { deployments, helpers } from "hardhat"
 import {
+  FactoryRegistry,
   GaugeFactory,
   ManagedRewardsFactory,
   Pool,
@@ -13,6 +14,7 @@ export default async function deployMezodrome(): Promise<{
   gaugeFactory: GaugeFactory
   votingRewardsFactory: VotingRewardsFactory
   managedRewardsFactory: ManagedRewardsFactory
+  factoryRegistry: FactoryRegistry
 }> {
   await deployments.fixture()
 
@@ -23,8 +25,9 @@ export default async function deployMezodrome(): Promise<{
     "VotingRewardsFactory",
   )
   const managedRewardsFactory = await helpers.contracts.getContract(
-    "ManagedRewardsFactory"
+    "ManagedRewardsFactory",
   )
+  const factoryRegistry = await helpers.contracts.getContract("FactoryRegistry")
 
   return {
     poolImplementation: poolImplementation as unknown as Pool,
@@ -32,6 +35,8 @@ export default async function deployMezodrome(): Promise<{
     gaugeFactory: gaugeFactory as unknown as GaugeFactory,
     votingRewardsFactory:
       votingRewardsFactory as unknown as VotingRewardsFactory,
-    managedRewardsFactory: managedRewardsFactory as unknown as ManagedRewardsFactory
+    managedRewardsFactory:
+      managedRewardsFactory as unknown as ManagedRewardsFactory,
+    factoryRegistry: factoryRegistry as unknown as FactoryRegistry,
   }
 }
