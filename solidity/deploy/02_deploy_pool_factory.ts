@@ -24,6 +24,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     waitConfirmations: 1,
   })
 
+  // TODO: The initial stable and volatile fees are 0.02%. Is it OK or do we want
+  // to update them?
+
   if (hre.network.tags.etherscan) {
     await helpers.etherscan.verify(poolFactoryDeployment)
   }
