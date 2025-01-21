@@ -12,3 +12,7 @@ node_modules
 # solidity-coverage files
 /coverage
 /coverage.json
+
+# Deployments (with exceptions)
+/deployments/*
+!/deployments/matsnet/
