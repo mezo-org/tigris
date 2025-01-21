@@ -37,12 +37,28 @@ const config: HardhatUserConfig = {
       url: "https://rpc.test.mezo.org",
       chainId: 31611,
       accounts: MATSNET_PRIVATE_KEY,
+      tags: ["etherscan"]
     },
   },
   external: {
     deployments: {
       matsnet: ["./external/matsnet"],
     },
+  },
+  etherscan: {
+    apiKey: {
+      matsnet: "empty",
+    },
+    customChains: [
+      {
+        network: "matsnet",
+        chainId: 31611,
+        urls: {
+          apiURL: "https://api.explorer.test.mezo.org/api",
+          browserURL: "https://explorer.test.mezo.org",
+        },
+      },
+    ],
   },
   namedAccounts: {
     deployer: 0,
