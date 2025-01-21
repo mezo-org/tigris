@@ -5,6 +5,7 @@ import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { expect } from "chai"
 import {
   GaugeFactory,
+  ManagedRewardsFactory,
   Pool,
   PoolFactory,
   VotingRewardsFactory,
@@ -16,10 +17,16 @@ describe("Mezodrome deployment", () => {
   let poolFactory: PoolFactory
   let gaugeFactory: GaugeFactory
   let votingRewardsFactory: VotingRewardsFactory
+  let managedRewardsFactory: ManagedRewardsFactory
 
   before(async () => {
-    ;({ poolImplementation, poolFactory, gaugeFactory, votingRewardsFactory } =
-      await loadFixture(deployMezodrome))
+    ;({ 
+      poolImplementation,
+      poolFactory,
+      gaugeFactory,
+      votingRewardsFactory,
+      managedRewardsFactory
+    } = await loadFixture(deployMezodrome))
   })
 
   it("should deploy the Pool implementation", async () => {
@@ -36,5 +43,9 @@ describe("Mezodrome deployment", () => {
 
   it("should deploy the VotingRewardsFactory", async () => {
     expect(await votingRewardsFactory.getAddress()).to.not.be.empty
+  })
+
+  it("should deploy the ManagedRewardsFactory", async () => {
+    expect(await managedRewardsFactory.getAddress()).to.not.be.empty
   })
 })
