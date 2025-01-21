@@ -6,8 +6,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deploy, log } = deployments
   const { deployer } = await getNamedAccounts()
 
+  const Pool = await deployments.getOrNull("Pool")
+  const isValidDeployment = Pool && helpers.address.isValid(Pool.address)
+  if (isValidDeployment) {
+    log(`Using Pool at ${Pool.address}`)
+    return
+  }
+
   log("Deploying Pool contract...")
-  const pool = await deploy("Pool", {
+  const poolDeployment = await deploy("Pool", {
     from: deployer,
     args: [],
     log: true,
@@ -15,13 +22,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   })
 
   if (hre.network.tags.etherscan) {
-    await helpers.etherscan.verify(pool)
+    await helpers.etherscan.verify(poolDeployment)
   }
 
   if (hre.network.tags.tenderly) {
     await hre.tenderly.verify({
       name: "Pool",
-      address: pool.address,
+      address: poolDeployment.address,
     })
   }
 }
