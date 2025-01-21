@@ -6,26 +6,29 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deploy, log } = deployments
   const { deployer } = await getNamedAccounts()
 
-  log("Deploying Pool contract...")
-  const pool = await deploy("Pool", {
+  log("Deploying PoolFactory contract...")
+  const poolAddress = (await deployments.get("Pool")).address
+
+  const poolFactory = await deploy("PoolFactory", {
     from: deployer,
-    args: [],
+    args: [poolAddress],
     log: true,
     waitConfirmations: 1,
   })
 
   if (hre.network.tags.etherscan) {
-    await helpers.etherscan.verify(pool)
+    await helpers.etherscan.verify(poolFactory)
   }
 
   if (hre.network.tags.tenderly) {
     await hre.tenderly.verify({
-      name: "Pool",
-      address: pool.address,
+      name: "PoolFactory",
+      address: poolFactory.address,
     })
   }
 }
 
 export default func
 
-func.tags = ["Pool"]
+func.tags = ["PoolFactory"]
+func.dependencies = ["Pool"]
