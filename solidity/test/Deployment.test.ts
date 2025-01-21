@@ -3,15 +3,17 @@
 
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { expect } from "chai"
-import { Pool, PoolFactory } from "../typechain"
+import { GaugeFactory, Pool, PoolFactory } from "../typechain"
 import deployMezodrome from "./fixtures/deployMezodrome"
 
 describe("Mezodrome deployment", () => {
   let poolImplementation: Pool
   let poolFactory: PoolFactory
+  let gaugeFactory: GaugeFactory
 
   before(async () => {
-    ;({ poolImplementation, poolFactory } = await loadFixture(deployMezodrome))
+    ;({ poolImplementation, poolFactory, gaugeFactory } =
+      await loadFixture(deployMezodrome))
   })
 
   it("should deploy the Pool implementation", async () => {
@@ -20,5 +22,9 @@ describe("Mezodrome deployment", () => {
 
   it("should deploy the PoolFactory", async () => {
     expect(await poolFactory.getAddress()).to.not.be.empty
+  })
+
+  it("should deploy the GaugeFactory", async () => {
+    expect(await gaugeFactory.getAddress()).to.not.be.empty
   })
 })
