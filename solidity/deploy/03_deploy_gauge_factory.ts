@@ -25,13 +25,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   if (hre.network.tags.etherscan) {
     await helpers.etherscan.verify(gaugeFactoryDeployment)
   }
-
-  if (hre.network.tags.tenderly) {
-    await hre.tenderly.verify({
-      name: "GaugeFactory",
-      address: gaugeFactoryDeployment.address,
-    })
-  }
 }
 
 export default func

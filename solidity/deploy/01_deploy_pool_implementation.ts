@@ -24,13 +24,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   if (hre.network.tags.etherscan) {
     await helpers.etherscan.verify(poolDeployment)
   }
-
-  if (hre.network.tags.tenderly) {
-    await hre.tenderly.verify({
-      name: "Pool",
-      address: poolDeployment.address,
-    })
-  }
 }
 
 export default func

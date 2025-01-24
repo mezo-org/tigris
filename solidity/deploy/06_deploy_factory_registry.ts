@@ -39,13 +39,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   if (hre.network.tags.etherscan) {
     await helpers.etherscan.verify(factoryRegistryDeployment)
   }
-
-  if (hre.network.tags.tenderly) {
-    await hre.tenderly.verify({
-      name: "FactoryRegistry",
-      address: factoryRegistryDeployment.address,
-    })
-  }
 }
 
 export default func
