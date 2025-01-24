@@ -6,6 +6,7 @@ import "@openzeppelin/hardhat-upgrades"
 import "hardhat-deploy"
 import "hardhat-contract-sizer"
 import "hardhat-gas-reporter"
+
 import dotenv from "dotenv-safer"
 
 dotenv.config({
@@ -36,19 +37,26 @@ const config: HardhatUserConfig = {
       chainId: 31611,
       accounts: MATSNET_PRIVATE_KEY,
     },
-    hardhat: {
-      initialBaseFeePerGas: 0,
-      allowUnlimitedContractSize: true, // allow larger contracts for testing
-      gas: 12000000,
-      blockGasLimit: 0x1fffffffffffff,
-      accounts: [],
-      tags: ["allowStubs"],
-    },
   },
   external: {
     deployments: {
       matsnet: ["./external/matsnet"],
     },
+  },
+  etherscan: {
+    apiKey: {
+      matsnet: "empty",
+    },
+    customChains: [
+      {
+        network: "matsnet",
+        chainId: 31611,
+        urls: {
+          apiURL: "https://api.explorer.test.mezo.org/api",
+          browserURL: "https://explorer.test.mezo.org",
+        },
+      },
+    ],
   },
   namedAccounts: {
     deployer: 0,
