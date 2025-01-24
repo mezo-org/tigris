@@ -13,7 +13,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     return
   }
 
-  log("Deploying Pool contract...")
+  log("Deploying Pool implementation contract...")
   const poolDeployment = await deploy("Pool", {
     from: deployer,
     args: [],
