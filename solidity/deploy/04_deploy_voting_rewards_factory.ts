@@ -25,7 +25,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     waitConfirmations: 1,
   })
 
-  if (hre.network.tags.etherscan) {
+  if (hre.network.name !== "hardhat") {
+    // Verify contract in Blockscout
     await helpers.etherscan.verify(votingRewardsFactoryDeployment)
   }
 }

@@ -36,7 +36,6 @@ const config: HardhatUserConfig = {
       url: "https://rpc.test.mezo.org",
       chainId: 31611,
       accounts: MATSNET_PRIVATE_KEY,
-      tags: ["etherscan"],
     },
   },
   external: {
