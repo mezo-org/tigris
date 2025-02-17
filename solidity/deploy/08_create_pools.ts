@@ -38,5 +38,4 @@ export default func
 func.tags = ["CreatePools"]
 func.dependencies = ["PoolFactory"]
 
-func.skip = async (hre) =>
-  hre.network.name !== "matsnet" && hre.network.name !== "hardhat"
+func.skip = async (hre) => hre.network.name !== "matsnet"
