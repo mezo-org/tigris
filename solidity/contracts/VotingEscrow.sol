@@ -13,4 +13,6 @@ abstract contract VotingEscrow is
     IERC6372,
     ERC2771Context,
     ReentrancyGuard
-{}
+{
+    constructor(address trustedForwarder) ERC2771Context(trustedForwarder) {}
+}
