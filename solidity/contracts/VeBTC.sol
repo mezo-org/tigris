@@ -5,12 +5,25 @@ pragma solidity 0.8.24;
 import {VotingEscrow} from "./VotingEscrow.sol";
 
 contract VeBTC is VotingEscrow {
-    address public btc;
-
     constructor(
-        address trustedForwarder,
-        address _btc
-    ) VotingEscrow(trustedForwarder) {
-        btc = _btc;
+        address _forwarder,
+        address _btc,
+        address _factoryRegistry
+    ) VotingEscrow(_forwarder, _btc, _factoryRegistry) {}
+
+    function name() external pure returns (string memory) {
+        return "veBTC";
+    }
+
+    function symbol() external pure returns (string memory) {
+        return "veBTC";
+    }
+
+    function version() external pure returns (string memory) {
+        return "1.0.0";
+    }
+
+    function decimals() external pure returns (uint8) {
+        return 18;
     }
 }
