@@ -36,6 +36,6 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 export default func
 
 func.tags = ["CreatePools"]
-func.dependencies = ["PoolFactory"]
+func.dependencies = ["Bitcoin", "PoolFactory"]
 
 func.skip = async (hre) => hre.network.name !== "matsnet"
