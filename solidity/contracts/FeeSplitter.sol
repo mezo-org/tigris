@@ -17,6 +17,9 @@ contract FeeSplitter {
     /// @notice The minimum value of the gauge needle.
     uint256 public constant MINIMUM_GAUGE_SCALE = 1;
 
+    /// @notice Duration of epoch.
+    uint256 public constant WEEK = 1 weeks;
+
     /// @notice Needle tick change per proposal.
     uint256 public constant TICK = 1;
 
@@ -43,6 +46,9 @@ contract FeeSplitter {
 
     /// @dev Emitted when the gauge needle is nudged.
     event Nudge(uint256 indexed period, uint256 oldNeedle, uint256 newNeedle);
+
+    /// @dev Emitted when the epoch period is updated.
+    event PeriodUpdated(uint256 oldPeriod, uint256 newPeriod);
 
     constructor(address _voter) {
         voter = IVoter(_voter);
@@ -80,6 +86,10 @@ contract FeeSplitter {
 
     /// @notice Updates the period of the current epoch.
     function updatePeriod() external {
-        // TODO: implement
+        uint256 oldPeriod = activePeriod;
+        if (block.timestamp >= activePeriod + WEEK) {
+            activePeriod = (block.timestamp / WEEK) * WEEK;
+        }
+        emit PeriodUpdated(oldPeriod, activePeriod);
     }
 }
