@@ -22,6 +22,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         log: true,
         waitConfirmations: 1,
       })
+
+      return
     }
 
     // On any other network, we should have a real Bitcoin contract provided
