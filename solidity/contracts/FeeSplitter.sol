@@ -18,6 +18,7 @@ contract FeeSplitter {
     uint256 public constant MINIMUM_GAUGE_SCALE = 1;
 
     /// @notice Duration of epoch.
+    /// TODO: Decide if we want to make this interval flexible and updatable by e.g. governor.
     uint256 public constant WEEK = 1 weeks;
 
     /// @notice Needle tick change per proposal.
@@ -62,15 +63,17 @@ contract FeeSplitter {
         uint256 period = activePeriod;
         if (proposals[period]) revert AlreadyNudged();
 
-        IFeeSplitterGovernor.ProposalState state = IFeeSplitterGovernor(epochGovernor).result();
-        
+        IFeeSplitterGovernor.ProposalState state = IFeeSplitterGovernor(
+            epochGovernor
+        ).result();
+
         uint256 oldNeedle = needle;
         if (state != IFeeSplitterGovernor.ProposalState.Expired) {
             if (state == IFeeSplitterGovernor.ProposalState.MovedUp) {
                 needle = needle + TICK > MAXIMUM_GAUGE_SCALE
                     ? MAXIMUM_GAUGE_SCALE
                     : needle + TICK;
-            } 
+            }
             if (state == IFeeSplitterGovernor.ProposalState.MovedDown) {
                 needle = needle - TICK < MINIMUM_GAUGE_SCALE
                     ? MINIMUM_GAUGE_SCALE
