@@ -22,9 +22,14 @@ const config: HardhatUserConfig = {
   solidity: {
     version: "0.8.24",
     settings: {
+      // `viaIR` is a temporary fix for `VeBTC` exceeding max contract size.
+      // TODO: remove once `veBTC` is refactored.
+      viaIR: true,
       optimizer: {
         enabled: true,
-        runs: 100,
+        // number of runs is lowered as a temporary fix for `VeBTC` exceeding max contract size.
+        // TODO: set to `100` once `veBTC` is refactored.
+        runs: 20,
       },
       evmVersion: "london", // latest EVM version supported on Matsnet is London
     },
