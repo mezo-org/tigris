@@ -78,7 +78,9 @@ contract RewardsDistributor is IRewardsDistributor {
 
     /// @inheritdoc IRewardsDistributor
     function checkpointToken() external {
-        assert(msg.sender == depositor);
+        if (msg.sender != depositor) {
+            revert NotDepositor();
+        }
         _checkpointToken();
     }
 
