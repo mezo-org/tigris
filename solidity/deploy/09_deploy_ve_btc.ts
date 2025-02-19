@@ -16,6 +16,21 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     .address
   log(`FactoryRegistry address is ${factoryRegistryAddress}`)
 
+  const balanceLogicLibraryDeployment = await deploy("BalanceLogicLibrary", {
+    from: deployer,
+    log: true,
+    waitConfirmations: 1,
+  })
+
+  const delegationLogicLibraryDeployment = await deploy(
+    "DelegationLogicLibrary",
+    {
+      from: deployer,
+      log: true,
+      waitConfirmations: 1,
+    },
+  )
+
   const VeBTC = await deployments.getOrNull("VeBTC")
 
   const isValidDeployment = VeBTC && helpers.address.isValid(VeBTC.address)
@@ -30,11 +45,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     args: [mezoForwarderAddress, btcAddress, factoryRegistryAddress],
     log: true,
     waitConfirmations: 1,
+    libraries: {
+      BalanceLogicLibrary: balanceLogicLibraryDeployment.address,
+      DelegationLogicLibrary: delegationLogicLibraryDeployment.address,
+    },
   })
 
   if (hre.network.name !== "hardhat") {
     // Verify contract in Blockscout
     await helpers.etherscan.verify(veBTCDeployment)
+    await helpers.etherscan.verify(balanceLogicLibraryDeployment)
+    await helpers.etherscan.verify(delegationLogicLibraryDeployment)
   }
 }
 
