@@ -11,8 +11,9 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {IReward} from "./interfaces/IReward.sol";
 import {IFactoryRegistry} from "./interfaces/factories/IFactoryRegistry.sol";
 import {IManagedRewardsFactory} from "./interfaces/factories/IManagedRewardsFactory.sol";
-import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {ERC2771ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {DelegationLogicLibrary} from "./libraries/DelegationLogicLibrary.sol";
 import {BalanceLogicLibrary} from "./libraries/BalanceLogicLibrary.sol";
 import {SafeCastLibrary} from "./libraries/SafeCastLibrary.sol";
@@ -26,8 +27,9 @@ import {SafeCastLibrary} from "./libraries/SafeCastLibrary.sol";
 /// @dev Vote weight decays linearly over time. Lock time cannot be more than `MAXTIME` (4 years).
 abstract contract VotingEscrow is
     IVotingEscrow,
-    ERC2771Context,
-    ReentrancyGuard
+    Initializable,
+    ERC2771ContextUpgradeable,
+    ReentrancyGuardUpgradeable
 {
     using SafeERC20 for IERC20;
     using SafeCastLibrary for uint256;
@@ -37,11 +39,11 @@ abstract contract VotingEscrow is
     //////////////////////////////////////////////////////////////*/
 
     /// @inheritdoc IVotingEscrow
-    address public immutable forwarder;
+    address public forwarder;
     /// @inheritdoc IVotingEscrow
-    address public immutable factoryRegistry;
+    address public factoryRegistry;
     /// @inheritdoc IVotingEscrow
-    address public immutable token;
+    address public token;
     /// @inheritdoc IVotingEscrow
     address public distributor;
     /// @inheritdoc IVotingEscrow
@@ -76,15 +78,33 @@ abstract contract VotingEscrow is
     /// @inheritdoc IVotingEscrow
     uint256 public tokenId;
 
+    // Reserved storage space that allows adding more variables without affecting
+    // the storage layout of the child contracts. The convention from OpenZeppelin
+    // suggests the storage space should add up to 50 slots. If more variables are
+    // added in the upcoming versions one need to reduce the array size accordingly.
+    // See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+    // slither-disable-next-line unused-state
+    uint256[50] private __gap;
+
+    constructor(address _forwarder) ERC2771ContextUpgradeable(_forwarder) {}
+
+    /// @notice Initializes the contract. MUST BE CALLED from the child
+    ///         contract initializer.
     /// @param _forwarder address of trusted forwarder
     /// @param _token token address
     /// @param _factoryRegistry Factory Registry address
-    constructor(
+    function __initializeVotingEscrow(
         address _forwarder,
         address _token,
         address _factoryRegistry
-    ) ERC2771Context(_forwarder) {
+    ) internal {
+        __ReentrancyGuard_init();
+
+        // Check if the provided forwarder address is the same as was used in the
+        // constructor.
+        require(isTrustedForwarder(_forwarder), "Forwarder mismatch");
         forwarder = _forwarder;
+
         token = _token;
         factoryRegistry = _factoryRegistry;
         team = _msgSender();
