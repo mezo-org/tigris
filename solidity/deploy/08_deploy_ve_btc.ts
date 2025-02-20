@@ -40,24 +40,21 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   }
 
   log("Deploying VeBTC contract...")
-  const [_, veBTCDeployment] = await helpers.upgrades.deployProxy(
-    "VeBTC",
-    {
-      contractName: "VeBTC",
-      initializerArgs: [mezoForwarderAddress, btcAddress, factoryRegistryAddress],
-      factoryOpts: {
-        signer: await ethers.getSigner(deployer),
-        libraries: {
-          BalanceLogicLibrary: balanceLogicLibraryDeployment.address,
-          DelegationLogicLibrary: delegationLogicLibraryDeployment.address,
-        },
+  const [_, veBTCDeployment] = await helpers.upgrades.deployProxy("VeBTC", {
+    contractName: "VeBTC",
+    initializerArgs: [mezoForwarderAddress, btcAddress, factoryRegistryAddress],
+    factoryOpts: {
+      signer: await ethers.getSigner(deployer),
+      libraries: {
+        BalanceLogicLibrary: balanceLogicLibraryDeployment.address,
+        DelegationLogicLibrary: delegationLogicLibraryDeployment.address,
       },
-      proxyOpts: {
-        kind: "transparent",
-        constructorArgs: [mezoForwarderAddress],
-      },
-    }
-  )
+    },
+    proxyOpts: {
+      kind: "transparent",
+      constructorArgs: [mezoForwarderAddress],
+    },
+  })
 
   if (hre.network.name !== "hardhat") {
     // Verify contract in Blockscout
