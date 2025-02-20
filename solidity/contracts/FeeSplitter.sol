@@ -100,33 +100,35 @@ contract FeeSplitter is IMinter {
         uint256 oldPeriod = activePeriod;
         if (block.timestamp >= activePeriod + WEEK) {
             activePeriod = (block.timestamp / WEEK) * WEEK;
+
+            uint256 stakeGuagesFee;
+            uint256 veBTCHoldersFee;
+
+            uint256 currentBalance = btc.balanceOf(address(this));
+            if (currentBalance > 0) {
+                veBTCHoldersFee =
+                    (currentBalance * needle) /
+                    MAXIMUM_GAUGE_SCALE;
+                stakeGuagesFee = currentBalance - veBTCHoldersFee;
+
+                // For veBTC holders.
+                btc.safeTransfer(address(rewardsDistributor), veBTCHoldersFee);
+                rewardsDistributor.checkpointToken(); // checkpoint token balance in rewards distributor
+
+                // For stake guages.
+                btc.safeApprove(address(voter), stakeGuagesFee);
+                voter.notifyRewardAmount(stakeGuagesFee);
+            }
+
+            emit PeriodUpdated(
+                oldPeriod,
+                activePeriod,
+                veBTCHoldersFee,
+                stakeGuagesFee
+            );
+
+            return activePeriod;
         }
-
-        uint256 stakeGuagesFee;
-        uint256 veBTCHoldersFee;
-
-        uint256 currentBalance = btc.balanceOf(address(this));
-        if (currentBalance > 0) {
-            veBTCHoldersFee = (currentBalance * needle) / MAXIMUM_GAUGE_SCALE;
-            stakeGuagesFee = currentBalance - veBTCHoldersFee;
-        }
-
-        // For veBTC holders.
-        btc.safeTransfer(address(rewardsDistributor), veBTCHoldersFee);
-        rewardsDistributor.checkpointToken(); // checkpoint token balance in rewards distributor
-
-        // For stake guages.
-        btc.safeApprove(address(voter), stakeGuagesFee);
-        voter.notifyRewardAmount(stakeGuagesFee);
-
-        emit PeriodUpdated(
-            oldPeriod,
-            activePeriod,
-            veBTCHoldersFee,
-            stakeGuagesFee
-        );
-
-        return activePeriod;
     }
 
     /// TODO: consider removing this function from IMinter.
