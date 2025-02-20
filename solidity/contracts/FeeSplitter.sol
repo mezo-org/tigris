@@ -2,14 +2,24 @@
 pragma solidity ^0.8.24;
 
 import {IVoter} from "./interfaces/IVoter.sol";
-import {IFeeSplitterGovernor} from "./interfaces/IFeeSplitterGovernor.sol";
+import {IEpochGovernor} from "./interfaces/IEpochGovernor.sol";
+import {IMinter} from "./interfaces/IMinter.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IRewardsDistributor} from "./interfaces/IRewardsDistributor.sol";
+import {IVotingEscrow} from "./interfaces/IVotingEscrow.sol";
 
 /// @title FeeSplitter
 /// @notice A FeeSplitter contract that changes the fee distribution between veBTC
 ///         holders and Stake Gauges based on the gauge needle position.
-contract FeeSplitter {
+contract FeeSplitter is IMinter {
+    using SafeERC20 for IERC20;
     /// @notice The address of the Voter contract.
     IVoter public immutable voter;
+    /// @notice Fee token.
+    IERC20 public immutable btc;
+    /// @notice Rewards distribution among stake gauges.
+    IRewardsDistributor public immutable rewardsDistributor;
 
     /// @notice The maximum value of the gauge needle.
     uint256 public constant MAXIMUM_GAUGE_SCALE = 100;
@@ -28,7 +38,7 @@ contract FeeSplitter {
     /// @dev The needle moves between 1 and 100. The default value is 33 to
     ///      simulate ~1/3 of fees going to the veBTC holders and ~2/3 to the
     ///      Stake Gauges.
-    uint256 public needle = 37;
+    uint256 public needle = 33;
 
     /// @notice Start time of currently active epoch.
     uint256 public activePeriod;
@@ -36,23 +46,31 @@ contract FeeSplitter {
     /// @dev activePeriod => proposal existing, used to enforce one proposal per epoch.
     mapping(uint256 => bool) public proposals;
 
-    /// @dev Emitted when the caller is not the epoch governor.
-    error NotEpochGovernor();
-
-    /// @dev Emitted when the gauge needle was already moved in the current epoch.
-    error AlreadyNudged();
-
     /// @dev Emitted when the gauge needle is moved.
     event NeedleMoved(uint256 oldNeedle, uint256 newNeedle);
 
-    /// @dev Emitted when the gauge needle is nudged.
-    event Nudge(uint256 indexed period, uint256 oldNeedle, uint256 newNeedle);
-
     /// @dev Emitted when the epoch period is updated.
-    event PeriodUpdated(uint256 oldPeriod, uint256 newPeriod);
+    event PeriodUpdated(
+        uint256 oldPeriod,
+        uint256 newPeriod,
+        uint256 veBTCHoldersFee,
+        uint256 stakeGuagesFee
+    );
 
-    constructor(address _voter) {
+    constructor(
+        address _voter, // the voting & distribution system
+        address _ve, // the ve(3,3) system that will be locked into
+        address _rewardsDistributor // the distribution system that ensures users aren't diluted
+    ) {
         voter = IVoter(_voter);
+        btc = IERC20(IVotingEscrow(_ve).token());
+        rewardsDistributor = IRewardsDistributor(_rewardsDistributor);
+    }
+
+    /// TODO: consider removing this function from IMinter.
+    function calculateGrowth(uint256 amount) external pure returns (uint256) {
+        // noop
+        return amount;
     }
 
     /// @notice Moves the gauge needle by 1 tick per epoch.
@@ -63,36 +81,60 @@ contract FeeSplitter {
         uint256 period = activePeriod;
         if (proposals[period]) revert AlreadyNudged();
 
-        IFeeSplitterGovernor.ProposalState state = IFeeSplitterGovernor(
-            epochGovernor
-        ).result();
+        IEpochGovernor.ProposalState state = IEpochGovernor(epochGovernor)
+            .result();
 
         uint256 oldNeedle = needle;
-        if (state != IFeeSplitterGovernor.ProposalState.Expired) {
-            if (state == IFeeSplitterGovernor.ProposalState.MovedUp) {
+        if (state != IEpochGovernor.ProposalState.Expired) {
+            // move the needle up by 1 tick
+            if (state == IEpochGovernor.ProposalState.Succeeded) {
                 needle = needle + TICK > MAXIMUM_GAUGE_SCALE
                     ? MAXIMUM_GAUGE_SCALE
                     : needle + TICK;
-            }
-            if (state == IFeeSplitterGovernor.ProposalState.MovedDown) {
+            } else {
+                // move the needle down by 1 tick
                 needle = needle - TICK < MINIMUM_GAUGE_SCALE
                     ? MINIMUM_GAUGE_SCALE
                     : needle - TICK;
             }
-            proposals[period] = true;
         }
 
         proposals[period] = true;
-        // Might happen that the needle didn't change.
+        // Might happen that needle did not move due to abstained or expired proposal.
         emit Nudge(period, oldNeedle, needle);
     }
 
     /// @notice Updates the period of the current epoch.
-    function updatePeriod() external {
+    function updatePeriod() external returns (uint256) {
         uint256 oldPeriod = activePeriod;
         if (block.timestamp >= activePeriod + WEEK) {
             activePeriod = (block.timestamp / WEEK) * WEEK;
         }
-        emit PeriodUpdated(oldPeriod, activePeriod);
+
+        uint256 stakeGuagesFee;
+        uint256 veBTCHoldersFee;
+
+        uint256 currentBalance = btc.balanceOf(address(this));
+        if (currentBalance > 0) {
+            veBTCHoldersFee = (currentBalance * needle) / MAXIMUM_GAUGE_SCALE;
+            stakeGuagesFee = currentBalance - veBTCHoldersFee;
+        }
+
+        // For veBTC holders.
+        btc.safeTransfer(address(rewardsDistributor), veBTCHoldersFee);
+        rewardsDistributor.checkpointToken(); // checkpoint token balance in rewards distributor
+
+        // For stake guages.
+        btc.safeApprove(address(voter), stakeGuagesFee);
+        voter.notifyRewardAmount(stakeGuagesFee);
+
+        emit PeriodUpdated(
+            oldPeriod,
+            activePeriod,
+            veBTCHoldersFee,
+            stakeGuagesFee
+        );
+
+        return activePeriod;
     }
 }
