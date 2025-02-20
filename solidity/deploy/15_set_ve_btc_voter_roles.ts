@@ -6,28 +6,42 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { execute } = deployments
   const { deployer, governance } = await getNamedAccounts()
 
-  const veBTCVoter = await deployments.get("VeBTCVoter")
+  const FeeSplitter = await deployments.get("FeeSplitter")
 
   // Set roles that were assigned to the deployer within the constructor.
 
   await execute(
-    "VeBTC",
+    "VeBTCVoter",
     { from: deployer, log: true, waitConfirmations: 1 },
-    "setVoterAndDistributor",
-    veBTCVoter.address, // voter
-    hre.ethers.ZeroAddress, // keep the distributor as zero address
+    "setEpochGovernor",
+    governance,
   )
 
   await execute(
-    "VeBTC",
+    "VeBTCVoter",
     { from: deployer, log: true, waitConfirmations: 1 },
-    "setTeam",
+    "setGovernor",
     governance,
+  )
+
+  await execute(
+    "VeBTCVoter",
+    { from: deployer, log: true, waitConfirmations: 1 },
+    "setEmergencyCouncil",
+    governance,
+  )
+
+  await execute(
+    "VeBTCVoter",
+    { from: deployer, log: true, waitConfirmations: 1 },
+    "initialize",
+    [], // no initial whitelisted tokens
+    FeeSplitter.address,
   )
 }
 
 export default func
 
-func.tags = ["SetVeBTCRoles"]
-func.dependencies = ["VeBTC", "VeBTCVoter"]
+func.tags = ["SetVeBTCVoterRoles"]
+func.dependencies = ["VeBTCVoter", "FeeSplitter"]
 func.runAtTheEnd = true
