@@ -9,11 +9,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const Bitcoin = await deployments.getOrNull("Bitcoin")
 
   if (Bitcoin && helpers.address.isValid(Bitcoin.address)) {
-    log(`using existing Bitcoin contract at ${Bitcoin.address}`)
+    log(`Using existing Bitcoin contract at ${Bitcoin.address}`)
   } else {
     if (hre.network.name === "hardhat") {
       // Deploy a test Bitcoin contract on hardhat network to feed test fixtures.
-      log("deploying Bitcoin test contract")
+      log("Deploying Bitcoin test contract")
 
       await deploy("Bitcoin", {
         contract: "TestERC20",
