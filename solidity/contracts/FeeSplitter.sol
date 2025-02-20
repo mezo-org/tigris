@@ -46,9 +46,6 @@ contract FeeSplitter is IMinter {
     /// @dev activePeriod => proposal existing, used to enforce one proposal per epoch.
     mapping(uint256 => bool) public proposals;
 
-    /// @dev Emitted when the gauge needle is moved.
-    event NeedleMoved(uint256 oldNeedle, uint256 newNeedle);
-
     /// @dev Emitted when the epoch period is updated.
     event PeriodUpdated(
         uint256 oldPeriod,
@@ -65,12 +62,6 @@ contract FeeSplitter is IMinter {
         voter = IVoter(_voter);
         btc = IERC20(IVotingEscrow(_ve).token());
         rewardsDistributor = IRewardsDistributor(_rewardsDistributor);
-    }
-
-    /// TODO: consider removing this function from IMinter.
-    function calculateGrowth(uint256 amount) external pure returns (uint256) {
-        // noop
-        return amount;
     }
 
     /// @notice Moves the gauge needle by 1 tick per epoch.
@@ -136,5 +127,11 @@ contract FeeSplitter is IMinter {
         );
 
         return activePeriod;
+    }
+
+    /// TODO: consider removing this function from IMinter.
+    function calculateGrowth(uint256 amount) external pure returns (uint256) {
+        // noop
+        return amount;
     }
 }
