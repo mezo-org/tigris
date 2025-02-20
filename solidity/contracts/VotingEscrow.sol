@@ -86,6 +86,7 @@ abstract contract VotingEscrow is
     // slither-disable-next-line unused-state
     uint256[50] private __gap;
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
     constructor(address _forwarder) ERC2771ContextUpgradeable(_forwarder) {}
 
     /// @notice Initializes the contract. MUST BE CALLED from the child
