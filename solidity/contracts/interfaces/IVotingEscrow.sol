@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.24;
 
-import {IERC721, IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
+import {IERC165, IERC721, IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
+import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 import {IERC4906} from "@openzeppelin/contracts/interfaces/IERC4906.sol";
 import {IVotes} from "../governance/IVotes.sol";
 
-interface IVotingEscrow is IVotes, IERC4906, IERC721Metadata {
+interface IVotingEscrow is IVotes, IERC4906, IERC6372, IERC721Metadata {
     struct LockedBalance {
         int128 amount;
         uint256 end;
@@ -59,6 +60,7 @@ interface IVotingEscrow is IVotes, IERC4906, IERC721Metadata {
     error ERC721TransferToNonERC721ReceiverImplementer();
     error InvalidNonce();
     error InvalidSignature();
+    error InvalidSignatureS();
     error InvalidManagedNFTId();
     error LockDurationNotInFuture();
     error LockDurationTooLong();
@@ -84,6 +86,7 @@ interface IVotingEscrow is IVotes, IERC4906, IERC721Metadata {
     error SameAddress();
     error SameNFT();
     error SameState();
+    error SplitNoOwner();
     error SplitNotAllowed();
     error SignatureExpired();
     error TooManyTokenIDs();
@@ -162,20 +165,31 @@ interface IVotingEscrow is IVotes, IERC4906, IERC721Metadata {
     event SetAllowedManager(address indexed _allowedManager);
 
     // State variables
+    /// @notice Address of Meta-tx Forwarder
+    function forwarder() external view returns (address);
+
+    /// @notice Address of FactoryRegistry.sol
     function factoryRegistry() external view returns (address);
 
+    /// @notice Address of token used to create a veNFT
     function token() external view returns (address);
 
+    /// @notice Address of RewardsDistributor.sol
     function distributor() external view returns (address);
 
+    /// @notice Address of Voter.sol
     function voter() external view returns (address);
 
+    /// @notice Address of Protocol Team multisig
     function team() external view returns (address);
 
+    /// @notice Address of art proxy used for on-chain art generation
     function artProxy() external view returns (address);
 
+    /// @dev address which can create managed NFTs
     function allowedManager() external view returns (address);
 
+    /// @dev Current count of token
     function tokenId() external view returns (uint256);
 
     /*///////////////////////////////////////////////////////////////
@@ -339,6 +353,7 @@ interface IVotingEscrow is IVotes, IERC4906, IERC721Metadata {
                               ERC165 LOGIC
     //////////////////////////////////////////////////////////////*/
 
+    /// @inheritdoc IERC165
     function supportsInterface(
         bytes4 _interfaceID
     ) external view returns (bool);
@@ -347,9 +362,14 @@ interface IVotingEscrow is IVotes, IERC4906, IERC721Metadata {
                              ESCROW STORAGE
     //////////////////////////////////////////////////////////////*/
 
+    /// @notice Total count of epochs witnessed since contract creation
     function epoch() external view returns (uint256);
 
+    /// @notice Total amount of token() deposited
     function supply() external view returns (uint256);
+
+    /// @notice Aggregate permanent locked balances
+    function permanentLockBalance() external view returns (uint256);
 
     function userPointEpoch(
         uint256 _tokenId
@@ -427,11 +447,15 @@ interface IVotingEscrow is IVotes, IERC4906, IERC721Metadata {
 
     /// @notice Withdraw all tokens for `_tokenId`
     /// @dev Only possible if the lock is both expired and not permanent
+    ///      This will burn the veNFT. Any rebases or rewards that are unclaimed
+    ///      will no longer be claimable. Claim all rebases and rewards prior to calling this.
     function withdraw(uint256 _tokenId) external;
 
     /// @notice Merges `_from` into `_to`.
     /// @dev Cannot merge `_from` locks that are permanent or have already voted this epoch.
     ///      Cannot merge `_to` locks that have already expired.
+    ///      This will burn the veNFT. Any rebases or rewards that are unclaimed
+    ///      will no longer be claimable. Claim all rebases and rewards prior to calling this.
     /// @param _from VeNFT to merge from.
     /// @param _to VeNFT to merge into.
     function merge(uint256 _from, uint256 _to) external;
@@ -439,8 +463,11 @@ interface IVotingEscrow is IVotes, IERC4906, IERC721Metadata {
     /// @notice Splits veNFT into two new veNFTS - one with oldLocked.amount - `_amount`, and the second with `_amount`
     /// @dev    This burns the tokenId of the target veNFT
     ///         Callable by approved or owner
+    ///         If this is called by approved, approved will not have permissions to manipulate the newly created veNFTs
     ///         Returns the two new split veNFTs to owner
     ///         If `from` is permanent, will automatically dedelegate.
+    ///         This will burn the veNFT. Any rebases or rewards that are unclaimed
+    ///         will no longer be claimable. Claim all rebases and rewards prior to calling this.
     /// @param _from VeNFT to split.
     /// @param _amount Amount to split from veNFT.
     /// @return _tokenId1 Return tokenId of veNFT with oldLocked.amount - `_amount`.
@@ -450,7 +477,7 @@ interface IVotingEscrow is IVotes, IERC4906, IERC721Metadata {
         uint256 _amount
     ) external returns (uint256 _tokenId1, uint256 _tokenId2);
 
-    /// @notice Toggle split for a specific veNFT.
+    /// @notice Toggle split for a specific address.
     /// @dev Toggle split for address(0) to enable or disable for all.
     /// @param _account Address to toggle split permissions
     /// @param _bool True to allow, false to disallow
@@ -570,4 +597,14 @@ interface IVotingEscrow is IVotes, IERC4906, IERC721Metadata {
         bytes32 r,
         bytes32 s
     ) external;
+
+    /*//////////////////////////////////////////////////////////////
+                              ERC6372 LOGIC
+    //////////////////////////////////////////////////////////////*/
+
+    /// @inheritdoc IERC6372
+    function clock() external view returns (uint48);
+
+    /// @inheritdoc IERC6372
+    function CLOCK_MODE() external view returns (string memory);
 }
