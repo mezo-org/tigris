@@ -2,7 +2,7 @@ import { DeployFunction } from "hardhat-deploy/dist/types"
 import { HardhatRuntimeEnvironment } from "hardhat/types"
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  const { deployments, getNamedAccounts, helpers } = hre
+  const { ethers, deployments, getNamedAccounts, helpers } = hre
   const { deploy, log } = deployments
   const { deployer } = await getNamedAccounts()
 
@@ -40,16 +40,24 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   }
 
   log("Deploying VeBTC contract...")
-  const veBTCDeployment = await deploy("VeBTC", {
-    from: deployer,
-    args: [mezoForwarderAddress, btcAddress, factoryRegistryAddress],
-    log: true,
-    waitConfirmations: 1,
-    libraries: {
-      BalanceLogicLibrary: balanceLogicLibraryDeployment.address,
-      DelegationLogicLibrary: delegationLogicLibraryDeployment.address,
-    },
-  })
+  const [_, veBTCDeployment] = await helpers.upgrades.deployProxy(
+    "VeBTC",
+    {
+      contractName: "VeBTC",
+      initializerArgs: [mezoForwarderAddress, btcAddress, factoryRegistryAddress],
+      factoryOpts: {
+        signer: await ethers.getSigner(deployer),
+        libraries: {
+          BalanceLogicLibrary: balanceLogicLibraryDeployment.address,
+          DelegationLogicLibrary: delegationLogicLibraryDeployment.address,
+        },
+      },
+      proxyOpts: {
+        kind: "transparent",
+        constructorArgs: [mezoForwarderAddress],
+      },
+    }
+  )
 
   if (hre.network.name !== "hardhat") {
     // Verify contract in Blockscout
