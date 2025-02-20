@@ -12,6 +12,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {PoolLibrary} from "./libraries/PoolLibrary.sol";
 
 // The token pool, either stable or volatile
 contract Pool is IPool, ERC20Permit, ReentrancyGuard {
@@ -296,7 +297,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
             _mint(address(1), MINIMUM_LIQUIDITY); // permanently lock the first MINIMUM_LIQUIDITY tokens - cannot be address(0)
             if (stable) {
                 if ((_amount0 * 1e18) / decimals0 != (_amount1 * 1e18) / decimals1) revert DepositsNotEqual();
-                if (_k(_amount0, _amount1) <= MINIMUM_K) revert BelowMinimumK();
+                if (PoolLibrary.stableK(_amount0, _amount1, decimals0, decimals1) <= MINIMUM_K) revert BelowMinimumK();
             }
         } else {
             liquidity = Math.min((_amount0 * _totalSupply) / _reserve0, (_amount1 * _totalSupply) / _reserve1);
@@ -361,7 +362,10 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
             _balance0 = IERC20(_token0).balanceOf(address(this)); // since we removed tokens, we need to reconfirm balances, can also simply use previous balance - amountIn/ 10000, but doing balanceOf again as safety check
             _balance1 = IERC20(_token1).balanceOf(address(this));
             // The curve, either x3y+y3x for stable pools, or x*y for volatile pools
-            if (_k(_balance0, _balance1) < _k(_reserve0, _reserve1)) revert K();
+            if (PoolLibrary.dispatchK(_balance0, _balance1, decimals0, decimals1, stable)
+                < PoolLibrary.dispatchK(_reserve0, _reserve1, decimals0, decimals1, stable)) {
+                revert K();
+            }
         }
 
         _update(_balance0, _balance1, _reserve0, _reserve1);
@@ -380,58 +384,6 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         _update(IERC20(token0).balanceOf(address(this)), IERC20(token1).balanceOf(address(this)), reserve0, reserve1);
     }
 
-    function _f(uint256 x0, uint256 y) internal pure returns (uint256) {
-        uint256 _a = (x0 * y) / 1e18;
-        uint256 _b = ((x0 * x0) / 1e18 + (y * y) / 1e18);
-        return (_a * _b) / 1e18;
-    }
-
-    function _d(uint256 x0, uint256 y) internal pure returns (uint256) {
-        return (3 * x0 * ((y * y) / 1e18)) / 1e18 + ((((x0 * x0) / 1e18) * x0) / 1e18);
-    }
-
-    function _get_y(uint256 x0, uint256 xy, uint256 y) internal view returns (uint256) {
-        for (uint256 i = 0; i < 255; i++) {
-            uint256 k = _f(x0, y);
-            if (k < xy) {
-                // there are two cases where dy == 0
-                // case 1: The y is converged and we find the correct answer
-                // case 2: _d(x0, y) is too large compare to (xy - k) and the rounding error
-                //         screwed us.
-                //         In this case, we need to increase y by 1
-                uint256 dy = ((xy - k) * 1e18) / _d(x0, y);
-                if (dy == 0) {
-                    if (k == xy) {
-                        // We found the correct answer. Return y
-                        return y;
-                    }
-                    if (_k(x0, y + 1) > xy) {
-                        // If _k(x0, y + 1) > xy, then we are close to the correct answer.
-                        // There's no closer answer than y + 1
-                        return y + 1;
-                    }
-                    dy = 1;
-                }
-                y = y + dy;
-            } else {
-                uint256 dy = ((k - xy) * 1e18) / _d(x0, y);
-                if (dy == 0) {
-                    if (k == xy || _f(x0, y - 1) < xy) {
-                        // Likewise, if k == xy, we found the correct answer.
-                        // If _f(x0, y - 1) < xy, then we are close to the correct answer.
-                        // There's no closer answer than "y"
-                        // It's worth mentioning that we need to find y where f(x0, y) >= xy
-                        // As a result, we can't return y - 1 even it's closer to the correct answer
-                        return y;
-                    }
-                    dy = 1;
-                }
-                y = y - dy;
-            }
-        }
-        revert("!y");
-    }
-
     function getAmountOut(uint256 amountIn, address tokenIn) external view returns (uint256) {
         (uint256 _reserve0, uint256 _reserve1) = (reserve0, reserve1);
         amountIn -= (amountIn * IPoolFactory(factory).getFee(address(this), stable)) / 10000; // remove fee from amount received
@@ -445,12 +397,12 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         uint256 _reserve1
     ) internal view returns (uint256) {
         if (stable) {
-            uint256 xy = _k(_reserve0, _reserve1);
+            uint256 xy = PoolLibrary.stableK(_reserve0, _reserve1, decimals0, decimals1);
             _reserve0 = (_reserve0 * 1e18) / decimals0;
             _reserve1 = (_reserve1 * 1e18) / decimals1;
             (uint256 reserveA, uint256 reserveB) = tokenIn == token0 ? (_reserve0, _reserve1) : (_reserve1, _reserve0);
             amountIn = tokenIn == token0 ? (amountIn * 1e18) / decimals0 : (amountIn * 1e18) / decimals1;
-            uint256 y = reserveB - _get_y(amountIn + reserveA, xy, reserveB);
+            uint256 y = reserveB - PoolLibrary.get_y(amountIn + reserveA, xy, reserveB, decimals0, decimals1);
             return (y * (tokenIn == token0 ? decimals1 : decimals0)) / 1e18;
         } else {
             (uint256 reserveA, uint256 reserveB) = tokenIn == token0 ? (_reserve0, _reserve1) : (_reserve1, _reserve0);
@@ -458,17 +410,17 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         }
     }
 
-    function _k(uint256 x, uint256 y) internal view returns (uint256) {
-        if (stable) {
-            uint256 _x = (x * 1e18) / decimals0;
-            uint256 _y = (y * 1e18) / decimals1;
-            uint256 _a = (_x * _y) / 1e18;
-            uint256 _b = ((_x * _x) / 1e18 + (_y * _y) / 1e18);
-            return (_a * _b) / 1e18; // x3y+y3x >= k
-        } else {
-            return x * y; // xy >= k
-        }
-    }
+    // function _k(uint256 x, uint256 y) internal view returns (uint256) {
+    //     if (stable) {
+    //         uint256 _x = (x * 1e18) / decimals0;
+    //         uint256 _y = (y * 1e18) / decimals1;
+    //         uint256 _a = (_x * _y) / 1e18;
+    //         uint256 _b = ((_x * _x) / 1e18 + (_y * _y) / 1e18);
+    //         return (_a * _b) / 1e18; // x3y+y3x >= k
+    //     } else {
+    //         return x * y; // xy >= k
+    //     }
+    // }
 
     /*
     @dev OZ inheritance overrides

@@ -75,6 +75,7 @@ describe("Router", () => {
 
     describe("liquidity", async () => {
         let poolXY: Pool
+        let poolXYVolatile: Pool
 
         before(async () => {
             await createSnapshot()
@@ -85,6 +86,14 @@ describe("Router", () => {
             await tokenX.mint(poolAddressXY, ethers.parseEther("100"))
             await tokenY.mint(poolAddressXY, ethers.parseEther("100"))
             await poolXY.mint(userOne)
+            await helpers.time.mineBlocks(2)
+
+            let poolAddressXYVolatile = await poolFactory.createPool.staticCall(xAddress, yAddress, ethers.Typed.bool(false))
+            await poolFactory.createPool(xAddress, yAddress, ethers.Typed.bool(false))
+            poolXYVolatile = await ethers.getContractAt("Pool", poolAddressXYVolatile)
+            await tokenX.mint(poolAddressXYVolatile, ethers.parseEther("100"))
+            await tokenY.mint(poolAddressXYVolatile, ethers.parseEther("100"))
+            await poolXYVolatile.mint(userOne)
             await helpers.time.mineBlocks(2)
         })
 
@@ -131,21 +140,25 @@ describe("Router", () => {
             expect(await poolXY.balanceOf(userTwo.address)).to.eq(ethers.parseEther("5"))
         })
 
-        // it("swaps", async () => {
-        //     await tokenX.connect(userTwo).approve(routerAddress, ethers.parseEther("20"))
-        //     await tokenY.connect(userTwo).approve(routerAddress, ethers.parseEther("5"))
-        //     await router.connect(userTwo).addLiquidity(
-        //         xAddress,
-        //         yAddress,
-        //         true,
-        //         ethers.parseEther("20"),
-        //         ethers.parseEther("5"),
-        //         ethers.parseEther("5"),
-        //         ethers.parseEther("5"),
-        //         userTwo.address,
-        //         0
-        //     )
-        // })
+        it("swaps", async () => {
+            await tokenX.connect(userTwo).approve(routerAddress, ethers.parseEther("20"))
+            await tokenY.connect(userTwo).approve(routerAddress, ethers.parseEther("5"))
+            await helpers.time.mineBlocks(2)
+
+            await router.connect(userTwo).addLiquidity(
+                xAddress,
+                yAddress,
+                false,
+                ethers.parseEther("20"),
+                ethers.parseEther("5"),
+                ethers.parseEther("5"),
+                ethers.parseEther("5"),
+                userTwo.address,
+                0
+            )
+        })
+
+
     })
 
     describe("swap tokens", async () => {
@@ -366,6 +379,60 @@ describe("Router", () => {
                 userTwo.address,
                 false
             )
+        })
+
+        it("zaps in with different route lengths", async () => {
+            let stableXY = {from: xAddress, to: yAddress, stable: true, factory: poolFactoryAddress}
+            let volatileYZ = {from: yAddress, to: zAddress, stable: false, factory: poolFactoryAddress}
+            let zapInPool = {
+                tokenA: xAddress,
+                tokenB: zAddress,
+                stable: false,
+                factory: poolFactoryAddress,
+                amountOutMinA: ethers.parseEther("0.9"),
+                amountOutMinB: ethers.parseEther("1.9"),
+                amountAMin: ethers.parseEther("0.9"),
+                amountBMin: ethers.parseEther("1.9"),
+            }
+
+            await tokenX.connect(userTwo).approve(routerAddress, ethers.parseEther("3"))
+            await router.connect(userTwo).zapIn(
+                xAddress,
+                ethers.parseEther("1"),
+                ethers.parseEther("1"),
+                zapInPool,
+                [],
+                [stableXY, volatileYZ],
+                userTwo.address,
+                false
+            )
+        })
+
+        it("will not zap in when minimums aren't met", async () => {
+            let stableXY = {from: xAddress, to: yAddress, stable: true, factory: poolFactoryAddress}
+            let volatileXZ = {from: xAddress, to: zAddress, stable: false, factory: poolFactoryAddress}
+            let zapInPool = {
+                tokenA: yAddress,
+                tokenB: zAddress,
+                stable: false,
+                factory: poolFactoryAddress,
+                amountOutMinA: ethers.parseEther("0.9"),
+                amountOutMinB: ethers.parseEther("2.1"),
+                amountAMin: ethers.parseEther("0.9"),
+                amountBMin: ethers.parseEther("2.1"),
+            }
+
+            await tokenX.connect(userTwo).approve(routerAddress, ethers.parseEther("3"))
+            await expect(router.connect(userTwo).zapIn(
+                xAddress,
+                ethers.parseEther("1"),
+                ethers.parseEther("1"),
+                zapInPool,
+                [stableXY],
+                [volatileXZ],
+                userTwo.address,
+                false
+            )).to.be.reverted
         })
     })
 })

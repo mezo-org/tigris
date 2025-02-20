@@ -10,6 +10,9 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
+import {PoolLibrary} from "./libraries/PoolLibrary.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+
 import "hardhat/console.sol";
 
 
@@ -129,9 +132,7 @@ contract Router is IRouter {
         uint256 amountADesired,
         uint256 amountBDesired
     ) public view returns (uint256 amountA, uint256 amountB, uint256 liquidity) {
-        PoolInfo memory pool = _poolInfo(tokenA, tokenB, stable, _factory);
-        PoolTokens memory reserves = _getReserveInfo(pool);
-        PoolTokens memory quote = _quoteAddLiquidity(pool, reserves, amountADesired, amountBDesired);
+        PoolTokens memory quote = _quoteAddLiquidity(tokenA, tokenB, stable, _factory, amountADesired, amountBDesired);
         return (quote.amountA, quote.amountB, quote.liquidity);
     }
 
@@ -168,40 +169,41 @@ contract Router is IRouter {
         address to,
         uint256 deadline
     ) external payable expires(deadline) returns (uint256 amountToken, uint256 amountBTC, uint256 liquidity) {
+        IBTC(btc).deposit{value: msg.value}();
+        (amountToken, amountBTC, liquidity) = _addLiquidity(token, btc, stable, amountTokenDesired, msg.value, amountTokenMin, amountBTCMin, to, address(this));
+        // // uint256 amountBTCDesired = msg.value;
+        // // XXX: more expensive this way
+        // uint256 quotedLiquidity;
+        // {
+        //     (amountToken, amountBTC, quotedLiquidity) = quoteAddLiquidity(
+        //         token,
+        //         btc,
+        //         stable,
+        //         defaultFactory,
+        //         amountTokenDesired,
+        //         msg.value
+        //     );
+        //     // The amount A minimum exceeds the amount A this liquidity addition would take.
+        //     // XXX: This technically means that amount B is too low comparatively.
+        //     if (amountToken < amountTokenMin) revert InsufficientAmountBDesired();
+        //     if (amountBTC < amountBTCMin) revert InsufficientAmountADesired();
+        // }
         
-        // uint256 amountBTCDesired = msg.value;
-        // XXX: more expensive this way
-        uint256 quotedLiquidity;
-        {
-            (amountToken, amountBTC, quotedLiquidity) = quoteAddLiquidity(
-                token,
-                btc,
-                stable,
-                defaultFactory,
-                amountTokenDesired,
-                msg.value
-            );
-            // The amount A minimum exceeds the amount A this liquidity addition would take.
-            // XXX: This technically means that amount B is too low comparatively.
-            if (amountToken < amountTokenMin) revert InsufficientAmountBDesired();
-            if (amountBTC < amountBTCMin) revert InsufficientAmountADesired();
-        }
         
-        
-        // Transfer tokens from sender to the contract.
-        // XXX: take tokens from `to` or `msg.sender`?
-        IBTC(btc).deposit{value: amountBTC}();
-        // XXX: Underspecified factory
-        address pool = poolFor(token, btc, stable, defaultFactory);
-        IBTC(btc).transfer(pool, amountBTC);
-        IERC20(token).transferFrom(msg.sender, pool, amountToken);
-        if (addressesNotOrdered(token, btc)) {
-            IPool(pool).swap(amountBTC, amountToken, pool, bytes(""));
-        } else {
-            IPool(pool).swap(amountToken, amountBTC, pool, bytes(""));
-        }
-        liquidity = IPool(pool).mint(to);
-        return (amountToken, amountBTC, liquidity);
+        // // Transfer tokens from sender to the contract.
+        // // XXX: take tokens from `to` or `msg.sender`?
+        // IBTC(btc).deposit{value: amountBTC}();
+        // // XXX: Underspecified factory
+        // address pool = poolFor(token, btc, stable, defaultFactory);
+        // IBTC(btc).transfer(pool, amountBTC);
+        // IERC20(token).transferFrom(msg.sender, pool, amountToken);
+        // if (addressesNotOrdered(token, btc)) {
+        //     IPool(pool).swap(amountBTC, amountToken, pool, bytes(""));
+        // } else {
+        //     IPool(pool).swap(amountToken, amountBTC, pool, bytes(""));
+        // }
+        // liquidity = IPool(pool).mint(to);
+        // return (amountToken, amountBTC, liquidity);
     }
 
     // **** REMOVE LIQUIDITY ****
@@ -424,6 +426,7 @@ contract Router is IRouter {
             );
             amountA = amountsA[routesA.length - 1];
         } else {
+            IERC20(tokenIn).transferFrom(msg.sender, address(this), amountInA);
             amountA = amountInA;
         }
         uint256 amountB;
@@ -436,6 +439,7 @@ contract Router is IRouter {
             );
             amountB = amountsB[routesB.length - 1];
         } else {
+            IERC20(tokenIn).transferFrom(msg.sender, address(this), amountInB);
             amountB = amountInB;
         }
         _addLiquidity(
@@ -638,59 +642,170 @@ contract Router is IRouter {
         return (PoolTokens(reserveA, reserveB, liquidity));
     }
 
-    function quoteLiquiditySwap(
-        uint256 amountLimiting,
-        uint256 amountMatched,
-        uint256 amountNonLimiting,
-        address pool,
-        address surplusToken
-    ) internal view returns (uint256 postSwapIn, uint256 postSwapOut) {
-        uint256 amountSurplus = amountNonLimiting - amountMatched;
-        if (amountSurplus == 0) {
-            return (amountNonLimiting, amountLimiting);
-        }
-        uint256 fullSwapAmount = IPool(pool).getAmountOut(amountSurplus, surplusToken);
-        uint256 swapRate = (fullSwapAmount * 1e18) / amountSurplus;
-        uint256 inRate = (amountLimiting * 1e18) / amountMatched;
-        uint256 swapFraction = (inRate * 1e18) / (swapRate + inRate);
-        uint256 swapIn = (amountSurplus * swapFraction) / 1e18;
-        // uint256 swapOut = (swapIn * swapRate) / 1e18;
-        uint256 swapOut = IPool(pool).getAmountOut(swapIn, surplusToken);
-        return (amountNonLimiting - swapIn, amountLimiting + swapOut);
-    }
-
     function _quoteAddLiquidity(
-        PoolInfo memory pool,
-        PoolTokens memory reserves,
+        address tokenA,
+        address tokenB,
+        bool stable,
+        address _factory,
         uint256 amountADesired,
         uint256 amountBDesired
     ) internal view returns (PoolTokens memory) {
-        uint256 liquidityA = (amountADesired * reserves.liquidity) / reserves.amountA;
-        uint256 liquidityB = (amountBDesired * reserves.liquidity) / reserves.amountB;
-        // bool minIsA = liquidityA < liquidityB;
-        uint256 amountA;
-        uint256 amountB;
-        uint256 liquidity;
-        if (liquidityA < liquidityB) {
-            (amountB, amountA) = quoteLiquiditySwap(
-                amountADesired,
-                (liquidityA * reserves.amountB) / reserves.liquidity,
-                amountBDesired,
-                pool.poolAddress,
-                pool.tokenB
-            );
-            liquidity = (amountA * reserves.liquidity) / reserves.amountA;
+        PoolInfo memory pool = _poolInfo(tokenA, tokenB, stable, _factory);
+        PoolTokens memory reserves = _getReserveInfo(pool);
+        uint256 amountAQuoted;
+        uint256 amountBQuoted;
+        uint256 minSwapFraction = 1e18 / 1000; // swap if the amount is off by at least 0.1%; otherwise do even-handed deposit
+        if (stable) {
+            (amountAQuoted, amountBQuoted) = _quoteAddLiquidityStable(pool, reserves, amountADesired, amountBDesired, minSwapFraction);
         } else {
-            (amountA, amountB) = quoteLiquiditySwap(
-                amountBDesired,
-                (liquidityB * reserves.amountA) / reserves.liquidity,
-                amountADesired,
-                pool.poolAddress,
-                pool.tokenA
-            );
-            liquidity = (amountA * reserves.liquidity) / reserves.amountB;
+            (amountAQuoted, amountBQuoted) = _quoteAddLiquidityVolatile(pool, reserves, amountADesired, amountBDesired, minSwapFraction);
         }
-        return (PoolTokens(amountA, amountB, liquidity));
+        if (amountAQuoted > amountADesired) {
+            // we swap B for A
+            reserves.amountA = reserves.amountA + amountADesired - amountAQuoted;
+            uint256 amountInB = amountBDesired - amountBQuoted;
+            uint256 swapFee = (amountInB * IPoolFactory(_factory).getFee(pool.poolAddress, stable)) / 10000;
+            reserves.amountB = reserves.amountB + amountInB - swapFee;
+            uint256 liquidity = _quoteAddLiquidityNoSwap(reserves, amountAQuoted, amountBQuoted);
+            // The swap takes in the full amount of both inputs
+            return PoolTokens(amountADesired, amountBDesired, liquidity);
+        } else if (amountBQuoted > amountBDesired) {
+            // we swap A for B
+            reserves.amountB = reserves.amountB + amountBDesired - amountBQuoted;
+            uint256 amountInA = amountADesired - amountAQuoted;
+            uint256 swapFee = (amountInA * IPoolFactory(_factory).getFee(pool.poolAddress, stable)) / 10000;
+            reserves.amountA = reserves.amountA + amountInA - swapFee;
+            uint256 liquidity = _quoteAddLiquidityNoSwap(reserves, amountAQuoted, amountBQuoted);
+            // The swap takes in the full amount of both inputs
+            return PoolTokens(amountADesired, amountBDesired, liquidity);
+        } else {
+            // we are not swapping, so for an efficient even-handed addition, we may output lower quoted amounts
+            uint256 liquidity = _quoteAddLiquidityNoSwap(reserves, amountAQuoted, amountBQuoted);
+            return PoolTokens(amountAQuoted, amountBQuoted, liquidity);
+        }
+    }
+
+    // min swap fraction: if the calculated difference in the token amounts vs. ideal
+    // distribution is greater than this fraction (expressed with 1e18 multiplier)
+    // quote a swap; otherwise quote an even-handed addition
+    function _quoteAddLiquidityVolatile(
+        PoolInfo memory pool,
+        PoolTokens memory reserves,
+        uint256 amountADesired,
+        uint256 amountBDesired,
+        uint256 minSwapFraction
+    ) internal view returns (uint256 amountA, uint256 amountB) {
+        uint256 postA = amountADesired + reserves.amountA;
+        uint256 postB = amountBDesired + reserves.amountB;
+        uint256 xy = PoolLibrary.volatileK(reserves.amountA, reserves.amountB); // x * y
+        uint256 r = postA * (1e18) / postB; // ratio of A / B
+        uint256 a2 = xy * r / 1e18;
+        uint256 a = Math.sqrt(a2);
+        uint256 b = xy / a;
+        if (a > reserves.amountA) {
+            // trade A for B
+            uint256 deltaA = a - reserves.amountA;
+            if (deltaA < (amountADesired * minSwapFraction / 1e18)) {
+                return optimise(amountADesired, amountBDesired, reserves);
+            } else {
+                uint256 deltaB = reserves.amountB - b;
+                uint256 quoteB = IPool(pool.poolAddress).getAmountOut(deltaA, pool.tokenA);
+                console.log(
+                    "Calculated B diff: %s, quoted: %s",
+                    deltaB,
+                    quoteB
+                );
+                return (amountADesired - deltaA, amountBDesired + quoteB);
+            }
+        } else if (b > reserves.amountB) {
+            // trade B for A
+            uint256 deltaB = b - reserves.amountB;
+            if (deltaB < (amountBDesired * minSwapFraction / 1e18)) {
+                return optimise(amountADesired, amountBDesired, reserves);
+            } else {
+                uint256 deltaA = reserves.amountA - a;
+                uint256 quoteA = IPool(pool.poolAddress).getAmountOut(deltaB, pool.tokenB);
+                console.log(
+                    "Calculated A diff: %s, quoted: %s",
+                    deltaA,
+                    quoteA
+                );
+                return (amountADesired + quoteA, amountBDesired - deltaB);
+            }
+        } else {
+            return (amountADesired, amountBDesired);
+        }
+    }
+
+    function _quoteAddLiquidityStable(
+        PoolInfo memory pool,
+        PoolTokens memory reserves,
+        uint256 amountADesired,
+        uint256 amountBDesired,
+        uint256 minSwapFraction
+    ) internal view returns (uint256 amountA, uint256 amountB) {
+        uint256 decimalsA = 10 ** ERC20(pool.tokenA).decimals();
+        uint256 decimalsB = 10 ** ERC20(pool.tokenB).decimals();
+        uint256 k = PoolLibrary.stableK(reserves.amountA, reserves.amountB, decimalsA, decimalsB);
+        // y^3x + x^3y
+        // when y = rx, this is r^3 x^3 x + x^3 rx = r^3 x^4 + r x^4 = (r + r^3) x^4
+        uint256 postA = ((amountADesired + reserves.amountA) * 1e18) / decimalsA;
+        uint256 postB = ((amountBDesired + reserves.amountB) * 1e18) / decimalsB;
+        uint256 r = postB * (1e18) / postA; // ratio of A / B
+        uint256 r3r = (((r * r) / 1e18) * r) / 1e18 + r;
+        uint256 a4 = k * 1e18 / r3r;
+        // XXX: check the math
+        uint256 a2 = Math.sqrt(a4 * 1e18);
+        uint256 _a = Math.sqrt(a2 * 1e18);
+        uint256 _b = r * _a / 1e18;
+        uint256 a = _a * decimalsA / 1e18;
+        uint256 b = _b * decimalsB / 1e18;
+        if (a > reserves.amountA) {
+            // trade A for B
+            uint256 deltaA = a - reserves.amountA;
+            if (deltaA < (amountADesired * minSwapFraction / 1e18)) {
+                return optimise(amountADesired, amountBDesired, reserves);
+            }
+            uint256 deltaB = reserves.amountB - b;
+            uint256 quoteB = IPool(pool.poolAddress).getAmountOut(deltaA, pool.tokenA);
+            console.log(
+                "Calculated B diff: %s, quoted: %s",
+                deltaB,
+                quoteB
+            );
+            return (amountADesired - deltaA, amountBDesired + quoteB);
+        } else if (b > reserves.amountB) {
+            // trade B for A
+            uint256 deltaB = b - reserves.amountB;
+            if (deltaB < (amountBDesired * minSwapFraction / 1e18)) {
+                return optimise(amountADesired, amountBDesired, reserves);
+            }
+            uint256 deltaA = reserves.amountA - a;
+            uint256 quoteA = IPool(pool.poolAddress).getAmountOut(deltaB, pool.tokenB);
+            console.log(
+                "Calculated A diff: %s, quoted: %s",
+                deltaA,
+                quoteA
+            );
+            return (amountADesired + quoteA, amountBDesired - deltaB);
+        } else {
+            return (amountADesired, amountBDesired);
+        }
+    }
+
+    function _quoteAddLiquidityNoSwap(
+        PoolTokens memory reserves,
+        uint256 amountA,
+        uint256 amountB
+    ) internal pure returns (uint256) {
+        uint256 liquidityA = (amountA * reserves.liquidity) / reserves.amountA;
+        uint256 liquidityB = (amountB * reserves.liquidity) / reserves.amountB;
+        console.log(
+            "Quoted liquidity A: %s, B: %s",
+            liquidityA,
+            liquidityB
+        );
+        return (Math.min(liquidityA, liquidityB));
     }
 
     function _quoteRemoveLiquidity(
@@ -794,30 +909,86 @@ contract Router is IRouter {
         address to,
         address from
     ) internal returns (uint256 amountA, uint256 amountB, uint256 liquidity) {
-        // XXX: more expensive this way. Optimisations possible.
-        uint256 quotedLiquidity;
-        {
-            (amountA, amountB, quotedLiquidity) = quoteAddLiquidity(
-                tokenA,
-                tokenB,
-                stable,
-                defaultFactory,
-                amountADesired,
-                amountBDesired
-            );
-            // The amount A minimum exceeds the amount A this liquidity addition would take.
-            // XXX: This technically means that amount B is too low comparatively.
-            if (amountA < amountAMin) revert InsufficientAmountBDesired();
-            if (amountB < amountBMin) revert InsufficientAmountADesired();
-        }
-        address pool = poolFor(tokenA, tokenB, stable, defaultFactory);
-        if (from == address(this)) {
-            IERC20(tokenA).transfer(pool, amountADesired);
-            IERC20(tokenB).transfer(pool, amountBDesired);
+        PoolInfo memory pool = _poolInfo(tokenA, tokenB, stable, defaultFactory);
+        PoolTokens memory reserves = _getReserveInfo(pool);
+        uint256 amountAQuoted;
+        uint256 amountBQuoted;
+        uint256 minSwapFraction = 1e18 / 1000; // swap if the amount is off by at least 0.1%; otherwise do even-handed deposit
+        if (stable) {
+            (amountAQuoted, amountBQuoted) = _quoteAddLiquidityStable(pool, reserves, amountADesired, amountBDesired, minSwapFraction);
         } else {
-            IERC20(tokenA).transferFrom(from, pool, amountADesired);
-            IERC20(tokenB).transferFrom(from, pool, amountBDesired);
+            (amountAQuoted, amountBQuoted) = _quoteAddLiquidityVolatile(pool, reserves, amountADesired, amountBDesired, minSwapFraction);
         }
+        // The amount A minimum exceeds the amount A this liquidity addition would take.
+        // XXX: This technically means that amount B is too low comparatively.
+        // if (amountAQuoted < amountAMin) revert InsufficientAmountBDesired();
+        // if (amountBQuoted < amountBMin) revert InsufficientAmountADesired();
+
+        console.log(
+            "Desired A: %s, B: %s",
+            amountADesired,
+            amountBDesired
+        );
+        console.log(
+            "Quoted A: %s, B: %s",
+            amountAQuoted,
+            amountBQuoted
+        );
+        if (amountAQuoted > amountADesired) {
+            // trade B for A
+            uint256 deltaB = amountBDesired - amountBQuoted;
+            if (from == address(this)) {
+                IERC20(tokenB).transfer(pool.poolAddress, deltaB);
+            } else {
+                IERC20(tokenB).transferFrom(from, pool.poolAddress, deltaB);
+                IERC20(tokenB).transferFrom(from, address(this), amountBQuoted);
+                IERC20(tokenA).transferFrom(from, address(this), amountADesired);
+            }
+            uint256 deltaA = amountAQuoted - amountADesired;
+            (uint256 amount0Out, uint256 amount1Out) = addressesNotOrdered(tokenA, tokenB) ? (uint256(0), deltaA) : (deltaA, uint256(0));
+            IPool(pool.poolAddress).swap(amount0Out, amount1Out, address(this), bytes(""));
+            IERC20(tokenA).transfer(pool.poolAddress, amountAQuoted);
+            IERC20(tokenB).transfer(pool.poolAddress, amountBQuoted);
+            amountA = amountADesired;
+            amountB = amountBDesired;
+        } else if (amountBQuoted > amountBDesired) {
+            // trade A for B
+            uint256 deltaA = amountADesired - amountAQuoted;
+            if (from == address(this)) {
+                IERC20(tokenA).transfer(pool.poolAddress, deltaA);
+            } else {
+                IERC20(tokenA).transferFrom(from, pool.poolAddress, deltaA);
+                IERC20(tokenA).transferFrom(from, address(this), amountAQuoted);
+                IERC20(tokenB).transferFrom(from, address(this), amountBDesired);
+            }
+            uint256 deltaB = amountBQuoted - amountBDesired;
+            (uint256 amount0Out, uint256 amount1Out) = addressesNotOrdered(tokenA, tokenB) ? (deltaB, uint256(0)) : (uint256(0), deltaB);
+            IPool(pool.poolAddress).swap(amount0Out, amount1Out, address(this), bytes(""));
+            IERC20(tokenA).transfer(pool.poolAddress, amountAQuoted);
+            IERC20(tokenB).transfer(pool.poolAddress, amountBQuoted);
+            amountA = amountADesired;
+            amountB = amountBDesired;
+        } else {
+            if (from == address(this)) {
+                IERC20(tokenA).transfer(pool.poolAddress, amountAQuoted);
+                IERC20(tokenB).transfer(pool.poolAddress, amountBQuoted);
+            } else {
+                IERC20(tokenA).transferFrom(from, pool.poolAddress, amountAQuoted);
+                IERC20(tokenB).transferFrom(from, pool.poolAddress, amountBQuoted);
+            }
+            amountA = amountAQuoted;
+            amountB = amountBQuoted;
+        }
+
+
+        // address pool = poolFor(tokenA, tokenB, stable, defaultFactory);
+        // if (from == address(this)) {
+        //     IERC20(tokenA).transfer(pool.poolAddress, amountADesired);
+        //     IERC20(tokenB).transfer(pool.poolAddress, amountBDesired);
+        // } else {
+        //     IERC20(tokenA).transferFrom(from, pool.poolAddress, amountADesired);
+        //     IERC20(tokenB).transferFrom(from, pool.poolAddress, amountBDesired);
+        // }
         // if (amountA != amountADesired || amountB != amountBDesired) {
         //     if (addressesNotOrdered(tokenA, tokenB)) {
         //         IPool(pool).swap(amountB, amountA, address(this), bytes(""));
@@ -827,7 +998,7 @@ contract Router is IRouter {
         //     IERC20(tokenA).transfer(pool, amountA);
         //     IERC20(tokenB).transfer(pool, amountB);
         // }
-        liquidity = IPool(pool).mint(to);
+        liquidity = IPool(pool.poolAddress).mint(to);
         return (amountA, amountB, liquidity);
     }
 
@@ -876,13 +1047,13 @@ contract Router is IRouter {
         uint256 amountAMin,
         uint256 amountBMin
     ) {
-        PoolInfo memory pool = _getPoolInfo(poolSeed);
-        PoolTokens memory reserves = _getReserveInfo(pool);
+        // PoolInfo memory pool = _getPoolInfo(poolSeed);
+        // PoolTokens memory reserves = _getReserveInfo(pool);
         uint256[] memory amountsA = getAmountsOut(amountInA, routesA);
         amountOutMinA = applyCompoundSlippage(amountsA[routesA.length - 1], 10, routesA.length);
         uint256[] memory amountsB = getAmountsOut(amountInB, routesB);
         amountOutMinB = applyCompoundSlippage(amountsB[routesB.length - 1], 10, routesB.length);
-        PoolTokens memory quote = _quoteAddLiquidity(pool, reserves, amountOutMinA, amountOutMinB);
+        PoolTokens memory quote = _quoteAddLiquidity(poolSeed.from, poolSeed.to, poolSeed.stable, poolSeed.factory, amountOutMinA, amountOutMinB);
         amountAMin = applySlippage(quote.amountA, 10);
         amountBMin = applySlippage(quote.amountB, 10);
         return (amountOutMinA, amountOutMinB, amountAMin, amountBMin);
@@ -963,13 +1134,33 @@ contract Router is IRouter {
 
     function validateRoute(Route[] calldata routes) internal view returns (bool) {
         uint256 steps = routes.length;
-        if (steps == 0) return false;
+        if (steps == 0) return true;
         address previousToken = routes[0].from;
         for (uint256 i = 0; i < steps; i++) {
             if (routes[i].from != previousToken) return false;
             previousToken = routes[i].to;
         }
         return true;
+    }
+
+    function optimise(
+        uint256 amountADesired,
+        uint256 amountBDesired,
+        PoolTokens memory reserves
+    ) internal pure returns (uint256 amountA, uint256 amountB) {
+        uint256 optimalB = amountADesired * reserves.amountB / reserves.amountA;
+        uint256 optimalA = amountBDesired * reserves.amountA / reserves.amountB;
+        console.log(
+            "Desired A: %s, B: %s",
+            amountADesired,
+            amountBDesired
+        );
+        console.log(
+            "Optimal A: %s, B: %s",
+            optimalA,
+            optimalB
+        );
+        return (Math.min(amountADesired, optimalA), Math.min(amountBDesired, optimalB));
     }
 
     // XXX: Assume timestamp here. Trivial change for block number.
