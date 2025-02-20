@@ -11,14 +11,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await execute(
     "VeBTCVoter",
     { from: deployer, log: true, waitConfirmations: 1 },
-    "setGovernor",
+    "setEpochGovernor",
     governance,
   )
 
   await execute(
     "VeBTCVoter",
-    { from: governance, log: true, waitConfirmations: 1 },
-    "setEpochGovernor",
+    { from: deployer, log: true, waitConfirmations: 1 },
+    "setGovernor",
     governance,
   )
 
