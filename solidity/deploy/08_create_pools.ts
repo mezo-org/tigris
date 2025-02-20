@@ -18,7 +18,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const pool = await poolFactory.getPair(btcAddress, musdAddress, false)
 
   if (pool !== ethers.ZeroAddress) {
-    log(`BTC-mUSD pool already deployed at is ${pool}`)
+    log(`BTC-mUSD pool already deployed at ${pool}`)
   } else {
     log("Creating BTC-mUSD pool...")
 
