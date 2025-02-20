@@ -26,6 +26,7 @@ const config: HardhatUserConfig = {
         enabled: true,
         runs: 100,
       },
+      evmVersion: "london", // latest EVM version supported on Matsnet is London
     },
   },
   typechain: {
@@ -62,6 +63,7 @@ const config: HardhatUserConfig = {
     deployer: 0,
     governance: {
       default: 0,
+      matsnet: "0x6e80164ea60673d64d5d6228beb684a1274bb017", // testertesting.eth
       mainnet: "0x98d8899c3030741925be630c710a98b57f397c7a",
     },
   },
