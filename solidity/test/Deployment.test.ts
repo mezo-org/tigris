@@ -5,13 +5,16 @@ import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers"
 import { expect } from "chai"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
 import {
+  EpochGovernor,
   ERC20,
   FactoryRegistry,
+  FeeSplitter,
   GaugeFactory,
   ManagedRewardsFactory,
   MezoForwarder,
   Pool,
   PoolFactory,
+  RewardsDistributor,
   VeBTC,
   Voter,
   VotingRewardsFactory,
@@ -19,7 +22,6 @@ import {
 import deployMezodrome from "./fixtures/deployMezodrome"
 
 describe("Mezodrome deployment", () => {
-  let deployer: SignerWithAddress
   let governance: SignerWithAddress
 
   let btc: ERC20
@@ -32,10 +34,12 @@ describe("Mezodrome deployment", () => {
   let forwarder: MezoForwarder
   let veBTC: VeBTC
   let veBTCVoter: Voter
+  let rewardsDistributor: RewardsDistributor
+  let feeSplitter: FeeSplitter
+  let epochGovernor: EpochGovernor
 
   before(async () => {
     ;({
-      deployer,
       governance,
       btc,
       poolImplementation,
@@ -47,6 +51,9 @@ describe("Mezodrome deployment", () => {
       forwarder,
       veBTC,
       veBTCVoter,
+      rewardsDistributor,
+      feeSplitter,
+      epochGovernor,
     } = await loadFixture(deployMezodrome))
   })
 
@@ -108,6 +115,9 @@ describe("Mezodrome deployment", () => {
     )
 
     expect(await veBTC.voter()).to.equal(await veBTCVoter.getAddress())
+    expect(await veBTC.distributor()).to.equal(
+      await rewardsDistributor.getAddress(),
+    )
     expect(await veBTC.team()).to.equal(await governance.getAddress())
   })
 
@@ -129,8 +139,41 @@ describe("Mezodrome deployment", () => {
     expect(await veBTCVoter.emergencyCouncil()).to.equal(
       await governance.getAddress(),
     )
-    // TODO: Change this assertion once the minter role is properly set.
-    //       For now, assert it's still the deployer.
-    expect(await veBTCVoter.minter()).to.equal(await deployer.getAddress())
+    expect(await veBTCVoter.minter()).to.equal(await feeSplitter.getAddress())
+  })
+
+  it("should deploy RewardsDistributor", async () => {
+    expect(await rewardsDistributor.getAddress()).to.not.be.empty
+  })
+
+  it("should wire up RewardsDistributor", async () => {
+    expect(await rewardsDistributor.ve()).to.equal(await veBTC.getAddress())
+    expect(await rewardsDistributor.depositor()).to.equal(
+      await feeSplitter.getAddress(),
+    )
+  })
+
+  it("should deploy FeeSplitter", async () => {
+    expect(await feeSplitter.getAddress()).to.not.be.empty
+  })
+
+  it("should wire up FeeSplitter", async () => {
+    expect(await feeSplitter.voter()).to.equal(await veBTCVoter.getAddress())
+    expect(await feeSplitter.btc()).to.equal(await btc.getAddress())
+    expect(await feeSplitter.rewardsDistributor()).to.equal(
+      await rewardsDistributor.getAddress(),
+    )
+  })
+
+  it("should deploy EpochGovernor", async () => {
+    expect(await epochGovernor.getAddress()).to.not.be.empty
+  })
+
+  it("should wire up EpochGovernor", async () => {
+    expect(await epochGovernor.isTrustedForwarder(forwarder)).to.be.true
+    expect(await epochGovernor.token()).to.equal(await veBTC.getAddress())
+    expect(await epochGovernor.minter()).to.equal(
+      await feeSplitter.getAddress(),
+    )
   })
 })
