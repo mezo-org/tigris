@@ -8,7 +8,6 @@ import "./Base.sol";
 import {IPool, Pool} from "contracts/Pool.sol";
 import {TestOwner} from "utils/TestOwner.sol";
 import {MockERC20} from "utils/MockERC20.sol";
-import {MockWETH} from "utils/MockWETH.sol";
 
 abstract contract BaseTest is Base, TestOwner {
     uint256 constant USDC_1 = 1e6;
@@ -98,7 +97,6 @@ abstract contract BaseTest is Base, TestOwner {
         tokens.push(address(DAI));
         tokens.push(address(BTC));
         tokens.push(address(LR));
-        tokens.push(address(WETH));
 
         allowedManager = address(owner);
     }
@@ -149,7 +147,6 @@ abstract contract BaseTest is Base, TestOwner {
         vm.label(address(USDC), "USDC");
         vm.label(address(FRAX), "FRAX");
         vm.label(address(DAI), "DAI");
-        vm.label(address(WETH), "WETH");
         vm.label(address(LR), "Bribe Voting Reward");
         vm.label(address(factory), "Pool Factory");
         vm.label(address(factoryRegistry), "Factory Registry");
@@ -193,7 +190,6 @@ abstract contract BaseTest is Base, TestOwner {
     function deployCoins() public {
         USDC = IERC20(new MockERC20("USDC", "USDC", 6));
         DAI = IERC20(new MockERC20("DAI", "DAI", 18));
-        WETH = IWETH(new MockWETH());
         FRAX = new MockERC20("FRAX", "FRAX", 18);
         BTC = new MockERC20("BTC", "BTC", 18);
         LR = new MockERC20("LR", "LR", 18);
@@ -208,16 +204,8 @@ abstract contract BaseTest is Base, TestOwner {
     }
 
     function mintToken(address _token, address[] memory _accounts, uint256[] memory _amounts) public {
-        if (_token == address(WETH)) {
-            for (uint256 i = 0; i < _amounts.length; i++) {
-                vm.deal(_accounts[i], _amounts[i]);
-                vm.prank(address(_accounts[i]));
-                WETH.deposit{value: _amounts[i]}();
-            }
-        } else {
-            for (uint256 i = 0; i < _amounts.length; i++) {
-                deal(address(_token), _accounts[i], _amounts[i], true);
-            }
+        for (uint256 i = 0; i < _amounts.length; i++) {
+            deal(address(_token), _accounts[i], _amounts[i], true);
         }
     }
 

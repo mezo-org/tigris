@@ -22,7 +22,6 @@ import {IVotingEscrow, VotingEscrow} from "contracts/VotingEscrow.sol";
 import {ProtocolGovernor} from "contracts/ProtocolGovernor.sol";
 import {EpochGovernor} from "contracts/EpochGovernor.sol";
 import {SafeCastLibrary} from "contracts/libraries/SafeCastLibrary.sol";
-import {IWETH} from "contracts/interfaces/IWETH.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {SigUtils} from "test/utils/SigUtils.sol";
@@ -41,7 +40,6 @@ abstract contract Base is Script, Test {
     ///      Local deployment used by default
     Deployment deploymentType;
 
-    IWETH public WETH;
     IERC20 public BTC;
     address[] public tokens;
 
@@ -86,7 +84,7 @@ abstract contract Base is Script, Test {
             address(factoryRegistry),
             address(factory),
             address(voter),
-            address(WETH)
+            address(0)
         );
 
         // Setup minter
