@@ -54,7 +54,12 @@ contract Minter is IMinter {
         activePeriod = ((block.timestamp) / WEEK) * WEEK; // allow emissions this coming epoch
     }
 
-    /// @inheritdoc IMinter
+    /// @notice Calculates rebases according to the formula
+    ///         weekly * (ve.totalSupply / mezo.totalSupply) ^ 3 / 2
+    ///         Note that ve.totalSupply is the locked ve supply
+    ///         mezo.totalSupply is the total ve supply minted
+    /// @param _minted Amount of MEZO minted this epoch
+    /// @return _growth Rebases
     function calculateGrowth(
         uint256 _minted
     ) public view returns (uint256 _growth) {
