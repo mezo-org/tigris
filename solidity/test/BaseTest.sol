@@ -10,9 +10,9 @@ import {TestOwner} from "test/utils/TestOwner.sol";
 import {MockERC20} from "test/utils/MockERC20.sol";
 
 abstract contract BaseTest is Base, TestOwner {
-    uint256 constant USDC_1 = 1e6;
-    uint256 constant USDC_10K = 1e10; // 1e4 = 10K tokens with 6 decimals
-    uint256 constant USDC_100K = 1e11; // 1e5 = 100K tokens with 6 decimals
+    uint256 constant mUSD_1 = 1e6;
+    uint256 constant mUSD_10K = 1e10; // 1e4 = 10K tokens with 6 decimals
+    uint256 constant mUSD_100K = 1e11; // 1e5 = 100K tokens with 6 decimals
     uint256 constant TOKEN_1 = 1e18;
     uint256 constant TOKEN_10K = 1e22; // 1e4 = 10K tokens with 18 decimals
     uint256 constant TOKEN_100K = 1e23; // 1e5 = 100K tokens with 18 decimals
@@ -35,10 +35,9 @@ abstract contract BaseTest is Base, TestOwner {
     TestOwner owner4;
     TestOwner owner5;
     address[] owners;
-    IERC20 USDC;
-    IERC20 FRAX;
-    IERC20 DAI;
-    MockERC20 WEVE;
+    IERC20 mUSD;
+    IERC20 wtBTC;
+    IERC20 LIMPETH;
     MockERC20 LR; // late reward
 
     Pool pool;
@@ -92,9 +91,9 @@ abstract contract BaseTest is Base, TestOwner {
         mintToken(address(BTC), owners, amounts);
         mintToken(address(LR), owners, amounts);
 
-        tokens.push(address(USDC));
-        tokens.push(address(FRAX));
-        tokens.push(address(DAI));
+        tokens.push(address(mUSD));
+        tokens.push(address(wtBTC));
+        tokens.push(address(LIMPETH));
         tokens.push(address(BTC));
         tokens.push(address(LR));
 
@@ -114,17 +113,17 @@ abstract contract BaseTest is Base, TestOwner {
 
         deployPoolWithOwner(address(owner));
 
-        // USDC - FRAX stable
+        // BTC - mUSD unstable
         gauge = Gauge(voter.createGauge(address(factory), address(votingRewardsFactory), address(gaugeFactory), address(pool)));
         feesVotingReward = FeesVotingReward(voter.gaugeToFees(address(gauge)));
         bribeVotingReward = BribeVotingReward(voter.gaugeToBribe(address(gauge)));
 
-        // USDC - FRAX unstable
+        // mUSD - LIMPETH unstable
         gauge2 = Gauge(voter.createGauge(address(factory), address(votingRewardsFactory), address(gaugeFactory), address(pool2)));
         feesVotingReward2 = FeesVotingReward(voter.gaugeToFees(address(gauge2)));
         bribeVotingReward2 = BribeVotingReward(voter.gaugeToBribe(address(gauge2)));
 
-        // FRAX - DAI stable
+        // mUSD - wtBTC unstable
         gauge3 = Gauge(voter.createGauge(address(factory), address(votingRewardsFactory), address(gaugeFactory), address(pool3)));
         feesVotingReward3 = FeesVotingReward(voter.gaugeToFees(address(gauge3)));
         bribeVotingReward3 = BribeVotingReward(voter.gaugeToBribe(address(gauge3)));
@@ -145,9 +144,9 @@ abstract contract BaseTest is Base, TestOwner {
         vm.label(address(owner3), "Owner 3");
         vm.label(address(owner4), "Owner 4");
         vm.label(address(owner5), "Owner 5");
-        vm.label(address(USDC), "USDC");
-        vm.label(address(FRAX), "FRAX");
-        vm.label(address(DAI), "DAI");
+        vm.label(address(mUSD), "mUSD");
+        vm.label(address(wtBTC), "wtBTC");
+        vm.label(address(LIMPETH), "LIMPETH");
         vm.label(address(LR), "Bribe Voting Reward");
         vm.label(address(factory), "Pool Factory");
         vm.label(address(factoryRegistry), "Factory Registry");
@@ -190,18 +189,18 @@ abstract contract BaseTest is Base, TestOwner {
     }
 
     function deployCoins() public {
-        USDC = IERC20(new MockERC20("USDC", "USDC", 6));
-        DAI = IERC20(new MockERC20("DAI", "DAI", 18));
-        FRAX = new MockERC20("FRAX", "FRAX", 18);
+        mUSD = IERC20(new MockERC20("mUSD", "mUSD", 6));
+        LIMPETH = IERC20(new MockERC20("LIMPETH", "LIMPETH", 18));
+        wtBTC = new MockERC20("wtBTC", "wtBTC", 18);
         BTC = new MockERC20("BTC", "BTC", 18);
         LR = new MockERC20("LR", "LR", 18);
     }
 
     function mintStables() public {
         for (uint256 i = 0; i < owners.length; i++) {
-            deal(address(USDC), owners[i], 1e12 * USDC_1, true);
-            deal(address(FRAX), owners[i], 1e12 * TOKEN_1, true);
-            deal(address(DAI), owners[i], 1e12 * TOKEN_1, true);
+            deal(address(mUSD), owners[i], 1e12 * mUSD_1, true);
+            deal(address(wtBTC), owners[i], 1e12 * TOKEN_1, true);
+            deal(address(LIMPETH), owners[i], 1e12 * TOKEN_1, true);
         }
     }
 
@@ -220,17 +219,17 @@ abstract contract BaseTest is Base, TestOwner {
     function deployPoolWithOwner(address _owner) public {
         // TODO: Add pool liquidity once Router implementation is complete.
 
-        factory.createPool(address(FRAX), address(USDC), true);
-        factory.createPool(address(FRAX), address(USDC), false);
-        factory.createPool(address(FRAX), address(DAI), true);
+        factory.createPool(address(BTC), address(mUSD), true);
+        factory.createPool(address(mUSD), address(LIMPETH), false);
+        factory.createPool(address(mUSD), address(wtBTC), true);
 
         assertEq(factory.allPoolsLength(), 3);
 
-        address address1 = factory.getPool(address(FRAX), address(USDC), true);
+        address address1 = factory.getPool(address(BTC), address(mUSD), true);
         pool = Pool(address1);
-        address address2 = factory.getPool(address(FRAX), address(USDC), false);
+        address address2 = factory.getPool(address(mUSD), address(LIMPETH), false);
         pool2 = Pool(address2);
-        address address3 = factory.getPool(address(FRAX), address(DAI), true);
+        address address3 = factory.getPool(address(mUSD), address(wtBTC), true);
         pool3 = Pool(address3);
     }
 
