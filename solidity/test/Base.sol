@@ -18,7 +18,6 @@ import {PoolFees} from "contracts/PoolFees.sol";
 import {RewardsDistributor, IRewardsDistributor} from "contracts/RewardsDistributor.sol";
 import {IRouter, Router} from "contracts/Router.sol";
 import {IVoter, Voter} from "contracts/Voter.sol";
-import {VeArtProxy} from "contracts/VeArtProxy.sol";
 import {IVotingEscrow, VotingEscrow} from "contracts/VotingEscrow.sol";
 import {ProtocolGovernor} from "contracts/ProtocolGovernor.sol";
 import {EpochGovernor} from "contracts/EpochGovernor.sol";
@@ -51,7 +50,6 @@ abstract contract Base is Script, Test {
     Pool public implementation;
     Router public router;
     VotingEscrow public escrow;
-    VeArtProxy public artProxy;
     PoolFactory public factory;
     FactoryRegistry public factoryRegistry;
     GaugeFactory public gaugeFactory;
@@ -73,7 +71,6 @@ abstract contract Base is Script, Test {
         forwarder = new Forwarder();
 
         escrow = new VotingEscrow(address(forwarder), address(BTC), address(factoryRegistry));
-        artProxy = new VeArtProxy(address(escrow));
         escrow.setArtProxy(address(artProxy));
 
         // Setup voter and distributor
