@@ -15,7 +15,7 @@
     "lint:config": "prettier --check '**/*.@(json|md)'",
     "lint:config:fix": "prettier --write '**/*.@(json|md)'",
     "prepare:env": "cp -n .env.example .env || true",
-    "test": "npm run prepare:env && hardhat test",
+    "test": "npm run prepare:env && hardhat test && forge test",
     "node": "hardhat node",
     "deploy": "npm run prepare:env && hardhat deploy",
     "coverage": "hardhat coverage"
