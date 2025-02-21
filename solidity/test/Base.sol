@@ -38,7 +38,6 @@ import "forge-std/Test.sol";
 abstract contract Base is Script, Test {
     enum Deployment {
         DEFAULT,
-        FORK,
         CUSTOM
     }
     /// @dev Determines whether or not to use the base set up configuration

@@ -57,23 +57,12 @@ abstract contract BaseTest is Base, TestOwner {
 
     SigUtils sigUtils;
 
-    uint256 fork;
-    /// @dev set BASE_RPC_URL in .env to run mainnet tests
-    string RPC_URL = vm.envString("BASE_RPC_URL");
-    /// @dev optionally set FORK_BLOCK_NUMBER in .env / test set up for faster tests / fixed tests
-    uint256 BLOCK_NUMBER = vm.envOr("FORK_BLOCK_NUMBER", uint256(0));
-
-    /// @dev Default set up of local deployment run if Deployment.DEFAULT selected
-    ///      Mainnet fork + deployment if Deployment.FORK selected
-    ///      Only _setUp function run if Deployment.CUSTOM selected
+    /// @dev Default set up of local deployment run if Deployment.DEFAULT selected.
+    ///      Only _setUp function run if Deployment.CUSTOM selected.
     ///      _setUp can be overriden to provide additional configuration if desired
-    ///      To set up mainnet forks from a certain block (e.g. to fix venft balances for testing)
-    ///      Use a CUSTOM deployment, and call _forkSetUp with the desired block number
     function setUp() public {
         if (deploymentType == Deployment.DEFAULT) {
             _testSetup();
-        } else if (deploymentType == Deployment.FORK) {
-            _forkSetup();
         }
         _setUp();
     }
@@ -86,11 +75,6 @@ abstract contract BaseTest is Base, TestOwner {
         _testSetupBefore();
         _coreSetup();
         _testSetupAfter();
-    }
-
-    function _forkSetup() public {
-        _forkSetupBefore();
-        _testSetup();
     }
 
     function _testSetupBefore() public {
@@ -192,15 +176,6 @@ abstract contract BaseTest is Base, TestOwner {
         vm.label(address(bribeVotingReward3), "Bribe Voting Reward 3");
     }
 
-    function _forkSetupBefore() public {
-        if (BLOCK_NUMBER != 0) {
-            fork = vm.createFork(RPC_URL, BLOCK_NUMBER);
-        } else {
-            fork = vm.createFork(RPC_URL);
-        }
-        vm.selectFork(fork);
-    }
-
     function deployOwners() public {
         owner = TestOwner(payable(address(this)));
         owner2 = new TestOwner();
@@ -216,17 +191,10 @@ abstract contract BaseTest is Base, TestOwner {
     }
 
     function deployCoins() public {
-        if (deploymentType == Deployment.FORK) {
-            USDC = IERC20(0x7F5c764cBc14f9669B88837ca1490cCa17c31607);
-            DAI = IERC20(0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1);
-            WETH = IWETH(0x4200000000000000000000000000000000000006);
-            FRAX = IERC20(0x2E3D870790dC77A83DD1d18184Acc7439A53f475);
-        } else {
-            USDC = IERC20(new MockERC20("USDC", "USDC", 6));
-            DAI = IERC20(new MockERC20("DAI", "DAI", 18));
-            WETH = IWETH(new MockWETH());
-            FRAX = new MockERC20("FRAX", "FRAX", 18);
-        }
+        USDC = IERC20(new MockERC20("USDC", "USDC", 6));
+        DAI = IERC20(new MockERC20("DAI", "DAI", 18));
+        WETH = IWETH(new MockWETH());
+        FRAX = new MockERC20("FRAX", "FRAX", 18);
         AERO = new Aero();
         LR = new MockERC20("LR", "LR", 18);
     }
