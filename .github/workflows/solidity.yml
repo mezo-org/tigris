@@ -50,6 +50,7 @@ jobs:
             solidity/typechain
             solidity/cache_forge
             solidity/out
+            solidity/lib
           if-no-files-found: error
           retention-days: 1
 
@@ -126,6 +127,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --prefer-offline --frozen-lockfile
 
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -152,6 +156,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --prefer-offline --frozen-lockfile
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
