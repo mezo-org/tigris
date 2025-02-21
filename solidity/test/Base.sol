@@ -29,6 +29,8 @@ import {MezoForwarder} from "contracts/forwarder/MezoForwarder.sol";
 
 import "forge-std/Script.sol";
 import "forge-std/Test.sol";
+import {VeBTC} from "../contracts/VeBTC.sol";
+import {FeeSplitter} from "../contracts/FeeSplitter.sol";
 
 /// @notice Base contract used for tests and deployment scripts
 abstract contract Base is Script, Test {
@@ -46,7 +48,8 @@ abstract contract Base is Script, Test {
     /// @dev Core Deployment
     MezoForwarder public forwarder;
     Pool public implementation;
-    Router public router;
+    // TODO: Uncomment once Router implementation is complete.
+    // Router public router;
     VotingEscrow public escrow;
     PoolFactory public factory;
     FactoryRegistry public factoryRegistry;
@@ -55,7 +58,7 @@ abstract contract Base is Script, Test {
     ManagedRewardsFactory public managedRewardsFactory;
     Voter public voter;
     RewardsDistributor public distributor;
-    Minter public minter;
+    FeeSplitter public feeSplitter;
     Gauge public gauge;
     MezoGovernor public governor;
     EpochGovernor public epochGovernor;
@@ -68,8 +71,7 @@ abstract contract Base is Script, Test {
 
         forwarder = new MezoForwarder();
 
-        escrow = new VotingEscrow(address(forwarder), address(BTC), address(factoryRegistry));
-        escrow.setArtProxy(address(artProxy));
+        escrow = new VeBTC(address(forwarder), address(BTC), address(factoryRegistry));
 
         // Setup voter and distributor
         distributor = new RewardsDistributor(address(escrow));
@@ -79,20 +81,21 @@ abstract contract Base is Script, Test {
         escrow.setAllowedManager(allowedManager);
 
         // Setup router
-        router = new Router(
-            address(forwarder),
-            address(factoryRegistry),
-            address(factory),
-            address(voter),
-            address(0)
-        );
+        // TODO: Uncomment once Router implementation is complete.
+        // router = new Router(
+        //     address(forwarder),
+        //     address(factoryRegistry),
+        //     address(factory),
+        //     address(voter),
+        //     address(0)
+        // );
 
-        // Setup minter
-        minter = new Minter(address(voter), address(escrow), address(distributor));
-        distributor.setMinter(address(minter));
+        // Setup fee splitter
+        feeSplitter = new FeeSplitter(address(voter), address(escrow), address(distributor));
+        distributor.setDepositor(address(feeSplitter));
 
         /// @dev tokens are already set in the respective setupBefore()
-        voter.initialize(tokens, address(minter));
+        voter.initialize(tokens, address(feeSplitter));
     }
 
     function deployFactories() public {

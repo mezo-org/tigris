@@ -20,3 +20,4 @@ node_modules
 # Foundry
 /out
 /broadcast
+/cache_forge
