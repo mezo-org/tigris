@@ -25,7 +25,7 @@ import {SafeCastLibrary} from "contracts/libraries/SafeCastLibrary.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {SigUtils} from "test/utils/SigUtils.sol";
-import {Forwarder} from "@opengsn/contracts/src/forwarder/Forwarder.sol";
+import {MezoForwarder} from "contracts/forwarder/MezoForwarder.sol";
 
 import "forge-std/Script.sol";
 import "forge-std/Test.sol";
@@ -44,7 +44,7 @@ abstract contract Base is Script, Test {
     address[] public tokens;
 
     /// @dev Core Deployment
-    Forwarder public forwarder;
+    MezoForwarder public forwarder;
     Pool public implementation;
     Router public router;
     VotingEscrow public escrow;
@@ -66,7 +66,7 @@ abstract contract Base is Script, Test {
     function _coreSetup() public {
         deployFactories();
 
-        forwarder = new Forwarder();
+        forwarder = new MezoForwarder();
 
         escrow = new VotingEscrow(address(forwarder), address(BTC), address(factoryRegistry));
         escrow.setArtProxy(address(artProxy));
