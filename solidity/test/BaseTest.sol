@@ -90,13 +90,13 @@ abstract contract BaseTest is Base, TestOwner {
         amounts[2] = TOKEN_10M;
         amounts[3] = TOKEN_10M;
         amounts[4] = TOKEN_10M;
-        mintToken(address(AERO), owners, amounts);
+        mintToken(address(BTC), owners, amounts);
         mintToken(address(LR), owners, amounts);
 
         tokens.push(address(USDC));
         tokens.push(address(FRAX));
         tokens.push(address(DAI));
-        tokens.push(address(AERO));
+        tokens.push(address(BTC));
         tokens.push(address(LR));
         tokens.push(address(WETH));
 
@@ -195,7 +195,7 @@ abstract contract BaseTest is Base, TestOwner {
         DAI = IERC20(new MockERC20("DAI", "DAI", 18));
         WETH = IWETH(new MockWETH());
         FRAX = new MockERC20("FRAX", "FRAX", 18);
-        AERO = new Aero();
+        BTC = new MockERC20("BTC", "BTC", 18);
         LR = new MockERC20("LR", "LR", 18);
     }
 
@@ -266,11 +266,11 @@ abstract contract BaseTest is Base, TestOwner {
 
     /// @dev Helper function to add rewards to gauge from voter
     function _addRewardToGauge(address _voter, address _gauge, uint256 _amount) internal {
-        deal(address(AERO), _voter, _amount);
+        deal(address(BTC), _voter, _amount);
         vm.startPrank(_voter);
         // do not overwrite approvals if already set
-        if (AERO.allowance(_voter, _gauge) < _amount) {
-            AERO.approve(_gauge, _amount);
+        if (BTC.allowance(_voter, _gauge) < _amount) {
+            BTC.approve(_gauge, _amount);
         }
         Gauge(_gauge).notifyRewardAmount(_amount);
         vm.stopPrank();
