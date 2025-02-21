@@ -79,12 +79,12 @@ contract FeeSplitter is IMinter {
         if (state != IEpochGovernor.ProposalState.Expired) {
             // move the needle up by 1 tick
             if (state == IEpochGovernor.ProposalState.Succeeded) {
-                needle = needle + TICK > MAXIMUM_GAUGE_SCALE
+                needle = oldNeedle + TICK > MAXIMUM_GAUGE_SCALE
                     ? MAXIMUM_GAUGE_SCALE
                     : needle + TICK;
             } else {
                 // move the needle down by 1 tick
-                needle = needle - TICK < MINIMUM_GAUGE_SCALE
+                needle = oldNeedle - TICK < MINIMUM_GAUGE_SCALE
                     ? MINIMUM_GAUGE_SCALE
                     : needle - TICK;
             }
@@ -96,10 +96,12 @@ contract FeeSplitter is IMinter {
     }
 
     /// @notice Updates the period of the current epoch.
-    function updatePeriod() external returns (uint256) {
-        uint256 oldPeriod = activePeriod;
-        if (block.timestamp >= activePeriod + WEEK) {
-            activePeriod = (block.timestamp / WEEK) * WEEK;
+    function updatePeriod() external returns (uint256 period) {
+        period = activePeriod;
+        if (block.timestamp >= period + WEEK) {
+            uint256 oldPeriod = period;
+            period = (block.timestamp / WEEK) * WEEK;
+            activePeriod = period;
 
             uint256 stakeGuagesFee;
             uint256 veBTCHoldersFee;
@@ -122,18 +124,10 @@ contract FeeSplitter is IMinter {
 
             emit PeriodUpdated(
                 oldPeriod,
-                activePeriod,
+                period,
                 veBTCHoldersFee,
                 stakeGuagesFee
             );
-
-            return activePeriod;
         }
-    }
-
-    /// TODO: consider removing this function from IMinter.
-    function calculateGrowth(uint256 amount) external pure returns (uint256) {
-        // noop
-        return amount;
     }
 }
