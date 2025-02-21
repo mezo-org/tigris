@@ -34,6 +34,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --prefer-offline --frozen-lockfile
 
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
       - name: Build
         run: pnpm run build
 
@@ -91,6 +94,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --prefer-offline --frozen-lockfile
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
