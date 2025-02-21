@@ -20,6 +20,8 @@ Install slither locally
 brew install slither
 ```
 
+Install Foundry locally by following [this guide](https://book.getfoundry.sh/getting-started/installation).
+
 ### Testing
 
 ```
