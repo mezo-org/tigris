@@ -19,7 +19,7 @@ import {RewardsDistributor, IRewardsDistributor} from "contracts/RewardsDistribu
 import {IRouter, Router} from "contracts/Router.sol";
 import {IVoter, Voter} from "contracts/Voter.sol";
 import {IVotingEscrow, VotingEscrow} from "contracts/VotingEscrow.sol";
-import {ProtocolGovernor} from "contracts/ProtocolGovernor.sol";
+import {MezoGovernor} from "contracts/MezoGovernor.sol";
 import {EpochGovernor} from "contracts/EpochGovernor.sol";
 import {SafeCastLibrary} from "contracts/libraries/SafeCastLibrary.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -57,7 +57,7 @@ abstract contract Base is Script, Test {
     RewardsDistributor public distributor;
     Minter public minter;
     Gauge public gauge;
-    ProtocolGovernor public governor;
+    MezoGovernor public governor;
     EpochGovernor public epochGovernor;
 
     /// @dev Global address to set
