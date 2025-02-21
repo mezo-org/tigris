@@ -16,7 +16,6 @@ import {LockedManagedReward} from "contracts/rewards/LockedManagedReward.sol";
 import {IGauge, Gauge} from "contracts/gauges/Gauge.sol";
 import {PoolFees} from "contracts/PoolFees.sol";
 import {RewardsDistributor, IRewardsDistributor} from "contracts/RewardsDistributor.sol";
-import {IAirdropDistributor, AirdropDistributor} from "contracts/AirdropDistributor.sol";
 import {IRouter, Router} from "contracts/Router.sol";
 import {IVoter, Voter} from "contracts/Voter.sol";
 import {VeArtProxy} from "contracts/VeArtProxy.sol";
@@ -61,7 +60,6 @@ abstract contract Base is Script, Test {
     Voter public voter;
     RewardsDistributor public distributor;
     Minter public minter;
-    AirdropDistributor public airdrop;
     Gauge public gauge;
     ProtocolGovernor public governor;
     EpochGovernor public epochGovernor;
@@ -97,8 +95,6 @@ abstract contract Base is Script, Test {
         // Setup minter
         minter = new Minter(address(voter), address(escrow), address(distributor));
         distributor.setMinter(address(minter));
-
-        airdrop = new AirdropDistributor(address(escrow));
 
         /// @dev tokens are already set in the respective setupBefore()
         voter.initialize(tokens, address(minter));
