@@ -50,7 +50,6 @@ jobs:
             solidity/typechain
             solidity/cache_forge
             solidity/out
-            solidity/lib
           if-no-files-found: error
           retention-days: 1
 
