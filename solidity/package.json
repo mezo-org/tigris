@@ -4,8 +4,8 @@
   "packageManager": "pnpm@9.15.1",
   "license": "GPL-3.0",
   "scripts": {
-    "clean": "hardhat clean && rm -rf cache/ artifacts/ typechain/",
-    "build": "hardhat compile",
+    "clean": "hardhat clean && forge clean && rm -rf cache/ artifacts/ typechain/",
+    "build": "hardhat compile && forge build",
     "format": "npm run lint:ts && npm run lint:sol && npm run lint:config",
     "format:fix": "npm run lint:ts:fix && npm run lint:sol:fix && npm run lint:config:fix",
     "lint:ts": "eslint .",
