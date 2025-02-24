@@ -30,7 +30,7 @@ import {MezoForwarder} from "contracts/forwarder/MezoForwarder.sol";
 import "forge-std/Script.sol";
 import "forge-std/Test.sol";
 import {VeBTC} from "../contracts/VeBTC.sol";
-import {FeeSplitter} from "../contracts/FeeSplitter.sol";
+import {ChainFeeSplitter} from "../contracts/ChainFeeSplitter.sol";
 
 /// @notice Base contract used for tests and deployment scripts
 abstract contract Base is Script, Test {
@@ -58,7 +58,7 @@ abstract contract Base is Script, Test {
     ManagedRewardsFactory public managedRewardsFactory;
     Voter public voter;
     RewardsDistributor public distributor;
-    FeeSplitter public feeSplitter;
+    ChainFeeSplitter public chainFeeSplitter;
     Gauge public gauge;
     MezoGovernor public governor;
     EpochGovernor public epochGovernor;
@@ -91,11 +91,11 @@ abstract contract Base is Script, Test {
         // );
 
         // Setup fee splitter
-        feeSplitter = new FeeSplitter(address(voter), address(escrow), address(distributor));
-        distributor.setDepositor(address(feeSplitter));
+        chainFeeSplitter = new ChainFeeSplitter(address(voter), address(escrow), address(distributor));
+        distributor.setDepositor(address(chainFeeSplitter));
 
         /// @dev tokens are already set in the respective setupBefore()
-        voter.initialize(tokens, address(feeSplitter));
+        voter.initialize(tokens, address(chainFeeSplitter));
     }
 
     function deployFactories() public {

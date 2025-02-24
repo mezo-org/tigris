@@ -103,7 +103,7 @@ abstract contract BaseTest is Base, TestOwner {
     function _testSetupAfter() public {
         // Setup governors
         governor = new MezoGovernor(escrow);
-        epochGovernor = new EpochGovernor(address(forwarder), escrow, address(feeSplitter));
+        epochGovernor = new EpochGovernor(address(forwarder), escrow, address(chainFeeSplitter));
         voter.setEpochGovernor(address(epochGovernor));
         voter.setGovernor(address(governor));
 
@@ -161,7 +161,7 @@ abstract contract BaseTest is Base, TestOwner {
         vm.label(address(votingRewardsFactory), "Voting Rewards Factory");
         vm.label(address(voter), "Voter");
         vm.label(address(distributor), "Distributor");
-        vm.label(address(feeSplitter), "FeeSplitter");
+        vm.label(address(chainFeeSplitter), "ChainFeeSplitter");
         vm.label(address(gauge), "Gauge");
         vm.label(address(governor), "Governor");
         vm.label(address(feesVotingReward), "Fees Voting Reward");
