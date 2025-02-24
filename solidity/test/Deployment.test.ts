@@ -134,7 +134,7 @@ describe("Mezodrome deployment", () => {
 
     expect(await veBTCVoter.governor()).to.equal(await governance.getAddress())
     expect(await veBTCVoter.epochGovernor()).to.equal(
-      await governance.getAddress(),
+      await veBTCEpochGovernor.getAddress(),
     )
     expect(await veBTCVoter.emergencyCouncil()).to.equal(
       await governance.getAddress(),
