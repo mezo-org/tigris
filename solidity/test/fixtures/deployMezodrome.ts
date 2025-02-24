@@ -4,7 +4,7 @@ import {
   EpochGovernor,
   ERC20,
   FactoryRegistry,
-  FeeSplitter,
+  ChainFeeSplitter,
   GaugeFactory,
   ManagedRewardsFactory,
   MezoForwarder,
@@ -29,9 +29,9 @@ export default async function deployMezodrome(): Promise<{
   forwarder: MezoForwarder
   veBTC: VeBTC
   veBTCVoter: Voter
-  rewardsDistributor: RewardsDistributor
-  feeSplitter: FeeSplitter
-  epochGovernor: EpochGovernor
+  veBTCRewardsDistributor: RewardsDistributor
+  chainFeeSplitter: ChainFeeSplitter
+  veBTCEpochGovernor: EpochGovernor
 }> {
   await deployments.fixture()
 
@@ -51,10 +51,13 @@ export default async function deployMezodrome(): Promise<{
   const fowarder = await helpers.contracts.getContract("MezoForwarder")
   const veBTC = await helpers.contracts.getContract("VeBTC")
   const veBTCVoter = await helpers.contracts.getContract("VeBTCVoter")
-  const rewardsDistributor =
-    await helpers.contracts.getContract("RewardsDistributor")
-  const feeSplitter = await helpers.contracts.getContract("FeeSplitter")
-  const epochGovernor = await helpers.contracts.getContract("EpochGovernor")
+  const veBTCRewardsDistributor = await helpers.contracts.getContract(
+    "VeBTCRewardsDistributor",
+  )
+  const chainFeeSplitter =
+    await helpers.contracts.getContract("ChainFeeSplitter")
+  const veBTCEpochGovernor =
+    await helpers.contracts.getContract("VeBTCEpochGovernor")
 
   return {
     deployer,
@@ -71,8 +74,9 @@ export default async function deployMezodrome(): Promise<{
     forwarder: fowarder as unknown as MezoForwarder,
     veBTC: veBTC as unknown as VeBTC,
     veBTCVoter: veBTCVoter as unknown as Voter,
-    rewardsDistributor: rewardsDistributor as unknown as RewardsDistributor,
-    feeSplitter: feeSplitter as unknown as FeeSplitter,
-    epochGovernor: epochGovernor as unknown as EpochGovernor,
+    veBTCRewardsDistributor:
+      veBTCRewardsDistributor as unknown as RewardsDistributor,
+    chainFeeSplitter: chainFeeSplitter as unknown as ChainFeeSplitter,
+    veBTCEpochGovernor: veBTCEpochGovernor as unknown as EpochGovernor,
   }
 }
