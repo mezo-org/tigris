@@ -95,7 +95,11 @@ contract ChainFeeSplitter is IMinter {
         emit Nudge(period, oldNeedle, needle);
     }
 
-    /// @notice Updates the period of the current epoch.
+    /// @notice Updates the period of the current epoch. This function can be called
+    ///         by anyone. Chain fees accumulate in this contract continuously and
+    ///         are distributed to veBTC holders and stake gauges over a specified
+    ///         period. In other words, the release of accumulated fees must wait
+    ///         until the end of the period.
     function updatePeriod() external returns (uint256 period) {
         period = activePeriod;
         if (block.timestamp >= period + WEEK) {
