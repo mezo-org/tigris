@@ -26,7 +26,6 @@ abstract contract BaseTest is Base, TestOwner {
     /// @dev Use same value as in voting escrow
     uint256 constant MAXTIME = 4 * 365 * 86400;
     uint256 constant MAX_BPS = 10_000;
-    address constant ETHER = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
     TestOwner owner;
     TestOwner owner2;
