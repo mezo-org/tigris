@@ -9,10 +9,10 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {IRewardsDistributor} from "./interfaces/IRewardsDistributor.sol";
 import {IVotingEscrow} from "./interfaces/IVotingEscrow.sol";
 
-/// @title FeeSplitter
-/// @notice A FeeSplitter contract that changes the fee distribution between veBTC
+/// @title ChainFeeSplitter
+/// @notice A ChainFeeSplitter contract that changes the fee distribution between veBTC
 ///         holders and Stake Gauges based on the gauge needle position.
-contract FeeSplitter is IMinter {
+contract ChainFeeSplitter is IMinter {
     using SafeERC20 for IERC20;
     /// @notice The address of the Voter contract.
     IVoter public immutable voter;
@@ -79,12 +79,12 @@ contract FeeSplitter is IMinter {
         if (state != IEpochGovernor.ProposalState.Expired) {
             // move the needle up by 1 tick
             if (state == IEpochGovernor.ProposalState.Succeeded) {
-                needle = needle + TICK > MAXIMUM_GAUGE_SCALE
+                needle = oldNeedle + TICK > MAXIMUM_GAUGE_SCALE
                     ? MAXIMUM_GAUGE_SCALE
                     : needle + TICK;
             } else {
                 // move the needle down by 1 tick
-                needle = needle - TICK < MINIMUM_GAUGE_SCALE
+                needle = oldNeedle - TICK < MINIMUM_GAUGE_SCALE
                     ? MINIMUM_GAUGE_SCALE
                     : needle - TICK;
             }
@@ -95,43 +95,43 @@ contract FeeSplitter is IMinter {
         emit Nudge(period, oldNeedle, needle);
     }
 
-    /// @notice Updates the period of the current epoch.
-    function updatePeriod() external returns (uint256) {
-        uint256 oldPeriod = activePeriod;
-        if (block.timestamp >= activePeriod + WEEK) {
-            activePeriod = (block.timestamp / WEEK) * WEEK;
+    /// @notice Updates the period of the current epoch. This function can be called
+    ///         by anyone. Chain fees accumulate in this contract continuously and
+    ///         are distributed to veBTC holders and stake gauges over a specified
+    ///         period. In other words, the release of accumulated fees must wait
+    ///         until the end of the period.
+    function updatePeriod() external returns (uint256 period) {
+        period = activePeriod;
+        if (block.timestamp >= period + WEEK) {
+            uint256 oldPeriod = period;
+            period = (block.timestamp / WEEK) * WEEK;
+            activePeriod = period;
+
+            uint256 stakeGuagesFee;
+            uint256 veBTCHoldersFee;
+
+            uint256 currentBalance = btc.balanceOf(address(this));
+            if (currentBalance > 0) {
+                veBTCHoldersFee =
+                    (currentBalance * needle) /
+                    MAXIMUM_GAUGE_SCALE;
+                stakeGuagesFee = currentBalance - veBTCHoldersFee;
+
+                // For veBTC holders.
+                btc.safeTransfer(address(rewardsDistributor), veBTCHoldersFee);
+                rewardsDistributor.checkpointToken(); // checkpoint token balance in rewards distributor
+
+                // For stake guages.
+                btc.safeApprove(address(voter), stakeGuagesFee);
+                voter.notifyRewardAmount(stakeGuagesFee);
+            }
+
+            emit PeriodUpdated(
+                oldPeriod,
+                period,
+                veBTCHoldersFee,
+                stakeGuagesFee
+            );
         }
-
-        uint256 stakeGuagesFee;
-        uint256 veBTCHoldersFee;
-
-        uint256 currentBalance = btc.balanceOf(address(this));
-        if (currentBalance > 0) {
-            veBTCHoldersFee = (currentBalance * needle) / MAXIMUM_GAUGE_SCALE;
-            stakeGuagesFee = currentBalance - veBTCHoldersFee;
-        }
-
-        // For veBTC holders.
-        btc.safeTransfer(address(rewardsDistributor), veBTCHoldersFee);
-        rewardsDistributor.checkpointToken(); // checkpoint token balance in rewards distributor
-
-        // For stake guages.
-        btc.safeApprove(address(voter), stakeGuagesFee);
-        voter.notifyRewardAmount(stakeGuagesFee);
-
-        emit PeriodUpdated(
-            oldPeriod,
-            activePeriod,
-            veBTCHoldersFee,
-            stakeGuagesFee
-        );
-
-        return activePeriod;
-    }
-
-    /// TODO: consider removing this function from IMinter.
-    function calculateGrowth(uint256 amount) external pure returns (uint256) {
-        // noop
-        return amount;
     }
 }

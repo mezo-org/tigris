@@ -26,16 +26,6 @@ interface IMinter {
     ///      This contract is coupled to EpochGovernor as it requires three option simple majority voting.
     function nudge() external;
 
-    /// @notice Calculates rebases according to the formula
-    ///         weekly * (ve.totalSupply / mezo.totalSupply) ^ 3 / 2
-    ///         Note that ve.totalSupply is the locked ve supply
-    ///         mezo.totalSupply is the total ve supply minted
-    /// @param _minted Amount of MEZO minted this epoch
-    /// @return _growth Rebases
-    function calculateGrowth(
-        uint256 _minted
-    ) external view returns (uint256 _growth);
-
     /// @notice Processes emissions and rebases. Callable once per epoch (1 week).
     /// @return _period Start of current epoch.
     function updatePeriod() external returns (uint256 _period);
