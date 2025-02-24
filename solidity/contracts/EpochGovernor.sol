@@ -22,9 +22,9 @@ contract EpochGovernor is
     constructor(
         address _forwarder,
         IVotes _ve,
-        address _minter
+        address _splitter
     )
-        GovernorSimple(_forwarder, "Epoch Governor", _minter)
+        GovernorSimple(_forwarder, "Epoch Governor", _splitter)
         GovernorSimpleVotes(_ve)
     {}
 

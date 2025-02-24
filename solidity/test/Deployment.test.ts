@@ -139,7 +139,7 @@ describe("Mezodrome deployment", () => {
     expect(await veBTCVoter.emergencyCouncil()).to.equal(
       await governance.getAddress(),
     )
-    expect(await veBTCVoter.minter()).to.equal(
+    expect(await veBTCVoter.splitter()).to.equal(
       await chainFeeSplitter.getAddress(),
     )
   })
@@ -178,7 +178,7 @@ describe("Mezodrome deployment", () => {
   it("should wire up VeBTCEpochGovernor", async () => {
     expect(await veBTCEpochGovernor.isTrustedForwarder(forwarder)).to.be.true
     expect(await veBTCEpochGovernor.token()).to.equal(await veBTC.getAddress())
-    expect(await veBTCEpochGovernor.minter()).to.equal(
+    expect(await veBTCEpochGovernor.splitter()).to.equal(
       await chainFeeSplitter.getAddress(),
     )
   })

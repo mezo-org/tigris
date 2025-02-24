@@ -64,7 +64,7 @@ abstract contract GovernorSimple is
     // solhint-enable var-name-mixedcase
 
     string private _name;
-    address public minter;
+    address public splitter;
 
     mapping(uint256 => ProposalCore) private _proposals;
 
@@ -104,10 +104,10 @@ abstract contract GovernorSimple is
     constructor(
         address forwarder_,
         string memory name_,
-        address minter_
+        address splitter_
     ) ERC2771Context(forwarder_) EIP712(name_, version()) {
         _name = name_;
-        minter = minter_;
+        splitter = splitter_;
     }
 
     /**
@@ -313,8 +313,8 @@ abstract contract GovernorSimple is
         );
         require(targets.length == 1, "GovernorSimple: only one target allowed");
         require(
-            address(targets[0]) == minter,
-            "GovernorSimple: only minter allowed"
+            address(targets[0]) == splitter,
+            "GovernorSimple: only splitter allowed"
         );
         require(
             calldatas.length == 1,
