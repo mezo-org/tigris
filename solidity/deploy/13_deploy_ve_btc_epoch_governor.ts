@@ -12,8 +12,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const veBTCAddress = (await deployments.get("VeBTC")).address
   log(`veBTC address is ${veBTCAddress}`)
 
-  const feeSplitterAddress = (await deployments.get("FeeSplitter")).address
-  log(`FeeSplitter address is ${feeSplitterAddress}`)
+  const chainFeeSplitterAddress = (await deployments.get("ChainFeeSplitter"))
+    .address
+  log(`ChainFeeSplitter address is ${chainFeeSplitterAddress}`)
 
   const VeBTCEpochGovernor = await deployments.getOrNull("VeBTCEpochGovernor")
 
@@ -28,7 +29,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const veBTCEpochGovernorDeployment = await deploy("VeBTCEpochGovernor", {
     contract: "EpochGovernor",
     from: deployer,
-    args: [mezoForwarderAddress, veBTCAddress, feeSplitterAddress],
+    args: [mezoForwarderAddress, veBTCAddress, chainFeeSplitterAddress],
     log: true,
     waitConfirmations: 1,
   })
@@ -42,4 +43,4 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 export default func
 
 func.tags = ["VeBTCEpochGovernor"]
-func.dependencies = ["MezoForwarder", "VeBTC", "FeeSplitter"]
+func.dependencies = ["MezoForwarder", "VeBTC", "ChainFeeSplitter"]

@@ -6,7 +6,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { execute } = deployments
   const { deployer } = await getNamedAccounts()
 
-  const FeeSplitter = await deployments.get("FeeSplitter")
+  const ChainFeeSplitter = await deployments.get("ChainFeeSplitter")
 
   // Set roles that were assigned to the deployer within the constructor.
 
@@ -14,12 +14,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     "VeBTCRewardsDistributor",
     { from: deployer, log: true, waitConfirmations: 1 },
     "setDepositor",
-    FeeSplitter.address,
+    ChainFeeSplitter.address,
   )
 }
 
 export default func
 
 func.tags = ["SetVeBTCRewardsDistributorRoles"]
-func.dependencies = ["VeBTCRewardsDistributor", "FeeSplitter"]
+func.dependencies = ["VeBTCRewardsDistributor", "ChainFeeSplitter"]
 func.runAtTheEnd = true
