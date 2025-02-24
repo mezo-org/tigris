@@ -8,7 +8,7 @@ import {
   EpochGovernor,
   ERC20,
   FactoryRegistry,
-  FeeSplitter,
+  ChainFeeSplitter,
   GaugeFactory,
   ManagedRewardsFactory,
   MezoForwarder,
@@ -34,9 +34,9 @@ describe("Mezodrome deployment", () => {
   let forwarder: MezoForwarder
   let veBTC: VeBTC
   let veBTCVoter: Voter
-  let rewardsDistributor: RewardsDistributor
-  let feeSplitter: FeeSplitter
-  let epochGovernor: EpochGovernor
+  let veBTCRewardsDistributor: RewardsDistributor
+  let chainFeeSplitter: ChainFeeSplitter
+  let veBTCEpochGovernor: EpochGovernor
 
   before(async () => {
     ;({
@@ -51,9 +51,9 @@ describe("Mezodrome deployment", () => {
       forwarder,
       veBTC,
       veBTCVoter,
-      rewardsDistributor,
-      feeSplitter,
-      epochGovernor,
+      veBTCRewardsDistributor,
+      chainFeeSplitter,
+      veBTCEpochGovernor,
     } = await loadFixture(deployMezodrome))
   })
 
@@ -116,7 +116,7 @@ describe("Mezodrome deployment", () => {
 
     expect(await veBTC.voter()).to.equal(await veBTCVoter.getAddress())
     expect(await veBTC.distributor()).to.equal(
-      await rewardsDistributor.getAddress(),
+      await veBTCRewardsDistributor.getAddress(),
     )
     expect(await veBTC.team()).to.equal(await governance.getAddress())
   })
@@ -134,46 +134,52 @@ describe("Mezodrome deployment", () => {
 
     expect(await veBTCVoter.governor()).to.equal(await governance.getAddress())
     expect(await veBTCVoter.epochGovernor()).to.equal(
-      await governance.getAddress(),
+      await veBTCEpochGovernor.getAddress(),
     )
     expect(await veBTCVoter.emergencyCouncil()).to.equal(
       await governance.getAddress(),
     )
-    expect(await veBTCVoter.minter()).to.equal(await feeSplitter.getAddress())
-  })
-
-  it("should deploy RewardsDistributor", async () => {
-    expect(await rewardsDistributor.getAddress()).to.not.be.empty
-  })
-
-  it("should wire up RewardsDistributor", async () => {
-    expect(await rewardsDistributor.ve()).to.equal(await veBTC.getAddress())
-    expect(await rewardsDistributor.depositor()).to.equal(
-      await feeSplitter.getAddress(),
+    expect(await veBTCVoter.minter()).to.equal(
+      await chainFeeSplitter.getAddress(),
     )
   })
 
-  it("should deploy FeeSplitter", async () => {
-    expect(await feeSplitter.getAddress()).to.not.be.empty
+  it("should deploy VeBTCRewardsDistributor", async () => {
+    expect(await veBTCRewardsDistributor.getAddress()).to.not.be.empty
   })
 
-  it("should wire up FeeSplitter", async () => {
-    expect(await feeSplitter.voter()).to.equal(await veBTCVoter.getAddress())
-    expect(await feeSplitter.btc()).to.equal(await btc.getAddress())
-    expect(await feeSplitter.rewardsDistributor()).to.equal(
-      await rewardsDistributor.getAddress(),
+  it("should wire up VeBTCRewardsDistributor", async () => {
+    expect(await veBTCRewardsDistributor.ve()).to.equal(
+      await veBTC.getAddress(),
+    )
+    expect(await veBTCRewardsDistributor.depositor()).to.equal(
+      await chainFeeSplitter.getAddress(),
     )
   })
 
-  it("should deploy EpochGovernor", async () => {
-    expect(await epochGovernor.getAddress()).to.not.be.empty
+  it("should deploy ChainFeeSplitter", async () => {
+    expect(await chainFeeSplitter.getAddress()).to.not.be.empty
   })
 
-  it("should wire up EpochGovernor", async () => {
-    expect(await epochGovernor.isTrustedForwarder(forwarder)).to.be.true
-    expect(await epochGovernor.token()).to.equal(await veBTC.getAddress())
-    expect(await epochGovernor.minter()).to.equal(
-      await feeSplitter.getAddress(),
+  it("should wire up ChainFeeSplitter", async () => {
+    expect(await chainFeeSplitter.voter()).to.equal(
+      await veBTCVoter.getAddress(),
+    )
+    expect(await chainFeeSplitter.btc()).to.equal(await btc.getAddress())
+    expect(await chainFeeSplitter.rewardsDistributor()).to.equal(
+      await veBTCRewardsDistributor.getAddress(),
+    )
+  })
+
+  it("should deploy VeBTCEpochGovernor", async () => {
+    expect(await veBTCEpochGovernor.getAddress()).to.not.be.empty
+  })
+
+  it("should wire up VeBTCEpochGovernor", async () => {
+    expect(await veBTCEpochGovernor.isTrustedForwarder(forwarder)).to.be.true
+    expect(await veBTCEpochGovernor.token()).to.equal(await veBTC.getAddress())
+    expect(await veBTCEpochGovernor.minter()).to.equal(
+      await chainFeeSplitter.getAddress(),
     )
   })
 })

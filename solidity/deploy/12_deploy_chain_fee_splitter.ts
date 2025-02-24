@@ -12,35 +12,35 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const veBTCAddress = (await deployments.get("VeBTC")).address
   log(`veBTC address is ${veBTCAddress}`)
 
-  const rewardsDistributorAddress = (
-    await deployments.get("RewardsDistributor")
+  const veBTCRewardsDistributorAddress = (
+    await deployments.get("VeBTCRewardsDistributor")
   ).address
-  log(`RewardsDistributor address is ${rewardsDistributorAddress}`)
+  log(`veBTCRewardsDistributor address is ${veBTCRewardsDistributorAddress}`)
 
-  const FeeSplitter = await deployments.getOrNull("FeeSplitter")
+  const ChainFeeSplitter = await deployments.getOrNull("ChainFeeSplitter")
 
   const isValidDeployment =
-    FeeSplitter && helpers.address.isValid(FeeSplitter.address)
+    ChainFeeSplitter && helpers.address.isValid(ChainFeeSplitter.address)
   if (isValidDeployment) {
-    log(`Using FeeSplitter at ${FeeSplitter.address}`)
+    log(`Using ChainFeeSplitter at ${ChainFeeSplitter.address}`)
     return
   }
 
-  log("Deploying FeeSplitter contract...")
-  const feeSplitterDeployment = await deploy("FeeSplitter", {
+  log("Deploying ChainFeeSplitter contract...")
+  const chainFeeSplitterDeployment = await deploy("ChainFeeSplitter", {
     from: deployer,
-    args: [veBTCVoterAddress, veBTCAddress, rewardsDistributorAddress],
+    args: [veBTCVoterAddress, veBTCAddress, veBTCRewardsDistributorAddress],
     log: true,
     waitConfirmations: 1,
   })
 
   if (hre.network.name !== "hardhat") {
     // Verify contract in Blockscout
-    await helpers.etherscan.verify(feeSplitterDeployment)
+    await helpers.etherscan.verify(chainFeeSplitterDeployment)
   }
 }
 
 export default func
 
-func.tags = ["FeeSplitter"]
-func.dependencies = ["VeBTCVoter", "VeBTC", "RewardsDistributor"]
+func.tags = ["ChainFeeSplitter"]
+func.dependencies = ["VeBTCVoter", "VeBTC", "VeBTCRewardsDistributor"]

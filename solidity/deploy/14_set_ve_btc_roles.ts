@@ -7,7 +7,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployer, governance } = await getNamedAccounts()
 
   const veBTCVoter = await deployments.get("VeBTCVoter")
-  const RewardsDistributor = await deployments.get("RewardsDistributor")
+  const veBTCRewardsDistributor = await deployments.get(
+    "VeBTCRewardsDistributor",
+  )
 
   // Set roles that were assigned to the deployer within the constructor.
 
@@ -16,7 +18,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     { from: deployer, log: true, waitConfirmations: 1 },
     "setVoterAndDistributor",
     veBTCVoter.address, // voter
-    RewardsDistributor.address, // distributor
+    veBTCRewardsDistributor.address, // distributor
   )
 
   await execute(
@@ -30,5 +32,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 export default func
 
 func.tags = ["SetVeBTCRoles"]
-func.dependencies = ["VeBTC", "VeBTCVoter", "RewardsDistributor"]
+func.dependencies = ["VeBTC", "VeBTCVoter", "VeBTCRewardsDistributor"]
 func.runAtTheEnd = true
