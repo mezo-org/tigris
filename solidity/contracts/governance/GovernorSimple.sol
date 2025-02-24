@@ -14,7 +14,7 @@ import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol"
 import {Timers} from "@openzeppelin/contracts/utils/Timers.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IGovernor} from "./IGovernor.sol";
-import {IMinter} from "../interfaces/IMinter.sol";
+import {ISplitter} from "../interfaces/ISplitter.sol";
 import {TimeLibrary} from "../libraries/TimeLibrary.sol";
 
 /**
@@ -321,7 +321,7 @@ abstract contract GovernorSimple is
             "GovernorSimple: only one calldata allowed"
         );
         require(
-            bytes4(calldatas[0]) == IMinter.nudge.selector,
+            bytes4(calldatas[0]) == ISplitter.nudge.selector,
             "GovernorSimple: only nudge allowed"
         );
 

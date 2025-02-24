@@ -2,7 +2,7 @@
 pragma solidity 0.8.24;
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-import {IMinter} from "./interfaces/IMinter.sol";
+import {ISplitter} from "./interfaces/ISplitter.sol";
 import {IRewardsDistributor} from "./interfaces/IRewardsDistributor.sol";
 import {IMezo} from "./interfaces/IMezo.sol";
 import {IVoter} from "./interfaces/IVoter.sol";
@@ -12,7 +12,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 
 /// @title Minter
 /// @notice Controls minting of emissions and rebases for Mezodrome
-contract Minter is IMinter {
+contract Minter is ISplitter {
     using SafeERC20 for IMezo;
     IMezo public immutable mezo;
     IVoter public immutable voter;
@@ -20,7 +20,7 @@ contract Minter is IMinter {
     IRewardsDistributor public immutable rewardsDistributor;
 
     /// @notice Duration of epoch in seconds
-    uint256 public constant WEEK = 1 weeks;
+    // uint256 public constant WEEK = 1 weeks;
     /// @notice Decay rate of emissions as percentage of `MAX_BPS`
     uint256 public constant WEEKLY_DECAY = 9_900;
     /// @notice Maximum tail emission rate in basis points.
@@ -72,7 +72,7 @@ contract Minter is IMinter {
             2;
     }
 
-    /// @inheritdoc IMinter
+    /// @inheritdoc ISplitter
     function nudge() external {
         address _epochGovernor = voter.epochGovernor();
         if (msg.sender != _epochGovernor) revert NotEpochGovernor();
@@ -100,7 +100,7 @@ contract Minter is IMinter {
         emit Nudge(_period, _oldRate, _newRate);
     }
 
-    /// @inheritdoc IMinter
+    /// @inheritdoc ISplitter
     function updatePeriod() external returns (uint256 _period) {
         _period = activePeriod;
         if (block.timestamp >= _period + WEEK) {

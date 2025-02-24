@@ -6,7 +6,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {IVotingRewardsFactory} from "./interfaces/factories/IVotingRewardsFactory.sol";
 import {IGauge} from "./interfaces/IGauge.sol";
 import {IGaugeFactory} from "./interfaces/factories/IGaugeFactory.sol";
-import {IMinter} from "./interfaces/IMinter.sol";
+import {ISplitter} from "./interfaces/ISplitter.sol";
 import {IPool} from "./interfaces/IPool.sol";
 import {IPoolFactory} from "./interfaces/factories/IPoolFactory.sol";
 import {IReward} from "./interfaces/IReward.sol";
@@ -575,7 +575,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
 
     /// @inheritdoc IVoter
     function distribute(uint256 _start, uint256 _finish) external nonReentrant {
-        IMinter(minter).updatePeriod();
+        ISplitter(minter).updatePeriod();
         for (uint256 x = _start; x < _finish; x++) {
             _distribute(gauges[pools[x]]);
         }
@@ -583,7 +583,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
 
     /// @inheritdoc IVoter
     function distribute(address[] memory _gauges) external nonReentrant {
-        IMinter(minter).updatePeriod();
+        ISplitter(minter).updatePeriod();
         uint256 _length = _gauges.length;
         for (uint256 x = 0; x < _length; x++) {
             _distribute(_gauges[x]);
