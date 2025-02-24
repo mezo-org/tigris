@@ -1,4 +1,3 @@
-// SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.24;
 
 import {ManagedRewardsFactory} from "contracts/factories/ManagedRewardsFactory.sol";
