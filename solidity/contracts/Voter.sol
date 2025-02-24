@@ -130,7 +130,10 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
     }
 
     /// @dev requires initialization with at least rewardToken
-    function initialize(address[] calldata _tokens, address _splitter) external {
+    function initialize(
+        address[] calldata _tokens,
+        address _splitter
+    ) external {
         if (_msgSender() != splitter) revert NotSplitter();
         uint256 _length = _tokens.length;
         for (uint256 i = 0; i < _length; i++) {
