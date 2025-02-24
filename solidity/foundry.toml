@@ -1,3 +1,9 @@
+# Thanks to the @nomicfoundation/hardhat-foundry plugin HH can fetch
+# foundry.toml values and dependencies remappings. However, this doesn't work
+# the other way around and Foundry cannot get HH config. In our case, HH is
+# still the main build tool and Foundry is just for tests. That said, we keep
+# the solc config in HH and let Foundry detect solc version automatically based
+# on contract pragmas. In this model, we should not add solc config in this file.
 [profile.default]
 src = 'contracts'
 out = 'out'
