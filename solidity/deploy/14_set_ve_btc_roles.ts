@@ -6,36 +6,31 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { execute } = deployments
   const { deployer, governance } = await getNamedAccounts()
 
+  const veBTCVoter = await deployments.get("VeBTCVoter")
+  const veBTCRewardsDistributor = await deployments.get(
+    "VeBTCRewardsDistributor",
+  )
+
   // Set roles that were assigned to the deployer within the constructor.
 
   await execute(
-    "VeBTCVoter",
+    "VeBTC",
     { from: deployer, log: true, waitConfirmations: 1 },
-    "setEpochGovernor",
-    governance,
+    "setVoterAndDistributor",
+    veBTCVoter.address, // voter
+    veBTCRewardsDistributor.address, // distributor
   )
 
   await execute(
-    "VeBTCVoter",
+    "VeBTC",
     { from: deployer, log: true, waitConfirmations: 1 },
-    "setGovernor",
+    "setTeam",
     governance,
   )
-
-  await execute(
-    "VeBTCVoter",
-    { from: deployer, log: true, waitConfirmations: 1 },
-    "setEmergencyCouncil",
-    governance,
-  )
-
-  // TODO: There is one more role that must be assigned - minter.
-  //       However, this requires adjusting the Minter contract first.
-  //       We are leaving this for the future.
 }
 
 export default func
 
-func.tags = ["SetVeBTCVoterRoles"]
-func.dependencies = ["VeBTCVoter"]
+func.tags = ["SetVeBTCRoles"]
+func.dependencies = ["VeBTC", "VeBTCVoter", "VeBTCRewardsDistributor"]
 func.runAtTheEnd = true
