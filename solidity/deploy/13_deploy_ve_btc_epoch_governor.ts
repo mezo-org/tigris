@@ -15,17 +15,18 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const feeSplitterAddress = (await deployments.get("FeeSplitter")).address
   log(`FeeSplitter address is ${feeSplitterAddress}`)
 
-  const EpochGovernor = await deployments.getOrNull("EpochGovernor")
+  const VeBTCEpochGovernor = await deployments.getOrNull("VeBTCEpochGovernor")
 
   const isValidDeployment =
-    EpochGovernor && helpers.address.isValid(EpochGovernor.address)
+    VeBTCEpochGovernor && helpers.address.isValid(VeBTCEpochGovernor.address)
   if (isValidDeployment) {
-    log(`Using EpochGovernor at ${EpochGovernor.address}`)
+    log(`Using VeBTCEpochGovernor at ${VeBTCEpochGovernor.address}`)
     return
   }
 
-  log("Deploying EpochGovernor contract...")
-  const epochGovernorDeployment = await deploy("EpochGovernor", {
+  log("Deploying VeBTCEpochGovernor contract...")
+  const veBTCEpochGovernorDeployment = await deploy("VeBTCEpochGovernor", {
+    contract: "EpochGovernor",
     from: deployer,
     args: [mezoForwarderAddress, veBTCAddress, feeSplitterAddress],
     log: true,
@@ -34,11 +35,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   if (hre.network.name !== "hardhat") {
     // Verify contract in Blockscout
-    await helpers.etherscan.verify(epochGovernorDeployment)
+    await helpers.etherscan.verify(veBTCEpochGovernorDeployment)
   }
 }
 
 export default func
 
-func.tags = ["EpochGovernor"]
+func.tags = ["VeBTCEpochGovernor"]
 func.dependencies = ["MezoForwarder", "VeBTC", "FeeSplitter"]
