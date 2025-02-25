@@ -16,3 +16,8 @@ node_modules
 # Deployments (with exceptions)
 /deployments/*
 !/deployments/matsnet/
+
+# Foundry
+/out
+/broadcast
+/cache_forge

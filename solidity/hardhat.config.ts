@@ -2,6 +2,12 @@ import { HardhatUserConfig } from "hardhat/config"
 import "@keep-network/hardhat-helpers"
 import "@nomicfoundation/hardhat-toolbox"
 import "@nomicfoundation/hardhat-chai-matchers"
+// The @nomicfoundation/hardhat-foundry plugin provides the `hardhat init-foundry`
+// command that was used to initialize foundry.toml. Moreover, this plugin
+// allows Hardhat to use dependencies installed by Foundry (the `lib` directory)
+// and understand Foundry dependency remappings. Last but not least, it lets
+// Foundry use Hardhat dependencies from `node_modules`.
+import "@nomicfoundation/hardhat-foundry"
 import "@openzeppelin/hardhat-upgrades"
 import "hardhat-deploy"
 import "hardhat-contract-sizer"

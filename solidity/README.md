@@ -1,4 +1,4 @@
-# Mezodrome Contracts
+\_\_# Mezodrome Contracts
 
 Smart contracts powering the Mezo gauge system and DEX, inspired by Solidly.
 
@@ -19,6 +19,9 @@ Install slither locally
 ```bash
 brew install slither
 ```
+
+Install Foundry locally by following [this guide](https://book.getfoundry.sh/getting-started/installation).
+See the [Hardhat and Foundry](#hardhat-and-foundry-) section for more information.
 
 ### Testing
 
@@ -81,3 +84,18 @@ workflow](https://github.com/thesis/mezo-portal/actions/workflows/solidity.yml)
 `TBTC_CONTRACT_ADDRESS`, `WBTC_CONTRACT_ADDRESS` and `PORTAL_CONTRACT_ADDRESS`
 environment variables in the settings of Netlify builds deploying dApp and its
 previews).
+
+### Hardhat and Foundry
+
+We use a hybrid approach with both Hardhat and Foundry for this project.
+
+Hardhat is considered the project's main build tool. It is used to compile and
+deploy contracts. Hardhat deployment scripts are the main deployment mechanism
+for real chains.
+
+Foundry is used as test platform. Unit tests are written and run entirely using
+Foundry. System tests are written using Foundry but run in fork mode against
+a Hardhat network with deployment scripts applied.
+
+Note that Foundry test runner expects specific compilation artifacts so Foundry
+is used to compile contracts for this concrete use case instead of Hardhat.
