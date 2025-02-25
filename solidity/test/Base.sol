@@ -6,7 +6,7 @@ import {GaugeFactory} from "contracts/factories/GaugeFactory.sol";
 import {PoolFactory, IPoolFactory} from "contracts/factories/PoolFactory.sol";
 import {IFactoryRegistry, FactoryRegistry} from "contracts/factories/FactoryRegistry.sol";
 import {Pool} from "contracts/Pool.sol";
-import {ISplitter, ChainFeeSplitter} from "contracts/ChainFeeSplitter.sol";
+import {ChainFeeSplitter} from "contracts/ChainFeeSplitter.sol";
 import {IReward, Reward} from "contracts/rewards/Reward.sol";
 import {FeesVotingReward} from "contracts/rewards/FeesVotingReward.sol";
 import {BribeVotingReward} from "contracts/rewards/BribeVotingReward.sol";
@@ -29,7 +29,6 @@ import {MezoForwarder} from "contracts/forwarder/MezoForwarder.sol";
 import "forge-std/Script.sol";
 import "forge-std/Test.sol";
 import {VeBTC} from "../contracts/VeBTC.sol";
-import {ChainFeeSplitter} from "../contracts/ChainFeeSplitter.sol";
 
 /// @notice Base contract used for tests and deployment scripts
 abstract contract Base is Script, Test {
