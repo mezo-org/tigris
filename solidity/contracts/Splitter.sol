@@ -77,5 +77,5 @@ abstract contract Splitter is ISplitter {
     function moveNeedleDown() internal virtual returns (uint256);
 
     /// @notice Returns the address of the epoch governor.
-    function epochGovernor() internal virtual view returns (address);
+    function epochGovernor() internal view virtual returns (address);
 }

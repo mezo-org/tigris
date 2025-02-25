@@ -107,7 +107,7 @@ contract ChainFeeSplitter is Splitter {
     }
 
     /// @notice Returns the address of the epoch governor.
-    function epochGovernor() internal override view returns (address) {
+    function epochGovernor() internal view override returns (address) {
         return voter.epochGovernor();
     }
 }
