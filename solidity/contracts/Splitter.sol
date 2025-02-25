@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {IVoter} from "./interfaces/IVoter.sol";
 import {IEpochGovernor} from "./interfaces/IEpochGovernor.sol";
 import {ISplitter} from "./interfaces/ISplitter.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -13,9 +12,6 @@ import {IVotingEscrow} from "./interfaces/IVotingEscrow.sol";
 /// @notice An abstract contract for fee splitting between token holders and Stake Gauges.
 abstract contract Splitter is ISplitter {
     using SafeERC20 for IERC20;
-
-    /// @notice The address of the Voter contract.
-    IVoter public immutable voter;
 
     /// @notice Token for fee distribution.
     IERC20 public immutable token;
@@ -42,14 +38,13 @@ abstract contract Splitter is ISplitter {
     mapping(uint256 => bool) public proposals;
 
     /// @notice Constructor to set up the fee splitter.
-    constructor(address _voter, address _ve) {
-        voter = IVoter(_voter);
+    constructor(address _ve) {
         token = IERC20(IVotingEscrow(_ve).token());
     }
 
     /// @notice Moves the gauge needle by 1 tick per epoch.
     function nudge() external {
-        address epochGovernor = voter.epochGovernor();
+        address epochGovernor = epochGovernor();
         if (msg.sender != epochGovernor) revert NotEpochGovernor();
 
         uint256 period = activePeriod;
@@ -73,11 +68,14 @@ abstract contract Splitter is ISplitter {
     }
 
     /// @notice Updates the period of the current epoch.
-    function updatePeriod() external virtual returns (uint256 period);
+    function updatePeriod() external virtual returns (uint256);
 
     /// @notice Moves the gauge needle to the right.
-    function moveNeedleUp() internal virtual returns (uint256 needle);
+    function moveNeedleUp() internal virtual returns (uint256);
 
     /// @notice Moves the gauge needle to the left.
-    function moveNeedleDown() internal virtual returns (uint256 needle);
+    function moveNeedleDown() internal virtual returns (uint256);
+
+    /// @notice Returns the address of the epoch governor.
+    function epochGovernor() internal virtual view returns (address);
 }
