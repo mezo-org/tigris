@@ -71,7 +71,7 @@ contract EpochGovernorTest is BaseTest {
         calldatas[0] = abi.encodeWithSelector(chainFeeSplitter.nudge.selector);
         string memory description = "";
 
-        vm.expectRevert("GovernorSimple: only minter allowed");
+        vm.expectRevert("GovernorSimple: only splitter allowed");
         epochGovernor.propose(1, targets, values, calldatas, description);
     }
 

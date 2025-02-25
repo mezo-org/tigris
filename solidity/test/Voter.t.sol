@@ -867,8 +867,8 @@ contract VoterTest is BaseTest {
         assertEq(BTC.balanceOf(address(gauge2)), 334999999999999999);
     }
 
-    function testCannotNotifyRewardAmountIfNotMinter() public {
-        vm.expectRevert(IVoter.NotMinter.selector);
+    function testCannotNotifyRewardAmountIfNotSplitter() public {
+        vm.expectRevert(IVoter.NotSplitter.selector);
         voter.notifyRewardAmount(TOKEN_1);
     }
 
