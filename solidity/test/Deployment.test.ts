@@ -165,7 +165,7 @@ describe("Mezodrome deployment", () => {
     expect(await chainFeeSplitter.voter()).to.equal(
       await veBTCVoter.getAddress(),
     )
-    expect(await chainFeeSplitter.btc()).to.equal(await btc.getAddress())
+    expect(await chainFeeSplitter.token()).to.equal(await btc.getAddress())
     expect(await chainFeeSplitter.rewardsDistributor()).to.equal(
       await veBTCRewardsDistributor.getAddress(),
     )

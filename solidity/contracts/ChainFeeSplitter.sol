@@ -3,48 +3,20 @@ pragma solidity 0.8.24;
 
 import {IVoter} from "./interfaces/IVoter.sol";
 import {IEpochGovernor} from "./interfaces/IEpochGovernor.sol";
-import {ISplitter} from "./interfaces/ISplitter.sol";
+import {Splitter} from "./Splitter.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IRewardsDistributor} from "./interfaces/IRewardsDistributor.sol";
 import {IVotingEscrow} from "./interfaces/IVotingEscrow.sol";
 
 /// @title ChainFeeSplitter
-/// @notice A ChainFeeSplitter contract that changes the fee distribution between veBTC
-///         holders and Stake Gauges based on the gauge needle position.
-contract ChainFeeSplitter is ISplitter {
+/// @notice A ChainFeeSplitter contract that changes the fee distribution between
+///         veBTC holders and Stake Gauges based on the gauge needle position.
+contract ChainFeeSplitter is Splitter {
     using SafeERC20 for IERC20;
-    /// @notice The address of the Voter contract.
-    IVoter public immutable voter;
-    /// @notice Fee token.
-    IERC20 public immutable btc;
+
     /// @notice Rewards distribution among stake gauges.
     IRewardsDistributor public immutable rewardsDistributor;
-
-    /// @notice The maximum value of the gauge needle.
-    uint256 public constant MAXIMUM_GAUGE_SCALE = 100;
-
-    /// @notice The minimum value of the gauge needle.
-    uint256 public constant MINIMUM_GAUGE_SCALE = 1;
-
-    /// @notice Duration of epoch.
-    /// TODO: Decide if we want to make this interval flexible and updatable by e.g. governor.
-    uint256 public constant WEEK = 1 weeks;
-
-    /// @notice Needle tick change per proposal.
-    uint256 public constant TICK = 1;
-
-    /// @notice The current position of the gauge needle.
-    /// @dev The needle moves between 1 and 100. The default value is 33 to
-    ///      simulate ~1/3 of fees going to the veBTC holders and ~2/3 to the
-    ///      Stake Gauges.
-    uint256 public needle = 33;
-
-    /// @notice Start time of currently active epoch.
-    uint256 public activePeriod;
-
-    /// @dev activePeriod => proposal existing, used to enforce one proposal per epoch.
-    mapping(uint256 => bool) public proposals;
 
     /// @dev Emitted when the epoch period is updated.
     event PeriodUpdated(
@@ -58,41 +30,11 @@ contract ChainFeeSplitter is ISplitter {
         address _voter, // the voting & distribution system
         address _ve, // the ve(3,3) system that will be locked into
         address _rewardsDistributor // the distribution system that ensures users aren't diluted
-    ) {
-        voter = IVoter(_voter);
-        btc = IERC20(IVotingEscrow(_ve).token());
-        rewardsDistributor = IRewardsDistributor(_rewardsDistributor);
-    }
-
-    /// @notice Moves the gauge needle by 1 tick per epoch.
-    function nudge() external {
-        address epochGovernor = voter.epochGovernor();
-        if (msg.sender != epochGovernor) revert NotEpochGovernor();
-
-        uint256 period = activePeriod;
-        if (proposals[period]) revert AlreadyNudged();
-
-        IEpochGovernor.ProposalState state = IEpochGovernor(epochGovernor)
-            .result();
-
-        uint256 oldNeedle = needle;
-        if (state != IEpochGovernor.ProposalState.Expired) {
-            // move the needle up by 1 tick
-            if (state == IEpochGovernor.ProposalState.Succeeded) {
-                needle = oldNeedle + TICK > MAXIMUM_GAUGE_SCALE
-                    ? MAXIMUM_GAUGE_SCALE
-                    : needle + TICK;
-            } else {
-                // move the needle down by 1 tick
-                needle = oldNeedle - TICK < MINIMUM_GAUGE_SCALE
-                    ? MINIMUM_GAUGE_SCALE
-                    : needle - TICK;
-            }
-        }
-
-        proposals[period] = true;
-        // Might happen that needle did not move due to abstained or expired proposal.
-        emit Nudge(period, oldNeedle, needle);
+    ) Splitter(_voter, _ve, _rewardsDistributor) {
+        /// The needle moves between 1 and 100. The default value is 33 to
+        /// simulate ~1/3 of fees going to the veBTC holders and ~2/3 to the
+        /// Stake Gauges.
+        needle = 33;
     }
 
     /// @notice Updates the period of the current epoch. This function can be called
@@ -100,7 +42,7 @@ contract ChainFeeSplitter is ISplitter {
     ///         are distributed to veBTC holders and stake gauges over a specified
     ///         period. In other words, the release of accumulated fees must wait
     ///         until the end of the period.
-    function updatePeriod() external returns (uint256 period) {
+    function updatePeriod() external override returns (uint256 period) {
         period = activePeriod;
         if (block.timestamp >= period + WEEK) {
             uint256 oldPeriod = period;
@@ -110,19 +52,22 @@ contract ChainFeeSplitter is ISplitter {
             uint256 stakeGuagesFee;
             uint256 veBTCHoldersFee;
 
-            uint256 currentBalance = btc.balanceOf(address(this));
+            uint256 currentBalance = token.balanceOf(address(this));
             if (currentBalance > 0) {
                 veBTCHoldersFee =
                     (currentBalance * needle) /
                     MAXIMUM_GAUGE_SCALE;
                 stakeGuagesFee = currentBalance - veBTCHoldersFee;
 
-                // For veBTC holders.
-                btc.safeTransfer(address(rewardsDistributor), veBTCHoldersFee);
+                // For veBTC holders. Token is BTC.
+                token.safeTransfer(
+                    address(rewardsDistributor),
+                    veBTCHoldersFee
+                );
                 rewardsDistributor.checkpointToken(); // checkpoint token balance in rewards distributor
 
-                // For stake guages.
-                btc.safeApprove(address(voter), stakeGuagesFee);
+                // For stake guages. Token is BTC.
+                token.safeApprove(address(voter), stakeGuagesFee);
                 voter.notifyRewardAmount(stakeGuagesFee);
             }
 
@@ -133,5 +78,25 @@ contract ChainFeeSplitter is ISplitter {
                 stakeGuagesFee
             );
         }
+    }
+
+    /// @notice Moves the needle up by 1 tick.
+    /// @dev The needle can be moved up to the maximum gauge scale.
+    function moveNeedleUp() internal override returns (uint256) {
+        uint256 oldNeedle = needle;
+        if (oldNeedle < MAXIMUM_GAUGE_SCALE) {
+            needle = oldNeedle + TICK;
+        }
+        return needle;
+    }
+
+    /// @notice Moves the needle down by 1 tick.
+    /// @dev The needle can be moved down to the minimum gauge scale.
+    function moveNeedleDown() internal override returns (uint256) {
+        uint256 oldNeedle = needle;
+        if (oldNeedle > MINIMUM_GAUGE_SCALE) {
+            needle = oldNeedle - TICK;
+        }
+        return needle;
     }
 }
