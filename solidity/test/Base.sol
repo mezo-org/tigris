@@ -6,7 +6,7 @@ import {GaugeFactory} from "contracts/factories/GaugeFactory.sol";
 import {PoolFactory, IPoolFactory} from "contracts/factories/PoolFactory.sol";
 import {IFactoryRegistry, FactoryRegistry} from "contracts/factories/FactoryRegistry.sol";
 import {Pool} from "contracts/Pool.sol";
-import {IMinter, Minter} from "contracts/Minter.sol";
+import {ISplitter, ChainFeeSplitter} from "contracts/ChainFeeSplitter.sol";
 import {IReward, Reward} from "contracts/rewards/Reward.sol";
 import {FeesVotingReward} from "contracts/rewards/FeesVotingReward.sol";
 import {BribeVotingReward} from "contracts/rewards/BribeVotingReward.sol";

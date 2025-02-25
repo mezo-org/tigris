@@ -3,7 +3,7 @@ pragma solidity 0.8.24;
 
 import {IVoter} from "./interfaces/IVoter.sol";
 import {IEpochGovernor} from "./interfaces/IEpochGovernor.sol";
-import {IMinter} from "./interfaces/IMinter.sol";
+import {ISplitter} from "./interfaces/ISplitter.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IRewardsDistributor} from "./interfaces/IRewardsDistributor.sol";
@@ -12,7 +12,7 @@ import {IVotingEscrow} from "./interfaces/IVotingEscrow.sol";
 /// @title ChainFeeSplitter
 /// @notice A ChainFeeSplitter contract that changes the fee distribution between veBTC
 ///         holders and Stake Gauges based on the gauge needle position.
-contract ChainFeeSplitter is IMinter {
+contract ChainFeeSplitter is ISplitter {
     using SafeERC20 for IERC20;
     /// @notice The address of the Voter contract.
     IVoter public immutable voter;

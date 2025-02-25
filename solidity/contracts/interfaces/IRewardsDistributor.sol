@@ -12,7 +12,7 @@ interface IRewardsDistributor {
 
     error NotDepositor();
 
-    /// @notice Called by Minter to notify Distributor of rebases
+    /// @notice Called by Splitter to notify Distributor of rebases
     function checkpointToken() external;
 
     /// @notice Returns the amount of rebases claimable for a given token ID
@@ -32,7 +32,7 @@ interface IRewardsDistributor {
     /// @return Whether or not the claim succeeded
     function claimMany(uint256[] calldata tokenIds) external returns (bool);
 
-    /// @notice Used to set minter once on initialization
-    /// @dev Callable once by Minter only, Minter is immutable
+    /// @notice Used to set splitter once on initialization
+    /// @dev Callable once by Splitter only, Splitter is immutable
     function setDepositor(address _depositor) external;
 }
