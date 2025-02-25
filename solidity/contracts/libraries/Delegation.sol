@@ -81,7 +81,8 @@ library Delegation {
         if (!NFT._isApprovedOrOwner(self, signatory, delegator))
             revert IVotingEscrow.NotApprovedOrOwner();
         if (signatory == address(0)) revert IVotingEscrow.InvalidSignature();
-        if (nonce != self.nonces[signatory]++) revert IVotingEscrow.InvalidNonce();
+        if (nonce != self.nonces[signatory]++)
+            revert IVotingEscrow.InvalidNonce();
         if (block.timestamp > expiry) revert IVotingEscrow.SignatureExpired();
         return _delegate(self, delegator, delegatee, msgSender);
     }
@@ -94,8 +95,11 @@ library Delegation {
         uint256 _delegatee,
         address _msgSender
     ) internal {
-        IVotingEscrow.LockedBalance memory delegateLocked = self._locked[_delegator];
-        if (!delegateLocked.isPermanent) revert IVotingEscrow.NotPermanentLock();
+        IVotingEscrow.LockedBalance memory delegateLocked = self._locked[
+            _delegator
+        ];
+        if (!delegateLocked.isPermanent)
+            revert IVotingEscrow.NotPermanentLock();
         if (_delegatee != 0 && NFT._ownerOf(self, _delegatee) == address(0))
             revert IVotingEscrow.NonExistentToken();
         if (self.ownershipChange[_delegator] == block.number)
@@ -105,7 +109,12 @@ library Delegation {
         if (currentDelegate == _delegatee) return;
 
         uint256 delegatedBalance = delegateLocked.amount.toUint256();
-        _checkpointDelegator(self, _delegator, _delegatee, NFT._ownerOf(self, _delegator));
+        _checkpointDelegator(
+            self,
+            _delegator,
+            _delegatee,
+            NFT._ownerOf(self, _delegator)
+        );
         _checkpointDelegatee(self, _delegatee, delegatedBalance, true);
 
         emit IVotes.DelegateChanged(_msgSender, currentDelegate, _delegatee);

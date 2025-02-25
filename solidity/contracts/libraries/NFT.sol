@@ -22,7 +22,9 @@ library NFT {
         if (owner == _approved) revert IVotingEscrow.SameAddress();
         // Check requirements
         bool senderIsOwner = (_ownerOf(self, _tokenId) == _msgSender);
-        bool senderIsApprovedForAll = (self.ownerToOperators[owner])[_msgSender];
+        bool senderIsApprovedForAll = (self.ownerToOperators[owner])[
+            _msgSender
+        ];
         if (!senderIsOwner && !senderIsApprovedForAll)
             revert IVotingEscrow.NotApprovedOrOwner();
         // Set the approval
@@ -69,7 +71,8 @@ library NFT {
                 }
             } catch (bytes memory reason) {
                 if (reason.length == 0) {
-                    revert IVotingEscrow.ERC721TransferToNonERC721ReceiverImplementer();
+                    revert IVotingEscrow
+                        .ERC721TransferToNonERC721ReceiverImplementer();
                 } else {
                     assembly {
                         revert(add(32, reason), mload(reason))
@@ -89,7 +92,8 @@ library NFT {
         if (self.escrowType[_tokenId] == IVotingEscrow.EscrowType.LOCKED)
             revert IVotingEscrow.NotManagedOrNormalNFT();
         // Check requirements
-        if (!_isApprovedOrOwner(self, _sender, _tokenId)) revert IVotingEscrow.NotApprovedOrOwner();
+        if (!_isApprovedOrOwner(self, _sender, _tokenId))
+            revert IVotingEscrow.NotApprovedOrOwner();
         // Clear approval. Throws if `_from` is not the current owner
         if (_ownerOf(self, _tokenId) != _from) revert IVotingEscrow.NotOwner();
         delete self.idToApprovals[_tokenId];
@@ -193,7 +197,8 @@ library NFT {
         uint256 _tokenId,
         address _msgSender
     ) internal {
-        if (!_isApprovedOrOwner(self, _msgSender, _tokenId)) revert IVotingEscrow.NotApprovedOrOwner();
+        if (!_isApprovedOrOwner(self, _msgSender, _tokenId))
+            revert IVotingEscrow.NotApprovedOrOwner();
         address owner = _ownerOf(self, _tokenId);
 
         // Clear approval
@@ -240,7 +245,9 @@ library NFT {
             // update tokenToOwnerIndex
             self.tokenToOwnerIndex[_tokenId] = 0;
         } else {
-            uint256 lastTokenId = self.ownerToNFTokenIdList[_from][currentCount];
+            uint256 lastTokenId = self.ownerToNFTokenIdList[_from][
+                currentCount
+            ];
 
             // Add
             // update ownerToNFTokenIdList

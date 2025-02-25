@@ -27,12 +27,18 @@ library Escrow {
         uint256 _tokenId,
         uint256 _value,
         address _msgSender
-    ) external  {
+    ) external {
         if (
             self.escrowType[_tokenId] == IVotingEscrow.EscrowType.MANAGED &&
             _msgSender != self.distributor
         ) revert IVotingEscrow.NotDistributor();
-        _increaseAmountFor(self, _tokenId, _value, IVotingEscrow.DepositType.DEPOSIT_FOR_TYPE, _msgSender);
+        _increaseAmountFor(
+            self,
+            _tokenId,
+            _value,
+            IVotingEscrow.DepositType.DEPOSIT_FOR_TYPE,
+            _msgSender
+        );
     }
 
     /// @notice Deposit and lock tokens for a user
@@ -76,7 +82,11 @@ library Escrow {
         Escrow._checkpoint(self, _tokenId, _oldLocked, newLocked);
 
         if (_value != 0) {
-            IERC20(self.token).safeTransferFrom(_msgSender, address(this), _value);
+            IERC20(self.token).safeTransferFrom(
+                _msgSender,
+                address(this),
+                _value
+            );
         }
 
         emit IVotingEscrow.Deposit(
@@ -152,13 +162,14 @@ library Escrow {
         // initialLastPoint is used for extrapolation to calculate block number
         // (approximately, for *At methods) and save them
         // as we cannot figure that out exactly from inside the contract
-        IVotingEscrow.GlobalPoint memory initialLastPoint = IVotingEscrow.GlobalPoint({
-            bias: lastPoint.bias,
-            slope: lastPoint.slope,
-            ts: lastPoint.ts,
-            blk: lastPoint.blk,
-            permanentLockBalance: lastPoint.permanentLockBalance
-        });
+        IVotingEscrow.GlobalPoint memory initialLastPoint = IVotingEscrow
+            .GlobalPoint({
+                bias: lastPoint.bias,
+                slope: lastPoint.slope,
+                ts: lastPoint.ts,
+                blk: lastPoint.blk,
+                permanentLockBalance: lastPoint.permanentLockBalance
+            });
         uint256 blockSlope = 0; // dblock/dt
         if (block.timestamp > lastPoint.ts) {
             blockSlope =
@@ -230,7 +241,9 @@ library Escrow {
         // Missing global checkpoints in prior weeks. In this case, _epoch = epoch + x, where x > 1
         // No missing global checkpoints, but timestamp != block.timestamp. Create new checkpoint.
         // No missing global checkpoints, but timestamp == block.timestamp. Overwrite last checkpoint.
-        if (_epoch != 1 && self._pointHistory[_epoch - 1].ts == block.timestamp) {
+        if (
+            _epoch != 1 && self._pointHistory[_epoch - 1].ts == block.timestamp
+        ) {
             // _epoch = epoch + 1, so we do not increment epoch
             self._pointHistory[_epoch - 1] = lastPoint;
         } else {
@@ -268,7 +281,8 @@ library Escrow {
             uint256 userEpoch = self.userPointEpoch[_tokenId];
             if (
                 userEpoch != 0 &&
-                self._userPointHistory[_tokenId][userEpoch].ts == block.timestamp
+                self._userPointHistory[_tokenId][userEpoch].ts ==
+                block.timestamp
             ) {
                 self._userPointHistory[_tokenId][userEpoch] = uNew;
             } else {
@@ -292,7 +306,8 @@ library Escrow {
         uint256 unlockTime = ((block.timestamp + _lockDuration) / WEEK) * WEEK; // Locktime is rounded down to weeks
 
         if (_value == 0) revert IVotingEscrow.ZeroAmount();
-        if (unlockTime <= block.timestamp) revert IVotingEscrow.LockDurationNotInFuture();
+        if (unlockTime <= block.timestamp)
+            revert IVotingEscrow.LockDurationNotInFuture();
         if (unlockTime > block.timestamp + MAXTIME)
             revert IVotingEscrow.LockDurationTooLong();
 
@@ -319,7 +334,13 @@ library Escrow {
     ) external {
         if (!NFT._isApprovedOrOwner(self, _msgSender, _tokenId))
             revert IVotingEscrow.NotApprovedOrOwner();
-        _increaseAmountFor(self, _tokenId, _value, IVotingEscrow.DepositType.INCREASE_LOCK_AMOUNT, _msgSender);
+        _increaseAmountFor(
+            self,
+            _tokenId,
+            _value,
+            IVotingEscrow.DepositType.INCREASE_LOCK_AMOUNT,
+            _msgSender
+        );
     }
 
     function _increaseAmountFor(
@@ -330,7 +351,8 @@ library Escrow {
         address _msgSender
     ) internal {
         IVotingEscrow.EscrowType _escrowType = self.escrowType[_tokenId];
-        if (_escrowType == IVotingEscrow.EscrowType.LOCKED) revert IVotingEscrow.NotManagedOrNormalNFT();
+        if (_escrowType == IVotingEscrow.EscrowType.LOCKED)
+            revert IVotingEscrow.NotManagedOrNormalNFT();
 
         IVotingEscrow.LockedBalance memory oldLocked = self._locked[_tokenId];
 
@@ -340,8 +362,21 @@ library Escrow {
             revert IVotingEscrow.LockExpired();
 
         if (oldLocked.isPermanent) self.permanentLockBalance += _value;
-        Delegation._checkpointDelegatee(self, self._delegates[_tokenId], _value, true);
-        _depositFor(self, _tokenId, _value, 0, oldLocked, _depositType, _msgSender);
+        Delegation._checkpointDelegatee(
+            self,
+            self._delegates[_tokenId],
+            _value,
+            true
+        );
+        _depositFor(
+            self,
+            _tokenId,
+            _value,
+            0,
+            oldLocked,
+            _depositType,
+            _msgSender
+        );
 
         if (_escrowType == IVotingEscrow.EscrowType.MANAGED) {
             // increaseAmount called on managed tokens are treated as locked rewards
@@ -363,15 +398,18 @@ library Escrow {
     ) external {
         if (!NFT._isApprovedOrOwner(self, _msgSender, _tokenId))
             revert IVotingEscrow.NotApprovedOrOwner();
-        if (self.escrowType[_tokenId] != IVotingEscrow.EscrowType.NORMAL) revert IVotingEscrow.NotNormalNFT();
+        if (self.escrowType[_tokenId] != IVotingEscrow.EscrowType.NORMAL)
+            revert IVotingEscrow.NotNormalNFT();
 
         IVotingEscrow.LockedBalance memory oldLocked = self._locked[_tokenId];
         if (oldLocked.isPermanent) revert IVotingEscrow.PermanentLock();
         uint256 unlockTime = ((block.timestamp + _lockDuration) / WEEK) * WEEK; // Locktime is rounded down to weeks
 
-        if (oldLocked.end <= block.timestamp) revert IVotingEscrow.LockExpired();
+        if (oldLocked.end <= block.timestamp)
+            revert IVotingEscrow.LockExpired();
         if (oldLocked.amount <= 0) revert IVotingEscrow.NoLockFound();
-        if (unlockTime <= oldLocked.end) revert IVotingEscrow.LockDurationNotInFuture();
+        if (unlockTime <= oldLocked.end)
+            revert IVotingEscrow.LockDurationNotInFuture();
         if (unlockTime > block.timestamp + MAXTIME)
             revert IVotingEscrow.LockDurationTooLong();
 
@@ -394,13 +432,16 @@ library Escrow {
         address _msgSender
     ) external {
         address sender = _msgSender;
-        if (!NFT._isApprovedOrOwner(self, sender, _tokenId)) revert IVotingEscrow.NotApprovedOrOwner();
+        if (!NFT._isApprovedOrOwner(self, sender, _tokenId))
+            revert IVotingEscrow.NotApprovedOrOwner();
         if (self.voted[_tokenId]) revert IVotingEscrow.AlreadyVoted();
-        if (self.escrowType[_tokenId] != IVotingEscrow.EscrowType.NORMAL) revert IVotingEscrow.NotNormalNFT();
+        if (self.escrowType[_tokenId] != IVotingEscrow.EscrowType.NORMAL)
+            revert IVotingEscrow.NotNormalNFT();
 
         IVotingEscrow.LockedBalance memory oldLocked = self._locked[_tokenId];
         if (oldLocked.isPermanent) revert IVotingEscrow.PermanentLock();
-        if (block.timestamp < oldLocked.end) revert IVotingEscrow.LockNotExpired();
+        if (block.timestamp < oldLocked.end)
+            revert IVotingEscrow.LockNotExpired();
         uint256 value = oldLocked.amount.toUint256();
 
         // Burn the NFT
@@ -412,7 +453,12 @@ library Escrow {
         // oldLocked can have either expired <= timestamp or zero end
         // oldLocked has only 0 end
         // Both can have >= 0 amount
-        _checkpoint(self, _tokenId, oldLocked, IVotingEscrow.LockedBalance(0, 0, false));
+        _checkpoint(
+            self,
+            _tokenId,
+            oldLocked,
+            IVotingEscrow.LockedBalance(0, 0, false)
+        );
 
         IERC20(self.token).safeTransfer(sender, value);
 
@@ -427,11 +473,15 @@ library Escrow {
         address _msgSender
     ) external {
         if (self.voted[_from]) revert IVotingEscrow.AlreadyVoted();
-        if (self.escrowType[_from] != IVotingEscrow.EscrowType.NORMAL) revert IVotingEscrow.NotNormalNFT();
-        if (self.escrowType[_to] != IVotingEscrow.EscrowType.NORMAL) revert IVotingEscrow.NotNormalNFT();
+        if (self.escrowType[_from] != IVotingEscrow.EscrowType.NORMAL)
+            revert IVotingEscrow.NotNormalNFT();
+        if (self.escrowType[_to] != IVotingEscrow.EscrowType.NORMAL)
+            revert IVotingEscrow.NotNormalNFT();
         if (_from == _to) revert IVotingEscrow.SameNFT();
-        if (!NFT._isApprovedOrOwner(self, _msgSender, _from)) revert IVotingEscrow.NotApprovedOrOwner();
-        if (!NFT._isApprovedOrOwner(self, _msgSender, _to)) revert IVotingEscrow.NotApprovedOrOwner();
+        if (!NFT._isApprovedOrOwner(self, _msgSender, _from))
+            revert IVotingEscrow.NotApprovedOrOwner();
+        if (!NFT._isApprovedOrOwner(self, _msgSender, _to))
+            revert IVotingEscrow.NotApprovedOrOwner();
         IVotingEscrow.LockedBalance memory oldLockedTo = self._locked[_to];
         if (oldLockedTo.end <= block.timestamp && !oldLockedTo.isPermanent)
             revert IVotingEscrow.LockExpired();
@@ -444,7 +494,12 @@ library Escrow {
 
         NFT._burn(self, _from, _msgSender);
         self._locked[_from] = IVotingEscrow.LockedBalance(0, 0, false);
-        _checkpoint(self, _from, oldLockedFrom, IVotingEscrow.LockedBalance(0, 0, false));
+        _checkpoint(
+            self,
+            _from,
+            oldLockedFrom,
+            IVotingEscrow.LockedBalance(0, 0, false)
+        );
 
         IVotingEscrow.LockedBalance memory newLockedTo;
         newLockedTo.amount = oldLockedTo.amount + oldLockedFrom.amount;
@@ -484,21 +539,30 @@ library Escrow {
     ) external returns (uint256 _tokenId1, uint256 _tokenId2) {
         address owner = NFT._ownerOf(self, _from);
         if (owner == address(0)) revert IVotingEscrow.SplitNoOwner();
-        if (!self.canSplit[owner] && !self.canSplit[address(0)]) revert IVotingEscrow.SplitNotAllowed();
-        if (self.escrowType[_from] != IVotingEscrow.EscrowType.NORMAL) revert IVotingEscrow.NotNormalNFT();
+        if (!self.canSplit[owner] && !self.canSplit[address(0)])
+            revert IVotingEscrow.SplitNotAllowed();
+        if (self.escrowType[_from] != IVotingEscrow.EscrowType.NORMAL)
+            revert IVotingEscrow.NotNormalNFT();
         if (self.voted[_from]) revert IVotingEscrow.AlreadyVoted();
-        if (!NFT._isApprovedOrOwner(self, _msgSender, _from)) revert IVotingEscrow.NotApprovedOrOwner();
+        if (!NFT._isApprovedOrOwner(self, _msgSender, _from))
+            revert IVotingEscrow.NotApprovedOrOwner();
         IVotingEscrow.LockedBalance memory newLocked = self._locked[_from];
         if (newLocked.end <= block.timestamp && !newLocked.isPermanent)
             revert IVotingEscrow.LockExpired();
         int128 _splitAmount = _amount.toInt128();
         if (_splitAmount == 0) revert IVotingEscrow.ZeroAmount();
-        if (newLocked.amount <= _splitAmount) revert IVotingEscrow.AmountTooBig();
+        if (newLocked.amount <= _splitAmount)
+            revert IVotingEscrow.AmountTooBig();
 
         // Zero out and burn old veNFT
         NFT._burn(self, _from, _msgSender);
         self._locked[_from] = IVotingEscrow.LockedBalance(0, 0, false);
-        _checkpoint(self, _from, newLocked, IVotingEscrow.LockedBalance(0, 0, false));
+        _checkpoint(
+            self,
+            _from,
+            newLocked,
+            IVotingEscrow.LockedBalance(0, 0, false)
+        );
 
         // Create new veNFT using old balance - amount
         newLocked.amount -= _splitAmount;
@@ -527,7 +591,12 @@ library Escrow {
     ) private returns (uint256 _tokenId) {
         _tokenId = ++self.tokenId;
         self._locked[_tokenId] = _newLocked;
-        _checkpoint(self, _tokenId, IVotingEscrow.LockedBalance(0, 0, false), _newLocked);
+        _checkpoint(
+            self,
+            _tokenId,
+            IVotingEscrow.LockedBalance(0, 0, false),
+            _newLocked
+        );
         NFT._mint(self, _to, _tokenId);
     }
 
@@ -546,11 +615,14 @@ library Escrow {
         uint256 _tokenId,
         address _msgSender
     ) external {
-        if (!NFT._isApprovedOrOwner(self, _msgSender, _tokenId)) revert IVotingEscrow.NotApprovedOrOwner();
-        if (self.escrowType[_tokenId] != IVotingEscrow.EscrowType.NORMAL) revert IVotingEscrow.NotNormalNFT();
+        if (!NFT._isApprovedOrOwner(self, _msgSender, _tokenId))
+            revert IVotingEscrow.NotApprovedOrOwner();
+        if (self.escrowType[_tokenId] != IVotingEscrow.EscrowType.NORMAL)
+            revert IVotingEscrow.NotNormalNFT();
         IVotingEscrow.LockedBalance memory _newLocked = self._locked[_tokenId];
         if (_newLocked.isPermanent) revert IVotingEscrow.PermanentLock();
-        if (_newLocked.end <= block.timestamp) revert IVotingEscrow.LockExpired();
+        if (_newLocked.end <= block.timestamp)
+            revert IVotingEscrow.LockExpired();
         if (_newLocked.amount <= 0) revert IVotingEscrow.NoLockFound();
 
         uint256 _amount = _newLocked.amount.toUint256();
@@ -560,7 +632,12 @@ library Escrow {
         _checkpoint(self, _tokenId, self._locked[_tokenId], _newLocked);
         self._locked[_tokenId] = _newLocked;
 
-        emit IVotingEscrow.LockPermanent(_msgSender, _tokenId, _amount, block.timestamp);
+        emit IVotingEscrow.LockPermanent(
+            _msgSender,
+            _tokenId,
+            _amount,
+            block.timestamp
+        );
         emit IERC4906.MetadataUpdate(_tokenId);
     }
 
@@ -569,8 +646,10 @@ library Escrow {
         uint256 _tokenId,
         address _msgSender
     ) external {
-        if (!NFT._isApprovedOrOwner(self, _msgSender, _tokenId)) revert IVotingEscrow.NotApprovedOrOwner();
-        if (self.escrowType[_tokenId] != IVotingEscrow.EscrowType.NORMAL) revert IVotingEscrow.NotNormalNFT();
+        if (!NFT._isApprovedOrOwner(self, _msgSender, _tokenId))
+            revert IVotingEscrow.NotApprovedOrOwner();
+        if (self.escrowType[_tokenId] != IVotingEscrow.EscrowType.NORMAL)
+            revert IVotingEscrow.NotNormalNFT();
         if (self.voted[_tokenId]) revert IVotingEscrow.AlreadyVoted();
         IVotingEscrow.LockedBalance memory _newLocked = self._locked[_tokenId];
         if (!_newLocked.isPermanent) revert IVotingEscrow.NotPermanentLock();
@@ -583,7 +662,12 @@ library Escrow {
         _checkpoint(self, _tokenId, self._locked[_tokenId], _newLocked);
         self._locked[_tokenId] = _newLocked;
 
-        emit IVotingEscrow.UnlockPermanent(_msgSender, _tokenId, _amount, block.timestamp);
+        emit IVotingEscrow.UnlockPermanent(
+            _msgSender,
+            _tokenId,
+            _amount,
+            block.timestamp
+        );
         emit IERC4906.MetadataUpdate(_tokenId);
     }
 }

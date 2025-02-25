@@ -22,14 +22,11 @@ library VotingEscrowState {
         address artProxy;
         /// @inheritdoc IVotingEscrow
         address allowedManager;
-
         mapping(uint256 => IVotingEscrow.GlobalPoint) _pointHistory; // epoch -> unsigned global point
         /// @dev Mapping of interface id to bool about whether or not it's supported
         mapping(bytes4 => bool) supportedInterfaces;
-
         /// @inheritdoc IVotingEscrow
         uint256 tokenId;
-
         /*///////////////////////////////////////////////////////////////
                                 MANAGED NFT
         //////////////////////////////////////////////////////////////*/
@@ -46,7 +43,6 @@ library VotingEscrowState {
         mapping(uint256 => address) managedToLocked;
         /// @inheritdoc IVotingEscrow
         mapping(uint256 => address) managedToFree;
-
         /*//////////////////////////////////////////////////////////////
                             ERC721 BALANCE/OWNER
         //////////////////////////////////////////////////////////////*/
@@ -55,7 +51,6 @@ library VotingEscrowState {
         mapping(uint256 => address) idToOwner;
         /// @dev Mapping from owner address to count of his tokens.
         mapping(address => uint256) ownerToNFTokenCount;
-
         /*//////////////////////////////////////////////////////////////
                                 ERC721 APPROVAL
         //////////////////////////////////////////////////////////////*/
@@ -65,7 +60,6 @@ library VotingEscrowState {
         /// @dev Mapping from owner address to mapping of operator addresses.
         mapping(address => mapping(address => bool)) ownerToOperators;
         mapping(uint256 => uint256) ownershipChange;
-
         /*//////////////////////////////////////////////////////////////
                             INTERNAL MINT/BURN
         //////////////////////////////////////////////////////////////*/
@@ -74,7 +68,6 @@ library VotingEscrowState {
         mapping(address => mapping(uint256 => uint256)) ownerToNFTokenIdList;
         /// @dev Mapping from NFT ID to index of owner
         mapping(uint256 => uint256) tokenToOwnerIndex;
-
         /*//////////////////////////////////////////////////////////////
                                     ESCROW
         //////////////////////////////////////////////////////////////*/
@@ -83,7 +76,6 @@ library VotingEscrowState {
         uint256 epoch;
         /// @inheritdoc IVotingEscrow
         uint256 supply;
-
         mapping(uint256 => IVotingEscrow.LockedBalance) _locked;
         mapping(uint256 => IVotingEscrow.UserPoint[1000000000]) _userPointHistory;
         mapping(uint256 => uint256) userPointEpoch;
@@ -93,7 +85,6 @@ library VotingEscrowState {
         mapping(address => bool) canSplit;
         /// @inheritdoc IVotingEscrow
         uint256 permanentLockBalance;
-
         /*///////////////////////////////////////////////////////////////
                                     DAO VOTING
         //////////////////////////////////////////////////////////////*/
@@ -106,7 +97,6 @@ library VotingEscrowState {
         mapping(uint256 => uint48) numCheckpoints;
         /// @inheritdoc IVotingEscrow
         mapping(address => uint256) nonces;
-
         /*///////////////////////////////////////////////////////////////
                                 GAUGE VOTING
         //////////////////////////////////////////////////////////////*/

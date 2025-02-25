@@ -24,8 +24,10 @@ library ManagedNFT {
         address _to,
         address _msgSender
     ) external returns (uint256 _mTokenId) {
-        if (_msgSender != self.allowedManager && _msgSender != IVoter(self.voter).governor())
-            revert IVotingEscrow.NotGovernorOrManager();
+        if (
+            _msgSender != self.allowedManager &&
+            _msgSender != IVoter(self.voter).governor()
+        ) revert IVotingEscrow.NotGovernorOrManager();
 
         _mTokenId = ++self.tokenId;
         NFT._mint(self, _to, _mTokenId);
@@ -66,8 +68,10 @@ library ManagedNFT {
         address _msgSender
     ) external {
         if (_msgSender != self.voter) revert IVotingEscrow.NotVoter();
-        if (self.escrowType[_mTokenId] != IVotingEscrow.EscrowType.MANAGED) revert IVotingEscrow.NotManagedNFT();
-        if (self.escrowType[_tokenId] != IVotingEscrow.EscrowType.NORMAL) revert IVotingEscrow.NotNormalNFT();
+        if (self.escrowType[_mTokenId] != IVotingEscrow.EscrowType.MANAGED)
+            revert IVotingEscrow.NotManagedNFT();
+        if (self.escrowType[_tokenId] != IVotingEscrow.EscrowType.NORMAL)
+            revert IVotingEscrow.NotNormalNFT();
         if (_balanceOfNFTAt(self, _tokenId, block.timestamp) == 0)
             revert IVotingEscrow.ZeroBalance();
 
@@ -77,7 +81,12 @@ library ManagedNFT {
             self.permanentLockBalance -= _amount.toUint256();
             Delegation._delegate(self, _tokenId, 0, _msgSender);
         }
-        Escrow._checkpoint(self, _tokenId, self._locked[_tokenId], IVotingEscrow.LockedBalance(0, 0, false));
+        Escrow._checkpoint(
+            self,
+            _tokenId,
+            self._locked[_tokenId],
+            IVotingEscrow.LockedBalance(0, 0, false)
+        );
         self._locked[_tokenId] = IVotingEscrow.LockedBalance(0, 0, false);
 
         // adjust managed nft
@@ -85,7 +94,12 @@ library ManagedNFT {
         self.permanentLockBalance += _weight;
         IVotingEscrow.LockedBalance memory newLocked = self._locked[_mTokenId];
         newLocked.amount += _amount;
-        Delegation._checkpointDelegatee(self, self._delegates[_mTokenId], _weight, true);
+        Delegation._checkpointDelegatee(
+            self,
+            self._delegates[_mTokenId],
+            _weight,
+            true
+        );
         Escrow._checkpoint(self, _mTokenId, self._locked[_mTokenId], newLocked);
         self._locked[_mTokenId] = newLocked;
 
@@ -116,7 +130,8 @@ library ManagedNFT {
         uint256 _mTokenId = self.idToManaged[_tokenId];
         if (_msgSender != self.voter) revert IVotingEscrow.NotVoter();
         if (_mTokenId == 0) revert IVotingEscrow.InvalidManagedNFTId();
-        if (self.escrowType[_tokenId] != IVotingEscrow.EscrowType.LOCKED) revert IVotingEscrow.NotLockedNFT();
+        if (self.escrowType[_tokenId] != IVotingEscrow.EscrowType.LOCKED)
+            revert IVotingEscrow.NotLockedNFT();
 
         // update accrued rewards
         address _lockedManagedReward = self.managedToLocked[_mTokenId];
@@ -127,7 +142,8 @@ library ManagedNFT {
             _tokenId
         );
         uint256 _total = _weight + _reward;
-        uint256 _unlockTime = ((block.timestamp + Escrow.MAXTIME) / Escrow.WEEK) * Escrow.WEEK;
+        uint256 _unlockTime = ((block.timestamp + Escrow.MAXTIME) /
+            Escrow.WEEK) * Escrow.WEEK;
 
         // claim locked rewards (rebases + compounded reward)
         address[] memory rewards = new address[](1);
@@ -135,16 +151,20 @@ library ManagedNFT {
         IReward(_lockedManagedReward).getReward(_tokenId, rewards);
 
         // adjust user nft
-        IVotingEscrow.LockedBalance memory newLockedNormal = IVotingEscrow.LockedBalance(
-            _total.toInt128(),
-            _unlockTime,
-            false
+        IVotingEscrow.LockedBalance memory newLockedNormal = IVotingEscrow
+            .LockedBalance(_total.toInt128(), _unlockTime, false);
+        Escrow._checkpoint(
+            self,
+            _tokenId,
+            self._locked[_tokenId],
+            newLockedNormal
         );
-        Escrow._checkpoint(self, _tokenId, self._locked[_tokenId], newLockedNormal);
         self._locked[_tokenId] = newLockedNormal;
 
         // adjust managed nft
-        IVotingEscrow.LockedBalance memory newLockedManaged = self._locked[_mTokenId];
+        IVotingEscrow.LockedBalance memory newLockedManaged = self._locked[
+            _mTokenId
+        ];
         // do not expect _total > locked.amount / permanentLockBalance but just in case
         newLockedManaged.amount -= (
             _total.toInt128() < newLockedManaged.amount
@@ -152,10 +172,22 @@ library ManagedNFT {
                 : newLockedManaged.amount
         );
         self.permanentLockBalance -= (
-            _total < self.permanentLockBalance ? _total : self.permanentLockBalance
+            _total < self.permanentLockBalance
+                ? _total
+                : self.permanentLockBalance
         );
-        Delegation._checkpointDelegatee(self, self._delegates[_mTokenId], _total, false);
-        Escrow._checkpoint(self, _mTokenId, self._locked[_mTokenId], newLockedManaged);
+        Delegation._checkpointDelegatee(
+            self,
+            self._delegates[_mTokenId],
+            _total,
+            false
+        );
+        Escrow._checkpoint(
+            self,
+            _mTokenId,
+            self._locked[_mTokenId],
+            newLockedManaged
+        );
         self._locked[_mTokenId] = newLockedManaged;
 
         IReward(_lockedManagedReward)._withdraw(_weight, _tokenId);
@@ -180,8 +212,10 @@ library ManagedNFT {
         address _allowedManager,
         address _msgSender
     ) external {
-        if (_msgSender != IVoter(self.voter).governor()) revert IVotingEscrow.NotGovernor();
-        if (_allowedManager == self.allowedManager) revert IVotingEscrow.SameAddress();
+        if (_msgSender != IVoter(self.voter).governor())
+            revert IVotingEscrow.NotGovernor();
+        if (_allowedManager == self.allowedManager)
+            revert IVotingEscrow.SameAddress();
         if (_allowedManager == address(0)) revert IVotingEscrow.ZeroAddress();
         self.allowedManager = _allowedManager;
         emit IVotingEscrow.SetAllowedManager(_allowedManager);
@@ -197,8 +231,10 @@ library ManagedNFT {
             _msgSender != IVoter(self.voter).emergencyCouncil() &&
             _msgSender != IVoter(self.voter).governor()
         ) revert IVotingEscrow.NotEmergencyCouncilOrGovernor();
-        if (self.escrowType[_mTokenId] != IVotingEscrow.EscrowType.MANAGED) revert IVotingEscrow.NotManagedNFT();
-        if (self.deactivated[_mTokenId] == _state) revert IVotingEscrow.SameState();
+        if (self.escrowType[_mTokenId] != IVotingEscrow.EscrowType.MANAGED)
+            revert IVotingEscrow.NotManagedNFT();
+        if (self.deactivated[_mTokenId] == _state)
+            revert IVotingEscrow.SameState();
         self.deactivated[_mTokenId] = _state;
     }
 

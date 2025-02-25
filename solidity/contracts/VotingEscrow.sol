@@ -133,7 +133,8 @@ abstract contract VotingEscrow is
 
     /// @inheritdoc IVotingEscrow
     function tokenURI(uint256 _tokenId) external view returns (string memory) {
-        if (NFT._ownerOf(self, _tokenId) == address(0)) revert NonExistentToken();
+        if (NFT._ownerOf(self, _tokenId) == address(0))
+            revert NonExistentToken();
         return IVeArtProxy(self.artProxy).tokenURI(_tokenId);
     }
 
@@ -251,7 +252,11 @@ abstract contract VotingEscrow is
 
     /// @inheritdoc IVotingEscrow
     function checkpoint() external nonReentrant {
-        self._checkpoint(0, LockedBalance(0, 0, false), LockedBalance(0, 0, false));
+        self._checkpoint(
+            0,
+            LockedBalance(0, 0, false),
+            LockedBalance(0, 0, false)
+        );
     }
 
     /// @inheritdoc IVotingEscrow
@@ -267,7 +272,8 @@ abstract contract VotingEscrow is
         uint256 _value,
         uint256 _lockDuration
     ) external nonReentrant returns (uint256) {
-        return self._createLock(_value, _lockDuration, _msgSender(), _msgSender());
+        return
+            self._createLock(_value, _lockDuration, _msgSender(), _msgSender());
     }
 
     /// @inheritdoc IVotingEscrow
@@ -441,19 +447,20 @@ abstract contract VotingEscrow is
         bytes32 r,
         bytes32 s
     ) external {
-        return self.delegateBySig(
-            delegator,
-            delegatee,
-            nonce,
-            expiry,
-            v,
-            r,
-            s,
-            this.name(),
-            this.version(),
-            address(this),
-            _msgSender()
-        );
+        return
+            self.delegateBySig(
+                delegator,
+                delegatee,
+                nonce,
+                expiry,
+                v,
+                r,
+                s,
+                this.name(),
+                this.version(),
+                address(this),
+                _msgSender()
+            );
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -490,7 +497,9 @@ abstract contract VotingEscrow is
     }
 
     /// @inheritdoc IVotingEscrow
-    function deactivated(uint256 _tokenId) external view returns (bool inactive) {
+    function deactivated(
+        uint256 _tokenId
+    ) external view returns (bool inactive) {
         return self.deactivated[_tokenId];
     }
 
@@ -583,9 +592,7 @@ abstract contract VotingEscrow is
     }
 
     /// @inheritdoc IVotingEscrow
-    function userPointEpoch(
-        uint256 _tokenId
-    ) external view returns (uint256) {
+    function userPointEpoch(uint256 _tokenId) external view returns (uint256) {
         return self.userPointEpoch[_tokenId];
     }
 
@@ -608,12 +615,12 @@ abstract contract VotingEscrow is
     }
 
     /// @notice The EIP-712 typehash for the contract's domain
-    function DOMAIN_TYPEHASH() external pure returns(bytes32) {
+    function DOMAIN_TYPEHASH() external pure returns (bytes32) {
         return Delegation.DOMAIN_TYPEHASH;
     }
 
     /// @notice The EIP-712 typehash for the delegation struct used by the contract
-    function DELEGATION_TYPEHASH() external pure returns(bytes32) {
+    function DELEGATION_TYPEHASH() external pure returns (bytes32) {
         return Delegation.DELEGATION_TYPEHASH;
     }
 
