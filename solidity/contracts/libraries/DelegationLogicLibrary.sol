@@ -4,6 +4,8 @@ pragma solidity 0.8.24;
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 import {SafeCastLibrary} from "./SafeCastLibrary.sol";
 
+// TODO: Place inside `Delegation` library
+
 library DelegationLogicLibrary {
     using SafeCastLibrary for int128;
 
