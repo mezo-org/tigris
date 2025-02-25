@@ -29,7 +29,6 @@ library NFT {
         emit IERC721.Approval(owner, _approved, _tokenId);
     }
 
-    /// @inheritdoc IVotingEscrow
     function setApprovalForAll(
         VotingEscrowState.Storage storage self,
         address _operator,

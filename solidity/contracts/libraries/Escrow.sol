@@ -353,7 +353,6 @@ library Escrow {
         emit IERC4906.MetadataUpdate(_tokenId);
     }
 
-    /// @inheritdoc IVotingEscrow
     function increaseUnlockTime(
         VotingEscrowState.Storage storage self,
         uint256 _tokenId,
@@ -387,7 +386,6 @@ library Escrow {
         emit IERC4906.MetadataUpdate(_tokenId);
     }
 
-    /// @inheritdoc IVotingEscrow
     function withdraw(
         VotingEscrowState.Storage storage self,
         uint256 _tokenId,
@@ -420,7 +418,6 @@ library Escrow {
         emit IVotingEscrow.Supply(supplyBefore, supplyBefore - value);
     }
 
-    /// @inheritdoc IVotingEscrow
     function merge(
         VotingEscrowState.Storage storage self,
         uint256 _from,
@@ -477,7 +474,6 @@ library Escrow {
         emit IERC4906.MetadataUpdate(_to);
     }
 
-    /// @inheritdoc IVotingEscrow
     function split(
         VotingEscrowState.Storage storage self,
         uint256 _from,
@@ -520,7 +516,7 @@ library Escrow {
             newLocked.end,
             block.timestamp
         );
-    } // <- TODO: Check self.canSplit
+    }
 
     function _createSplitNFT(
         VotingEscrowState.Storage storage self,
@@ -533,7 +529,6 @@ library Escrow {
         NFT._mint(self, _to, _tokenId);
     }
 
-    /// @inheritdoc IVotingEscrow
     function toggleSplit(
         VotingEscrowState.Storage storage self,
         address _account,
@@ -544,7 +539,6 @@ library Escrow {
         self.canSplit[_account] = _bool;
     }
 
-    /// @inheritdoc IVotingEscrow
     function lockPermanent(
         VotingEscrowState.Storage storage self,
         uint256 _tokenId,
@@ -568,7 +562,6 @@ library Escrow {
         emit IERC4906.MetadataUpdate(_tokenId);
     }
 
-        /// @inheritdoc IVotingEscrow
     function unlockPermanent(
         VotingEscrowState.Storage storage self,
         uint256 _tokenId,

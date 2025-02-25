@@ -98,7 +98,7 @@ abstract contract VotingEscrow is
     function createManagedLockFor(
         address _to
     ) external nonReentrant returns (uint256 _mTokenId) {
-        self.createManagedLockFor(_to, _msgSender());
+        return self.createManagedLockFor(_to, _msgSender());
     }
 
     /// @inheritdoc IVotingEscrow
@@ -478,4 +478,154 @@ abstract contract VotingEscrow is
     function CLOCK_MODE() external pure returns (string memory) {
         return "mode=timestamp";
     }
+
+    /*//////////////////////////////////////////////////////////////
+                              GETTERS
+    //////////////////////////////////////////////////////////////*/
+
+    /// @inheritdoc IVotingEscrow
+    function allowedManager() external view returns (address) {
+        return self.allowedManager;
+    }
+
+    /// @inheritdoc IVotingEscrow
+    function artProxy() external view returns (address) {
+        return self.artProxy;
+    }
+
+    /// @inheritdoc IVotingEscrow
+    function canSplit(address _account) external view returns (bool) {
+        return self.canSplit[_account];
+    }
+
+    /// @inheritdoc IVotingEscrow
+    function deactivated(uint256 _tokenId) external view returns (bool inactive) {
+        return self.deactivated[_tokenId];
+    }
+
+    /// @inheritdoc IVotingEscrow
+    function distributor() external view returns (address) {
+        return self.distributor;
+    }
+
+    /// @inheritdoc IVotingEscrow
+    function epoch() external view returns (uint256) {
+        return self.epoch;
+    }
+
+    /// @inheritdoc IVotingEscrow
+    function escrowType(uint256 _tokenId) external view returns (EscrowType) {
+        return self.escrowType[_tokenId];
+    }
+
+    /// @inheritdoc IVotingEscrow
+    function factoryRegistry() external view returns (address) {
+        return self.factoryRegistry;
+    }
+
+    /// @inheritdoc IVotingEscrow
+    function forwarder() external view returns (address) {
+        return self.forwarder;
+    }
+
+    /// @inheritdoc IVotingEscrow
+    function idToManaged(uint256 _tokenId) external view returns (uint256) {
+        return self.idToManaged[_tokenId];
+    }
+
+    /// @inheritdoc IVotingEscrow
+    function managedToFree(uint256 _tokenId) external view returns (address) {
+        return self.managedToFree[_tokenId];
+    }
+
+    /// @inheritdoc IVotingEscrow
+    function managedToLocked(uint256 _tokenId) external view returns (address) {
+        return self.managedToLocked[_tokenId];
+    }
+
+    /// @inheritdoc IVotingEscrow
+    function nonces(address _account) external view returns (uint256) {
+        return self.nonces[_account];
+    }
+
+    /// @inheritdoc IVotingEscrow
+    function numCheckpoints(uint256 _tokenId) external view returns (uint48) {
+        return self.numCheckpoints[_tokenId];
+    }
+
+    /// @inheritdoc IVotingEscrow
+    function ownerToNFTokenIdList(
+        address _owner,
+        uint256 _index
+    ) external view returns (uint256) {
+        return self.ownerToNFTokenIdList[_owner][_index];
+    }
+
+    /// @inheritdoc IVotingEscrow
+    function permanentLockBalance() external view returns (uint256) {
+        return self.permanentLockBalance;
+    }
+
+    /// @inheritdoc IVotingEscrow
+    function slopeChanges(uint256 _timestamp) external view returns (int128) {
+        return self.slopeChanges[_timestamp];
+    }
+
+    /// @inheritdoc IVotingEscrow
+    function supply() external view returns (uint256) {
+        return self.supply;
+    }
+
+    /// @inheritdoc IVotingEscrow
+    function team() external view returns (address) {
+        return self.team;
+    }
+
+    /// @inheritdoc IVotingEscrow
+    function token() external view returns (address) {
+        return self.token;
+    }
+
+    /// @inheritdoc IVotingEscrow
+    function tokenId() external view returns (uint256) {
+        return self.tokenId;
+    }
+
+    /// @inheritdoc IVotingEscrow
+    function userPointEpoch(
+        uint256 _tokenId
+    ) external view returns (uint256) {
+        return self.userPointEpoch[_tokenId];
+    }
+
+    /// @inheritdoc IVotingEscrow
+    function voted(uint256 _tokenId) external view returns (bool) {
+        return self.voted[_tokenId];
+    }
+
+    /// @inheritdoc IVotingEscrow
+    function voter() external view returns (address) {
+        return self.voter;
+    }
+
+    /// @inheritdoc IVotingEscrow
+    function weights(
+        uint256 _tokenId,
+        uint256 _managedTokenId
+    ) external view returns (uint256) {
+        return self.weights[_tokenId][_managedTokenId];
+    }
+
+    /// @notice The EIP-712 typehash for the contract's domain
+    function DOMAIN_TYPEHASH() external pure returns(bytes32) {
+        return Delegation.DOMAIN_TYPEHASH;
+    }
+
+    /// @notice The EIP-712 typehash for the delegation struct used by the contract
+    function DELEGATION_TYPEHASH() external pure returns(bytes32) {
+        return Delegation.DELEGATION_TYPEHASH;
+    }
+
+    // TODO: Consider adding other getters. All the state variables accessible
+    //       before the refactor should be accessible.
 }

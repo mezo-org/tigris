@@ -33,7 +33,6 @@ library Delegation {
         return _delegate(self, delegator, delegatee, _msgSender);
     }
 
-    /// @inheritdoc IVotingEscrow
     function delegateBySig(
         VotingEscrowState.Storage storage self,
         uint256 delegator,
