@@ -42,10 +42,9 @@ abstract contract Splitter is ISplitter {
     mapping(uint256 => bool) public proposals;
 
     /// @notice Constructor to set up the fee splitter.
-    constructor(address _voter, address _ve, address _rewardsDistributor) {
+    constructor(address _voter, address _ve) {
         voter = IVoter(_voter);
         token = IERC20(IVotingEscrow(_ve).token());
-        rewardsDistributor = IRewardsDistributor(_rewardsDistributor);
     }
 
     /// @notice Moves the gauge needle by 1 tick per epoch.

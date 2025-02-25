@@ -30,11 +30,12 @@ contract ChainFeeSplitter is Splitter {
         address _voter, // the voting & distribution system
         address _ve, // the ve(3,3) system that will be locked into
         address _rewardsDistributor // the distribution system that ensures users aren't diluted
-    ) Splitter(_voter, _ve, _rewardsDistributor) {
+    ) Splitter(_voter, _ve) {
         /// The needle moves between 1 and 100. The default value is 33 to
         /// simulate ~1/3 of fees going to the veBTC holders and ~2/3 to the
         /// Stake Gauges.
         needle = 33;
+        rewardsDistributor = IRewardsDistributor(_rewardsDistributor);
     }
 
     /// @notice Updates the period of the current epoch. This function can be called
