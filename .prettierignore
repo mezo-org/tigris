@@ -7,6 +7,7 @@ solidity/external/
 solidity/typechain/
 solidity/typechain-types/
 solidity/artifacts/
+solidity/lib/
 
 # Auto-generated files.
 pnpm-lock.yaml
