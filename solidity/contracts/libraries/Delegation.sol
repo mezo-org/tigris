@@ -2,10 +2,12 @@
 
 pragma solidity 0.8.24;
 
-import "./VotingEscrowState.sol";
-import "./NFT.sol";
+import {VotingEscrowState} from "./VotingEscrowState.sol";
+import {NFT} from "./NFT.sol";
 import {DelegationLogicLibrary} from "./DelegationLogicLibrary.sol";
 import {SafeCastLibrary} from "./SafeCastLibrary.sol";
+import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
+import {IVotes} from "../governance/IVotes.sol";
 
 library Delegation {
     using SafeCastLibrary for int128;

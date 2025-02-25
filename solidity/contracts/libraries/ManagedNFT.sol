@@ -2,19 +2,19 @@
 
 pragma solidity 0.8.24;
 
-import "./VotingEscrowState.sol";
-import "./Escrow.sol";
-import "./NFT.sol";
-import {DelegationLogicLibrary} from "./DelegationLogicLibrary.sol";
+import {VotingEscrowState} from "./VotingEscrowState.sol";
+import {Escrow} from "./Escrow.sol";
+import {NFT} from "./NFT.sol";
+import {Delegation} from "./Delegation.sol";
 import {BalanceLogicLibrary} from "./BalanceLogicLibrary.sol";
-import "../interfaces/IVotingEscrow.sol";
+import {SafeCastLibrary} from "./SafeCastLibrary.sol";
+import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 import {IReward} from "../interfaces/IReward.sol";
 import {IVoter} from "../interfaces/IVoter.sol";
 import {IManagedRewardsFactory} from "../interfaces/factories/IManagedRewardsFactory.sol";
 import {IFactoryRegistry} from "../interfaces/factories/IFactoryRegistry.sol";
+import {IERC4906} from "@openzeppelin/contracts/interfaces/IERC4906.sol";
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 library ManagedNFT {
     using SafeCastLibrary for uint256;
     using SafeCastLibrary for int128;

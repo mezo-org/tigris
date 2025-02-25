@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.24;
 
-import "../interfaces/IVotingEscrow.sol";
+import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 
 library VotingEscrowState {
     struct Storage {

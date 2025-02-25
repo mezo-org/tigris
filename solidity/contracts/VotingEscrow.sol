@@ -4,16 +4,10 @@ pragma solidity 0.8.24;
 
 import {IVeArtProxy} from "./interfaces/IVeArtProxy.sol";
 import {IVotingEscrow} from "./interfaces/IVotingEscrow.sol";
-import {IVoter} from "./interfaces/IVoter.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IReward} from "./interfaces/IReward.sol";
 import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {DelegationLogicLibrary} from "./libraries/DelegationLogicLibrary.sol";
 import {BalanceLogicLibrary} from "./libraries/BalanceLogicLibrary.sol";
-import {SafeCastLibrary} from "./libraries/SafeCastLibrary.sol";
-
 import {VotingEscrowState} from "./libraries/VotingEscrowState.sol";
 import {ManagedNFT} from "./libraries/ManagedNFT.sol";
 import {NFT} from "./libraries/NFT.sol";
@@ -32,9 +26,6 @@ abstract contract VotingEscrow is
     ERC2771Context,
     ReentrancyGuard
 {
-    using SafeERC20 for IERC20;
-    using SafeCastLibrary for uint256;
-    using SafeCastLibrary for int128;
     using NFT for VotingEscrowState.Storage;
     using ManagedNFT for VotingEscrowState.Storage;
     using Escrow for VotingEscrowState.Storage;

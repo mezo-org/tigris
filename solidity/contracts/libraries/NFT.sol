@@ -2,8 +2,9 @@
 
 pragma solidity 0.8.24;
 
-import "./VotingEscrowState.sol";
-import "./Delegation.sol";
+import {VotingEscrowState} from "./VotingEscrowState.sol";
+import {Delegation} from "./Delegation.sol";
+import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 

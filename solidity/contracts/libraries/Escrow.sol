@@ -2,10 +2,12 @@
 
 pragma solidity 0.8.24;
 
-import "./VotingEscrowState.sol";
-import "./Delegation.sol";
-import "./NFT.sol";
+import {VotingEscrowState} from "./VotingEscrowState.sol";
+import {Delegation} from "./Delegation.sol";
+import {NFT} from "./NFT.sol";
+import {SafeCastLibrary} from "./SafeCastLibrary.sol";
 import {IReward} from "../interfaces/IReward.sol";
+import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC4906} from "@openzeppelin/contracts/interfaces/IERC4906.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
