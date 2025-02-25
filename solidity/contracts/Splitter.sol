@@ -72,12 +72,12 @@ abstract contract Splitter is ISplitter {
         emit Nudge(period, oldNeedle, needle);
     }
 
+    /// @notice Updates the period of the current epoch.
+    function updatePeriod() external virtual returns (uint256 period);
+
     /// @notice Moves the gauge needle to the right.
     function moveNeedleUp() internal virtual returns (uint256 needle);
 
     /// @notice Moves the gauge needle to the left.
     function moveNeedleDown() internal virtual returns (uint256 needle);
-
-    /// @notice Updates the period of the current epoch.
-    function updatePeriod() external virtual returns (uint256 period);
 }
