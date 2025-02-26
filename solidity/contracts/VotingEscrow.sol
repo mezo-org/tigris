@@ -6,12 +6,12 @@ import {IVeArtProxy} from "./interfaces/IVeArtProxy.sol";
 import {IVotingEscrow} from "./interfaces/IVotingEscrow.sol";
 import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import {BalanceLogicLibrary} from "./libraries/BalanceLogicLibrary.sol";
 import {VotingEscrowState} from "./libraries/VotingEscrowState.sol";
 import {ManagedNFT} from "./libraries/ManagedNFT.sol";
 import {NFT} from "./libraries/NFT.sol";
 import {Escrow} from "./libraries/Escrow.sol";
 import {Delegation} from "./libraries/Delegation.sol";
+import {Balance} from "./libraries/Balance.sol";
 
 /// @title Voting Escrow
 /// @notice veNFT implementation that escrows ERC-20 tokens in the form of an ERC-721 NFT
@@ -29,6 +29,7 @@ abstract contract VotingEscrow is
     using ManagedNFT for VotingEscrowState.Storage;
     using Escrow for VotingEscrowState.Storage;
     using Delegation for VotingEscrowState.Storage;
+    using Balance for VotingEscrowState.Storage;
 
     VotingEscrowState.Storage internal self;
 
@@ -334,19 +335,12 @@ abstract contract VotingEscrow is
     //////////////////////////////////////////////////////////////*/
 
     function _supplyAt(uint256 _timestamp) internal view returns (uint256) {
-        return
-            BalanceLogicLibrary.supplyAt(
-                self.slopeChanges,
-                self._pointHistory,
-                self.epoch,
-                _timestamp
-            );
+        return self.supplyAt(self.epoch, _timestamp);
     }
 
     /// @inheritdoc IVotingEscrow
     function balanceOfNFT(uint256 _tokenId) public view returns (uint256) {
-        if (self.ownershipChange[_tokenId] == block.number) return 0;
-        return self._balanceOfNFTAt(_tokenId, block.timestamp);
+        return self._balanceOfNFT(_tokenId);
     }
 
     /// @inheritdoc IVotingEscrow

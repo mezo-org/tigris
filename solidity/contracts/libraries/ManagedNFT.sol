@@ -6,7 +6,7 @@ import {VotingEscrowState} from "./VotingEscrowState.sol";
 import {Escrow} from "./Escrow.sol";
 import {NFT} from "./NFT.sol";
 import {Delegation} from "./Delegation.sol";
-import {BalanceLogicLibrary} from "./BalanceLogicLibrary.sol";
+import {Balance} from "./Balance.sol";
 import {SafeCastLibrary} from "./SafeCastLibrary.sol";
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 import {IReward} from "../interfaces/IReward.sol";
@@ -21,6 +21,7 @@ library ManagedNFT {
     using NFT for VotingEscrowState.Storage;
     using Escrow for VotingEscrowState.Storage;
     using Delegation for VotingEscrowState.Storage;
+    using Balance for VotingEscrowState.Storage;
 
     function createManagedLockFor(
         VotingEscrowState.Storage storage self,
@@ -74,7 +75,7 @@ library ManagedNFT {
             revert IVotingEscrow.NotManagedNFT();
         if (self.escrowType[_tokenId] != IVotingEscrow.EscrowType.NORMAL)
             revert IVotingEscrow.NotNormalNFT();
-        if (_balanceOfNFTAt(self, _tokenId, block.timestamp) == 0)
+        if (self._balanceOfNFTAt(_tokenId, block.timestamp) == 0)
             revert IVotingEscrow.ZeroBalance();
 
         // adjust user nft
@@ -217,19 +218,5 @@ library ManagedNFT {
         if (self.deactivated[_mTokenId] == _state)
             revert IVotingEscrow.SameState();
         self.deactivated[_mTokenId] = _state;
-    }
-
-    function _balanceOfNFTAt(
-        VotingEscrowState.Storage storage self,
-        uint256 _tokenId,
-        uint256 _t
-    ) internal view returns (uint256) {
-        return
-            BalanceLogicLibrary.balanceOfNFTAt(
-                self.userPointEpoch,
-                self._userPointHistory,
-                _tokenId,
-                _t
-            );
     }
 }
