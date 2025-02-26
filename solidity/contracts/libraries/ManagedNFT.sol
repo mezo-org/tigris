@@ -18,6 +18,9 @@ import {IERC4906} from "@openzeppelin/contracts/interfaces/IERC4906.sol";
 library ManagedNFT {
     using SafeCastLibrary for uint256;
     using SafeCastLibrary for int128;
+    using NFT for VotingEscrowState.Storage;
+    using Escrow for VotingEscrowState.Storage;
+    using Delegation for VotingEscrowState.Storage;
 
     function createManagedLockFor(
         VotingEscrowState.Storage storage self,
@@ -30,9 +33,8 @@ library ManagedNFT {
         ) revert IVotingEscrow.NotGovernorOrManager();
 
         _mTokenId = ++self.tokenId;
-        NFT._mint(self, _to, _mTokenId);
-        Escrow._depositFor(
-            self,
+        self._mint(_to, _mTokenId);
+        self._depositFor(
             _mTokenId,
             0,
             0,
@@ -79,10 +81,9 @@ library ManagedNFT {
         int128 _amount = self._locked[_tokenId].amount;
         if (self._locked[_tokenId].isPermanent) {
             self.permanentLockBalance -= _amount.toUint256();
-            Delegation._delegate(self, _tokenId, 0, _msgSender);
+            self._delegate(_tokenId, 0, _msgSender);
         }
-        Escrow._checkpoint(
-            self,
+        self._checkpoint(
             _tokenId,
             self._locked[_tokenId],
             IVotingEscrow.LockedBalance(0, 0, false)
@@ -94,13 +95,8 @@ library ManagedNFT {
         self.permanentLockBalance += _weight;
         IVotingEscrow.LockedBalance memory newLocked = self._locked[_mTokenId];
         newLocked.amount += _amount;
-        Delegation._checkpointDelegatee(
-            self,
-            self._delegates[_mTokenId],
-            _weight,
-            true
-        );
-        Escrow._checkpoint(self, _mTokenId, self._locked[_mTokenId], newLocked);
+        self._checkpointDelegatee(self._delegates[_mTokenId], _weight, true);
+        self._checkpoint(_mTokenId, self._locked[_mTokenId], newLocked);
         self._locked[_mTokenId] = newLocked;
 
         self.weights[_tokenId][_mTokenId] = _weight;
@@ -113,7 +109,7 @@ library ManagedNFT {
         IReward(_freeManagedReward)._deposit(_weight, _tokenId);
 
         emit IVotingEscrow.DepositManaged(
-            NFT._ownerOf(self, _tokenId),
+            self._ownerOf(_tokenId),
             _tokenId,
             _mTokenId,
             _weight,
@@ -153,12 +149,7 @@ library ManagedNFT {
         // adjust user nft
         IVotingEscrow.LockedBalance memory newLockedNormal = IVotingEscrow
             .LockedBalance(_total.toInt128(), _unlockTime, false);
-        Escrow._checkpoint(
-            self,
-            _tokenId,
-            self._locked[_tokenId],
-            newLockedNormal
-        );
+        self._checkpoint(_tokenId, self._locked[_tokenId], newLockedNormal);
         self._locked[_tokenId] = newLockedNormal;
 
         // adjust managed nft
@@ -176,18 +167,8 @@ library ManagedNFT {
                 ? _total
                 : self.permanentLockBalance
         );
-        Delegation._checkpointDelegatee(
-            self,
-            self._delegates[_mTokenId],
-            _total,
-            false
-        );
-        Escrow._checkpoint(
-            self,
-            _mTokenId,
-            self._locked[_mTokenId],
-            newLockedManaged
-        );
+        self._checkpointDelegatee(self._delegates[_mTokenId], _total, false);
+        self._checkpoint(_mTokenId, self._locked[_mTokenId], newLockedManaged);
         self._locked[_mTokenId] = newLockedManaged;
 
         IReward(_lockedManagedReward)._withdraw(_weight, _tokenId);
@@ -198,7 +179,7 @@ library ManagedNFT {
         delete self.escrowType[_tokenId];
 
         emit IVotingEscrow.WithdrawManaged(
-            NFT._ownerOf(self, _tokenId),
+            self._ownerOf(_tokenId),
             _tokenId,
             _mTokenId,
             _total,

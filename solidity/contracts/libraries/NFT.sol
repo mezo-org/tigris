@@ -9,6 +9,8 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
 library NFT {
+    using Delegation for VotingEscrowState.Storage;
+
     function approve(
         VotingEscrowState.Storage storage self,
         address _approved,
@@ -100,7 +102,7 @@ library NFT {
         // Remove NFT. Throws if `_tokenId` is not a valid NFT
         _removeTokenFrom(self, _from, _tokenId);
         // Update voting checkpoints
-        Delegation._checkpointDelegator(self, _tokenId, 0, _to);
+        self._checkpointDelegator(_tokenId, 0, _to);
         // Add NFT
         _addTokenTo(self, _to, _tokenId);
         // Set the block of ownership transfer (for Flash NFT protection)
@@ -153,7 +155,7 @@ library NFT {
         // Add NFT. Throws if `_tokenId` is owned by someone
         _addTokenTo(self, _to, _tokenId);
         // Update voting checkpoints
-        Delegation._checkpointDelegator(self, _tokenId, 0, _to);
+        self._checkpointDelegator(_tokenId, 0, _to);
         emit IERC721.Transfer(address(0), _to, _tokenId);
         return true;
     }
@@ -204,7 +206,7 @@ library NFT {
         // Clear approval
         delete self.idToApprovals[_tokenId];
         // Update voting checkpoints
-        Delegation._checkpointDelegator(self, _tokenId, 0, address(0));
+        self._checkpointDelegator(_tokenId, 0, address(0));
         // Remove token
         _removeTokenFrom(self, owner, _tokenId);
         emit IERC721.Transfer(owner, address(0), _tokenId);

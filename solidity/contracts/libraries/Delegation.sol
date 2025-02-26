@@ -11,6 +11,7 @@ import {IVotes} from "../governance/IVotes.sol";
 
 library Delegation {
     using SafeCastLibrary for int128;
+    using NFT for VotingEscrowState.Storage;
 
     /// @notice The EIP-712 typehash for the contract's domain
     bytes32 public constant DOMAIN_TYPEHASH =
@@ -30,7 +31,7 @@ library Delegation {
         uint256 delegatee,
         address _msgSender
     ) external {
-        if (!NFT._isApprovedOrOwner(self, _msgSender, delegator))
+        if (!self._isApprovedOrOwner(_msgSender, delegator))
             revert IVotingEscrow.NotApprovedOrOwner();
         return _delegate(self, delegator, delegatee, _msgSender);
     }
@@ -78,7 +79,7 @@ library Delegation {
             abi.encodePacked("\x19\x01", domainSeparator, structHash)
         );
         address signatory = ecrecover(digest, v, r, s);
-        if (!NFT._isApprovedOrOwner(self, signatory, delegator))
+        if (!self._isApprovedOrOwner(signatory, delegator))
             revert IVotingEscrow.NotApprovedOrOwner();
         if (signatory == address(0)) revert IVotingEscrow.InvalidSignature();
         if (nonce != self.nonces[signatory]++)
@@ -100,7 +101,7 @@ library Delegation {
         ];
         if (!delegateLocked.isPermanent)
             revert IVotingEscrow.NotPermanentLock();
-        if (_delegatee != 0 && NFT._ownerOf(self, _delegatee) == address(0))
+        if (_delegatee != 0 && self._ownerOf(_delegatee) == address(0))
             revert IVotingEscrow.NonExistentToken();
         if (self.ownershipChange[_delegator] == block.number)
             revert IVotingEscrow.OwnershipChange();
@@ -113,7 +114,7 @@ library Delegation {
             self,
             _delegator,
             _delegatee,
-            NFT._ownerOf(self, _delegator)
+            self._ownerOf(_delegator)
         );
         _checkpointDelegatee(self, _delegatee, delegatedBalance, true);
 
