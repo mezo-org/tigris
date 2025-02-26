@@ -9,7 +9,10 @@ import {IRewardsDistributor} from "./interfaces/IRewardsDistributor.sol";
 import {IVotingEscrow} from "./interfaces/IVotingEscrow.sol";
 
 /// @title Splitter
-/// @notice An abstract contract for fee splitting between token holders and Stake Gauges.
+/// @notice An abstract contract for tokens splitting between addresses defined
+///         in the implementation contract. Amount of the split tokens depends on
+///         the current position of the gauge needle that can be moved each epoch
+///         by the Epoch Governor.
 abstract contract Splitter is ISplitter {
     using SafeERC20 for IERC20;
 
