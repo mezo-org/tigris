@@ -6,7 +6,6 @@ import {IVeArtProxy} from "./interfaces/IVeArtProxy.sol";
 import {IVotingEscrow} from "./interfaces/IVotingEscrow.sol";
 import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import {DelegationLogicLibrary} from "./libraries/DelegationLogicLibrary.sol";
 import {BalanceLogicLibrary} from "./libraries/BalanceLogicLibrary.sol";
 import {VotingEscrowState} from "./libraries/VotingEscrowState.sol";
 import {ManagedNFT} from "./libraries/ManagedNFT.sol";
@@ -30,10 +29,6 @@ abstract contract VotingEscrow is
     using ManagedNFT for VotingEscrowState.Storage;
     using Escrow for VotingEscrowState.Storage;
     using Delegation for VotingEscrowState.Storage;
-
-    /*//////////////////////////////////////////////////////////////
-                               CONSTRUCTOR
-    //////////////////////////////////////////////////////////////*/
 
     VotingEscrowState.Storage internal self;
 
@@ -411,14 +406,7 @@ abstract contract VotingEscrow is
         uint256 _tokenId,
         uint256 _timestamp
     ) external view returns (uint256) {
-        return
-            DelegationLogicLibrary.getPastVotes(
-                self.numCheckpoints,
-                self._checkpoints,
-                _account,
-                _tokenId,
-                _timestamp
-            );
+        return self.getPastVotes(_account, _tokenId, _timestamp);
     }
 
     /// @inheritdoc IVotingEscrow
