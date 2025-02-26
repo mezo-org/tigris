@@ -22,14 +22,6 @@ contract ChainFeeSplitter is Splitter {
     /// @notice The address of the Voter contract.
     IVoter public immutable voter;
 
-    /// @dev Emitted when the epoch period is updated.
-    event PeriodUpdated(
-        uint256 oldPeriod,
-        uint256 newPeriod,
-        uint256 veBTCHoldersFee,
-        uint256 stakeGuagesFee
-    );
-
     constructor(
         address _voter, // the voting & distribution system
         address _ve, // the ve(3,3) system that will be locked into
@@ -43,71 +35,21 @@ contract ChainFeeSplitter is Splitter {
         voter = IVoter(_voter);
     }
 
-    /// @notice Updates the period of the current epoch. This function can be called
-    ///         by anyone. Chain fees accumulate in this contract continuously and
-    ///         are distributed to veBTC holders and stake gauges over a specified
-    ///         period. In other words, the release of accumulated fees must wait
-    ///         until the end of the period.
-    function updatePeriod() external override returns (uint256 period) {
-        period = activePeriod;
-        if (block.timestamp >= period + WEEK) {
-            uint256 oldPeriod = period;
-            period = (block.timestamp / WEEK) * WEEK;
-            activePeriod = period;
-
-            uint256 stakeGuagesFee;
-            uint256 veBTCHoldersFee;
-
-            uint256 currentBalance = token.balanceOf(address(this));
-            if (currentBalance > 0) {
-                veBTCHoldersFee =
-                    (currentBalance * needle) /
-                    MAXIMUM_GAUGE_SCALE;
-                stakeGuagesFee = currentBalance - veBTCHoldersFee;
-
-                // For veBTC holders. Token is BTC.
-                token.safeTransfer(
-                    address(rewardsDistributor),
-                    veBTCHoldersFee
-                );
-                rewardsDistributor.checkpointToken(); // checkpoint token balance in rewards distributor
-
-                // For stake guages. Token is BTC.
-                token.safeApprove(address(voter), stakeGuagesFee);
-                voter.notifyRewardAmount(stakeGuagesFee);
-            }
-
-            emit PeriodUpdated(
-                oldPeriod,
-                period,
-                veBTCHoldersFee,
-                stakeGuagesFee
-            );
-        }
-    }
-
-    /// @notice Moves the needle up by 1 tick.
-    /// @dev The needle can be moved up to the maximum gauge scale.
-    function moveNeedleUp() internal override returns (uint256) {
-        uint256 oldNeedle = needle;
-        if (oldNeedle < MAXIMUM_GAUGE_SCALE) {
-            needle = oldNeedle + TICK;
-        }
-        return needle;
-    }
-
-    /// @notice Moves the needle down by 1 tick.
-    /// @dev The needle can be moved down to the minimum gauge scale.
-    function moveNeedleDown() internal override returns (uint256) {
-        uint256 oldNeedle = needle;
-        if (oldNeedle > MINIMUM_GAUGE_SCALE) {
-            needle = oldNeedle - TICK;
-        }
-        return needle;
-    }
-
     /// @notice Returns the address of the epoch governor.
     function epochGovernor() internal view override returns (address) {
         return voter.epochGovernor();
+    }
+
+    /// @notice Transfers amount to veBTC holders. Token is BTC.
+    function transferFirstRecipient(uint256 amount) internal override {
+        token.safeTransfer(address(rewardsDistributor), amount);
+        // checkpoint token balance in rewards distributor
+        rewardsDistributor.checkpointToken();
+    }
+
+    /// @notice Transfers amount to stake gauges. Token is BTC.
+    function transferSecondRecipient(uint256 amount) internal override {
+        token.safeApprove(address(voter), amount);
+        voter.notifyRewardAmount(amount);
     }
 }

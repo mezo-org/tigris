@@ -40,6 +40,14 @@ abstract contract Splitter is ISplitter {
     /// @dev activePeriod => proposal existing, used to enforce one proposal per epoch.
     mapping(uint256 => bool) public proposals;
 
+    /// @dev Emitted when the epoch period is updated.
+    event PeriodUpdated(
+        uint256 oldPeriod,
+        uint256 newPeriod,
+        uint256 firstRecipientAmount,
+        uint256 secondRecipientAmount
+    );
+
     /// @notice Constructor to set up the fee splitter.
     constructor(address _ve) {
         token = IERC20(IVotingEscrow(_ve).token());
@@ -58,10 +66,16 @@ abstract contract Splitter is ISplitter {
 
         uint256 oldNeedle = needle;
         if (state != IEpochGovernor.ProposalState.Expired) {
+            // move the needle up by 1 tick
             if (state == IEpochGovernor.ProposalState.Succeeded) {
-                needle = moveNeedleUp();
+                needle = oldNeedle + TICK > MAXIMUM_GAUGE_SCALE
+                    ? MAXIMUM_GAUGE_SCALE
+                    : needle + TICK;
             } else {
-                needle = moveNeedleDown();
+                // move the needle down by 1 tick
+                needle = oldNeedle - TICK < MINIMUM_GAUGE_SCALE
+                    ? MINIMUM_GAUGE_SCALE
+                    : needle - TICK;
             }
         }
 
@@ -70,15 +84,47 @@ abstract contract Splitter is ISplitter {
         emit Nudge(period, oldNeedle, needle);
     }
 
-    /// @notice Updates the period of the current epoch.
-    function updatePeriod() external virtual returns (uint256);
+    /// @notice Updates the period of the current epoch. This function can be called
+    ///         by anyone. Chain fees accumulate in this contract continuously and
+    ///         are distributed to veBTC holders and stake gauges over a specified
+    ///         period. In other words, the release of accumulated fees must wait
+    ///         until the end of the period.
+    function updatePeriod() external returns (uint256 period) {
+        period = activePeriod;
+        if (block.timestamp >= period + WEEK) {
+            uint256 oldPeriod = period;
+            period = (block.timestamp / WEEK) * WEEK;
+            activePeriod = period;
 
-    /// @notice Moves the gauge needle to the right.
-    function moveNeedleUp() internal virtual returns (uint256);
+            uint256 firstRecipientAmount;
+            uint256 secondRecipientAmount;
 
-    /// @notice Moves the gauge needle to the left.
-    function moveNeedleDown() internal virtual returns (uint256);
+            uint256 currentBalance = token.balanceOf(address(this));
+            if (currentBalance > 0) {
+                firstRecipientAmount =
+                    (currentBalance * needle) /
+                    MAXIMUM_GAUGE_SCALE;
+                secondRecipientAmount = currentBalance - firstRecipientAmount;
+
+                transferFirstRecipient(firstRecipientAmount);
+                transferSecondRecipient(secondRecipientAmount);
+            }
+
+            emit PeriodUpdated(
+                oldPeriod,
+                period,
+                firstRecipientAmount,
+                secondRecipientAmount
+            );
+        }
+    }
 
     /// @notice Returns the address of the epoch governor.
     function epochGovernor() internal view virtual returns (address);
+
+    /// @notice Transfers amount to the first recipient.
+    function transferFirstRecipient(uint256 amount) internal virtual;
+
+    /// @notice Transfers amount to the second recipient.
+    function transferSecondRecipient(uint256 amount) internal virtual;
 }
