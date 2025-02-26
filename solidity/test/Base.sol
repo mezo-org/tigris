@@ -6,7 +6,7 @@ import {GaugeFactory} from "contracts/factories/GaugeFactory.sol";
 import {PoolFactory, IPoolFactory} from "contracts/factories/PoolFactory.sol";
 import {IFactoryRegistry, FactoryRegistry} from "contracts/factories/FactoryRegistry.sol";
 import {Pool} from "contracts/Pool.sol";
-import {ISplitter, ChainFeeSplitter} from "contracts/ChainFeeSplitter.sol";
+import {ChainFeeSplitter} from "contracts/ChainFeeSplitter.sol";
 import {IReward, Reward} from "contracts/rewards/Reward.sol";
 import {FeesVotingReward} from "contracts/rewards/FeesVotingReward.sol";
 import {BribeVotingReward} from "contracts/rewards/BribeVotingReward.sol";
@@ -24,12 +24,11 @@ import {SafeCastLibrary} from "contracts/libraries/SafeCastLibrary.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {SigUtils} from "test/utils/SigUtils.sol";
+import {MockVeArtProxy} from "test/utils/MockVeArtProxy.sol";
 import {MezoForwarder} from "contracts/forwarder/MezoForwarder.sol";
-
 import "forge-std/Script.sol";
 import "forge-std/Test.sol";
 import {VeBTC} from "../contracts/VeBTC.sol";
-import {ChainFeeSplitter} from "../contracts/ChainFeeSplitter.sol";
 
 /// @notice Base contract used for tests and deployment scripts
 abstract contract Base is Script, Test {
@@ -50,6 +49,7 @@ abstract contract Base is Script, Test {
     // TODO: Uncomment once Router implementation is complete.
     // Router public router;
     VotingEscrow public escrow;
+    MockVeArtProxy public artProxy;
     PoolFactory public factory;
     FactoryRegistry public factoryRegistry;
     GaugeFactory public gaugeFactory;
@@ -71,6 +71,8 @@ abstract contract Base is Script, Test {
         forwarder = new MezoForwarder();
 
         escrow = new VeBTC(address(forwarder), address(BTC), address(factoryRegistry));
+        artProxy = new MockVeArtProxy(address(escrow));
+        escrow.setArtProxy(address(artProxy));
 
         // Setup voter and distributor
         distributor = new RewardsDistributor(address(escrow));

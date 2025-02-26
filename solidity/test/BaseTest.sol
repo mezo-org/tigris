@@ -2,13 +2,15 @@ pragma solidity 0.8.24;
 
 import "forge-std/Test.sol";
 import "forge-std/console2.sol";
-
 import "./Base.sol";
 import {IPool, Pool} from "contracts/Pool.sol";
 import {TestOwner} from "test/utils/TestOwner.sol";
 import {MockERC20} from "test/utils/MockERC20.sol";
 
 abstract contract BaseTest is Base, TestOwner {
+    // In production/testnet environments, mUSD uses the 1e18 precision and
+    // 1e6 is used only in this test fixture to provide better coverage.
+    // All mUSD_* constants follow this assumption.
     uint256 constant mUSD_1 = 1e6;
     uint256 constant mUSD_10K = 1e10; // 1e4 = 10K tokens with 6 decimals
     uint256 constant mUSD_100K = 1e11; // 1e5 = 100K tokens with 6 decimals
@@ -187,6 +189,8 @@ abstract contract BaseTest is Base, TestOwner {
     }
 
     function deployCoins() public {
+        // In production/testnet environments, mUSD uses the 1e18 precision and
+        // 1e6 is used only in this test fixture to provide better coverage.
         mUSD = IERC20(new MockERC20("mUSD", "mUSD", 6));
         LIMPETH = IERC20(new MockERC20("LIMPETH", "LIMPETH", 18));
         wtBTC = new MockERC20("wtBTC", "wtBTC", 18);
