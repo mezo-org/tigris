@@ -182,45 +182,14 @@ library Escrow {
         // But that's ok b/c we know the block in such case
 
         // Go over weeks to fill history and calculate what the current point is
-        {
-            uint256 t_i = (lastCheckpoint / WEEK) * WEEK;
-            for (uint256 i = 0; i < 255; ++i) {
-                // Hopefully it won't happen that this won't get used in 5 years!
-                // If it does, users will be able to withdraw but vote weight will be broken
-                t_i += WEEK; // Initial value of t_i is always larger than the ts of the last point
-                int128 d_slope = 0;
-                if (t_i > block.timestamp) {
-                    t_i = block.timestamp;
-                } else {
-                    d_slope = self.slopeChanges[t_i];
-                }
-                lastPoint.bias -=
-                    lastPoint.slope *
-                    (t_i - lastCheckpoint).toInt128();
-                lastPoint.slope += d_slope;
-                if (lastPoint.bias < 0) {
-                    // This can happen
-                    lastPoint.bias = 0;
-                }
-                if (lastPoint.slope < 0) {
-                    // This cannot happen - just in case
-                    lastPoint.slope = 0;
-                }
-                lastCheckpoint = t_i;
-                lastPoint.ts = t_i;
-                lastPoint.blk =
-                    initialLastPoint.blk +
-                    (blockSlope * (t_i - initialLastPoint.ts)) /
-                    MULTIPLIER;
-                _epoch += 1;
-                if (t_i == block.timestamp) {
-                    lastPoint.blk = block.number;
-                    break;
-                } else {
-                    self._pointHistory[_epoch] = lastPoint;
-                }
-            }
-        }
+        (_epoch, lastPoint) = _updateHistory(
+            self,
+            _epoch,
+            lastPoint,
+            lastCheckpoint,
+            initialLastPoint,
+            blockSlope
+        );
 
         if (_tokenId != 0) {
             // If last point was in this block, the slope change has been applied already
@@ -292,6 +261,54 @@ library Escrow {
                 self._userPointHistory[_tokenId][userEpoch] = uNew;
             }
         }
+    }
+
+    function _updateHistory(
+        VotingEscrowState.Storage storage self,
+        uint256 _epoch,
+        IVotingEscrow.GlobalPoint memory lastPoint,
+        uint256 lastCheckpoint,
+        IVotingEscrow.GlobalPoint memory initialLastPoint,
+        uint256 blockSlope
+    ) internal returns (uint256, IVotingEscrow.GlobalPoint memory) {
+        uint256 t_i = (lastCheckpoint / WEEK) * WEEK;
+        for (uint256 i = 0; i < 255; ++i) {
+            // Hopefully it won't happen that this won't get used in 5 years!
+            // If it does, users will be able to withdraw but vote weight will be broken
+            t_i += WEEK; // Initial value of t_i is always larger than the ts of the last point
+            int128 d_slope = 0;
+            if (t_i > block.timestamp) {
+                t_i = block.timestamp;
+            } else {
+                d_slope = self.slopeChanges[t_i];
+            }
+            lastPoint.bias -=
+                lastPoint.slope *
+                (t_i - lastCheckpoint).toInt128();
+            lastPoint.slope += d_slope;
+            if (lastPoint.bias < 0) {
+                // This can happen
+                lastPoint.bias = 0;
+            }
+            if (lastPoint.slope < 0) {
+                // This cannot happen - just in case
+                lastPoint.slope = 0;
+            }
+            lastCheckpoint = t_i;
+            lastPoint.ts = t_i;
+            lastPoint.blk =
+                initialLastPoint.blk +
+                (blockSlope * (t_i - initialLastPoint.ts)) /
+                MULTIPLIER;
+            _epoch += 1;
+            if (t_i == block.timestamp) {
+                lastPoint.blk = block.number;
+                break;
+            } else {
+                self._pointHistory[_epoch] = lastPoint;
+            }
+        }
+        return (_epoch, lastPoint);
     }
 
     /// @dev Deposit `_value` tokens for `_to` and lock for `_lockDuration`

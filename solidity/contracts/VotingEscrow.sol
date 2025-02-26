@@ -431,13 +431,15 @@ abstract contract VotingEscrow is
     ) external {
         return
             self.delegateBySig(
-                delegator,
-                delegatee,
-                nonce,
-                expiry,
-                v,
-                r,
-                s,
+                Delegation.SignatureData({
+                    delegator: delegator,
+                    delegatee: delegatee,
+                    nonce: nonce,
+                    expiry: expiry,
+                    v: v,
+                    r: r,
+                    s: s
+                }),
                 this.name(),
                 this.version(),
                 address(this),

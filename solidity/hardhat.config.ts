@@ -28,9 +28,6 @@ const config: HardhatUserConfig = {
   solidity: {
     version: "0.8.24",
     settings: {
-      // `viaIR` is a temporary fix for stack too depp for `delegateBySig`.
-      // Remove once refactored.
-      viaIR: true,
       optimizer: {
         enabled: true,
         runs: 100,

@@ -147,13 +147,43 @@ library ManagedNFT {
         rewards[0] = address(self.token);
         IReward(_lockedManagedReward).getReward(_tokenId, rewards);
 
-        // adjust user nft
+        _adjustUserNFT(self, _tokenId, _total, _unlockTime);
+        _adjustManagedNFT(self, _mTokenId, _total);
+
+        IReward(_lockedManagedReward)._withdraw(_weight, _tokenId);
+        IReward(_freeManagedReward)._withdraw(_weight, _tokenId);
+
+        delete self.idToManaged[_tokenId];
+        delete self.weights[_tokenId][_mTokenId];
+        delete self.escrowType[_tokenId];
+
+        emit IVotingEscrow.WithdrawManaged(
+            self._ownerOf(_tokenId),
+            _tokenId,
+            _mTokenId,
+            _total,
+            block.timestamp
+        );
+        emit IERC4906.MetadataUpdate(_tokenId);
+    }
+
+    function _adjustUserNFT(
+        VotingEscrowState.Storage storage self,
+        uint256 _tokenId,
+        uint256 _total,
+        uint256 _unlockTime
+    ) internal {
         IVotingEscrow.LockedBalance memory newLockedNormal = IVotingEscrow
             .LockedBalance(_total.toInt128(), _unlockTime, false);
         self._checkpoint(_tokenId, self._locked[_tokenId], newLockedNormal);
         self._locked[_tokenId] = newLockedNormal;
+    }
 
-        // adjust managed nft
+    function _adjustManagedNFT(
+        VotingEscrowState.Storage storage self,
+        uint256 _mTokenId,
+        uint256 _total
+    ) internal {
         IVotingEscrow.LockedBalance memory newLockedManaged = self._locked[
             _mTokenId
         ];
@@ -171,22 +201,6 @@ library ManagedNFT {
         self._checkpointDelegatee(self._delegates[_mTokenId], _total, false);
         self._checkpoint(_mTokenId, self._locked[_mTokenId], newLockedManaged);
         self._locked[_mTokenId] = newLockedManaged;
-
-        IReward(_lockedManagedReward)._withdraw(_weight, _tokenId);
-        IReward(_freeManagedReward)._withdraw(_weight, _tokenId);
-
-        delete self.idToManaged[_tokenId];
-        delete self.weights[_tokenId][_mTokenId];
-        delete self.escrowType[_tokenId];
-
-        emit IVotingEscrow.WithdrawManaged(
-            self._ownerOf(_tokenId),
-            _tokenId,
-            _mTokenId,
-            _total,
-            block.timestamp
-        );
-        emit IERC4906.MetadataUpdate(_tokenId);
     }
 
     function setAllowedManager(

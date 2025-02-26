@@ -12,6 +12,16 @@ library Delegation {
     using SafeCastLibrary for int128;
     using NFT for VotingEscrowState.Storage;
 
+    struct SignatureData {
+        uint256 delegator;
+        uint256 delegatee;
+        uint256 nonce;
+        uint256 expiry;
+        uint8 v;
+        bytes32 r;
+        bytes32 s;
+    }
+
     /// @notice The EIP-712 typehash for the contract's domain
     bytes32 public constant DOMAIN_TYPEHASH =
         keccak256(
@@ -37,13 +47,7 @@ library Delegation {
 
     function delegateBySig(
         VotingEscrowState.Storage storage self,
-        uint256 delegator,
-        uint256 delegatee,
-        uint256 nonce,
-        uint256 expiry,
-        uint8 v,
-        bytes32 r,
-        bytes32 s,
+        SignatureData calldata signatureData,
         string calldata contractName,
         string calldata contractVersion,
         address contractAddress,
@@ -59,7 +63,7 @@ library Delegation {
         // vice versa. If your library also generates signatures with 0/1 for v instead 27/28, add 27 to v to accept
         // these malleable signatures as well.
         if (
-            uint256(s) >
+            uint256(signatureData.s) >
             0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0
         ) revert IVotingEscrow.InvalidSignatureS();
         bytes32 domainSeparator = keccak256(
@@ -72,19 +76,37 @@ library Delegation {
             )
         );
         bytes32 structHash = keccak256(
-            abi.encode(DELEGATION_TYPEHASH, delegator, delegatee, nonce, expiry)
+            abi.encode(
+                DELEGATION_TYPEHASH,
+                signatureData.delegator,
+                signatureData.delegatee,
+                signatureData.nonce,
+                signatureData.expiry
+            )
         );
         bytes32 digest = keccak256(
             abi.encodePacked("\x19\x01", domainSeparator, structHash)
         );
-        address signatory = ecrecover(digest, v, r, s);
-        if (!self._isApprovedOrOwner(signatory, delegator))
+        address signatory = ecrecover(
+            digest,
+            signatureData.v,
+            signatureData.r,
+            signatureData.s
+        );
+        if (!self._isApprovedOrOwner(signatory, signatureData.delegator))
             revert IVotingEscrow.NotApprovedOrOwner();
         if (signatory == address(0)) revert IVotingEscrow.InvalidSignature();
-        if (nonce != self.nonces[signatory]++)
+        if (signatureData.nonce != self.nonces[signatory]++)
             revert IVotingEscrow.InvalidNonce();
-        if (block.timestamp > expiry) revert IVotingEscrow.SignatureExpired();
-        return _delegate(self, delegator, delegatee, msgSender);
+        if (block.timestamp > signatureData.expiry)
+            revert IVotingEscrow.SignatureExpired();
+        return
+            _delegate(
+                self,
+                signatureData.delegator,
+                signatureData.delegatee,
+                msgSender
+            );
     }
 
     /// @notice Record user delegation checkpoints. Used by voting system.
