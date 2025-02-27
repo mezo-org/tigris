@@ -1,4 +1,4 @@
-import { DeployFunction } from "hardhat-deploy/dist/types"
+import { DeployFunction, DeployOptions } from "hardhat-deploy/dist/types"
 import { HardhatRuntimeEnvironment } from "hardhat/types"
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -16,35 +16,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     .address
   log(`FactoryRegistry address is ${factoryRegistryAddress}`)
 
-  const balanceDeployment = await deploy("Balance", {
+  const deployOptions: DeployOptions = {
     from: deployer,
     log: true,
     waitConfirmations: 1,
-  })
+  }
 
-  const delegationDeployment = await deploy("Delegation", {
-    from: deployer,
-    log: true,
-    waitConfirmations: 1,
-  })
-
-  const escrowDeployment = await deploy("Escrow", {
-    from: deployer,
-    log: true,
-    waitConfirmations: 1,
-  })
-
-  const managedNFTDeployment = await deploy("ManagedNFT", {
-    from: deployer,
-    log: true,
-    waitConfirmations: 1,
-  })
-
-  const nftDeployment = await deploy("NFT", {
-    from: deployer,
-    log: true,
-    waitConfirmations: 1,
-  })
+  const balanceDeployment = await deploy("Balance", deployOptions)
+  const delegationDeployment = await deploy("Delegation", deployOptions)
+  const escrowDeployment = await deploy("Escrow", deployOptions)
+  const managedNFTDeployment = await deploy("ManagedNFT", deployOptions)
+  const nftDeployment = await deploy("NFT", deployOptions)
 
   const VeBTC = await deployments.getOrNull("VeBTC")
 
