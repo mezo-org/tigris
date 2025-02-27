@@ -10,3 +10,7 @@ out = 'out'
 libs = ['node_modules', 'lib']
 test = 'test'
 cache_path  = 'cache_forge'
+
+[profile.system-test]
+test = 'system-test'
+fs_permissions = [{ access = "read-write", path = "./"}]
