@@ -118,15 +118,13 @@ library Balance {
     }
 
     /// @notice Calculate total voting power at some point in the past
-    /// @param _epoch The epoch to start search from
     /// @param _t Time to calculate the total voting power at
     /// @return Total voting power at that time
     function supplyAt(
         VotingEscrowState.Storage storage self,
-        uint256 _epoch,
         uint256 _t
     ) external view returns (uint256) {
-        uint256 epoch_ = getPastGlobalPointIndex(self, _epoch, _t);
+        uint256 epoch_ = getPastGlobalPointIndex(self, self.epoch, _t);
         // epoch 0 is an empty point
         if (epoch_ == 0) return 0;
         IVotingEscrow.GlobalPoint memory _point = self._pointHistory[epoch_];

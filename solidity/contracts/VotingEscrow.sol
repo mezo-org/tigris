@@ -328,10 +328,6 @@ abstract contract VotingEscrow is
                            GAUGE VOTING STORAGE
     //////////////////////////////////////////////////////////////*/
 
-    function _supplyAt(uint256 _timestamp) internal view returns (uint256) {
-        return self.supplyAt(self.epoch, _timestamp);
-    }
-
     /// @inheritdoc IVotingEscrow
     function balanceOfNFT(uint256 _tokenId) public view returns (uint256) {
         return self._balanceOfNFT(_tokenId);
@@ -347,12 +343,12 @@ abstract contract VotingEscrow is
 
     /// @inheritdoc IVotingEscrow
     function totalSupply() external view returns (uint256) {
-        return _supplyAt(block.timestamp);
+        return self.supplyAt(block.timestamp);
     }
 
     /// @inheritdoc IVotingEscrow
     function totalSupplyAt(uint256 _timestamp) external view returns (uint256) {
-        return _supplyAt(_timestamp);
+        return self.supplyAt(_timestamp);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -398,7 +394,7 @@ abstract contract VotingEscrow is
     function getPastTotalSupply(
         uint256 _timestamp
     ) external view returns (uint256) {
-        return _supplyAt(_timestamp);
+        return self.supplyAt(_timestamp);
     }
 
     /*///////////////////////////////////////////////////////////////
