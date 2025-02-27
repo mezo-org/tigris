@@ -4,7 +4,7 @@ pragma solidity 0.8.24;
 
 import {VotingEscrowState} from "./VotingEscrowState.sol";
 import {NFT} from "./NFT.sol";
-import {SafeCastLibrary} from "./SafeCastLibrary.sol";
+import {SafeCastLibrary} from "../libraries/SafeCastLibrary.sol";
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 import {IVotes} from "../governance/IVotes.sol";
 

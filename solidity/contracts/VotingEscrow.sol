@@ -5,12 +5,12 @@ pragma solidity 0.8.24;
 import {IVotingEscrow} from "./interfaces/IVotingEscrow.sol";
 import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import {VotingEscrowState} from "./libraries/VotingEscrowState.sol";
-import {ManagedNFT} from "./libraries/ManagedNFT.sol";
-import {NFT} from "./libraries/NFT.sol";
-import {Escrow} from "./libraries/Escrow.sol";
-import {Delegation} from "./libraries/Delegation.sol";
-import {Balance} from "./libraries/Balance.sol";
+import {VotingEscrowState} from "./ve/VotingEscrowState.sol";
+import {ManagedNFT} from "./ve/ManagedNFT.sol";
+import {NFT} from "./ve/NFT.sol";
+import {Escrow} from "./ve/Escrow.sol";
+import {Delegation} from "./ve/Delegation.sol";
+import {Balance} from "./ve/Balance.sol";
 
 /// @title Voting Escrow
 /// @notice veNFT implementation that escrows ERC-20 tokens in the form of an ERC-721 NFT

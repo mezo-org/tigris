@@ -7,7 +7,7 @@ import {Escrow} from "./Escrow.sol";
 import {NFT} from "./NFT.sol";
 import {Delegation} from "./Delegation.sol";
 import {Balance} from "./Balance.sol";
-import {SafeCastLibrary} from "./SafeCastLibrary.sol";
+import {SafeCastLibrary} from "../libraries/SafeCastLibrary.sol";
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 import {IReward} from "../interfaces/IReward.sol";
 import {IVoter} from "../interfaces/IVoter.sol";

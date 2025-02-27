@@ -2,7 +2,7 @@
 pragma solidity 0.8.24;
 
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
-import {SafeCastLibrary} from "./SafeCastLibrary.sol";
+import {SafeCastLibrary} from "../libraries/SafeCastLibrary.sol";
 import {VotingEscrowState} from "./VotingEscrowState.sol";
 
 library Balance {
