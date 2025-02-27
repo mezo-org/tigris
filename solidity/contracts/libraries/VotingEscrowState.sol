@@ -3,6 +3,7 @@
 pragma solidity 0.8.24;
 
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
+import {IERC4906} from "@openzeppelin/contracts/interfaces/IERC4906.sol";
 
 library VotingEscrowState {
     struct Storage {
@@ -103,5 +104,46 @@ library VotingEscrowState {
 
         /// @inheritdoc IVotingEscrow
         mapping(uint256 => bool) voted;
+    }
+
+    function setTeam(
+        VotingEscrowState.Storage storage self,
+        address _team,
+        address _msgSender
+    ) internal {
+        if (_msgSender != self.team) revert IVotingEscrow.NotTeam();
+        if (_team == address(0)) revert IVotingEscrow.ZeroAddress();
+        self.team = _team;
+    }
+
+    function setArtProxy(
+        VotingEscrowState.Storage storage self,
+        address _proxy,
+        address _msgSender
+    ) internal {
+        if (_msgSender != self.team) revert IVotingEscrow.NotTeam();
+        self.artProxy = _proxy;
+        emit IERC4906.BatchMetadataUpdate(0, type(uint256).max);
+    }
+
+    function setVoterAndDistributor(
+        VotingEscrowState.Storage storage self,
+        address _voter,
+        address _distributor,
+        address _msgSender
+    ) internal {
+        if (_msgSender != self.voter) revert IVotingEscrow.NotVoter();
+        self.voter = _voter;
+        self.distributor = _distributor;
+    }
+
+    function setVoting(
+        VotingEscrowState.Storage storage self,
+        uint256 _tokenId,
+        bool _voted,
+        address _msgSender
+    ) internal {
+        if (_msgSender != self.voter) revert IVotingEscrow.NotVoter();
+        self.voted[_tokenId] = _voted;
     }
 }

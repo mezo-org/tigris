@@ -5,6 +5,7 @@ pragma solidity 0.8.24;
 import {VotingEscrowState} from "./VotingEscrowState.sol";
 import {Delegation} from "./Delegation.sol";
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
+import {IVeArtProxy} from "../interfaces/IVeArtProxy.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
@@ -263,5 +264,14 @@ library NFT {
             // update tokenToOwnerIndex
             self.tokenToOwnerIndex[_tokenId] = 0;
         }
+    }
+
+    function tokenURI(
+        VotingEscrowState.Storage storage self,
+        uint256 _tokenId
+    ) external view returns (string memory) {
+        if (_ownerOf(self, _tokenId) == address(0))
+            revert IVotingEscrow.NonExistentToken();
+        return IVeArtProxy(self.artProxy).tokenURI(_tokenId);
     }
 }

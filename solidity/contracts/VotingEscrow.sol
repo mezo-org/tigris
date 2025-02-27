@@ -2,7 +2,6 @@
 
 pragma solidity 0.8.24;
 
-import {IVeArtProxy} from "./interfaces/IVeArtProxy.sol";
 import {IVotingEscrow} from "./interfaces/IVotingEscrow.sol";
 import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -25,6 +24,7 @@ abstract contract VotingEscrow is
     ERC2771Context,
     ReentrancyGuard
 {
+    using VotingEscrowState for VotingEscrowState.Storage;
     using NFT for VotingEscrowState.Storage;
     using ManagedNFT for VotingEscrowState.Storage;
     using Escrow for VotingEscrowState.Storage;
@@ -116,22 +116,16 @@ abstract contract VotingEscrow is
     //////////////////////////////////////////////////////////////*/
 
     function setTeam(address _team) external {
-        if (_msgSender() != self.team) revert NotTeam();
-        if (_team == address(0)) revert ZeroAddress();
-        self.team = _team;
+        self.setTeam(_team, _msgSender());
     }
 
     function setArtProxy(address _proxy) external {
-        if (_msgSender() != self.team) revert NotTeam();
-        self.artProxy = _proxy;
-        emit BatchMetadataUpdate(0, type(uint256).max);
+        self.setArtProxy(_proxy, _msgSender());
     }
 
     /// @inheritdoc IVotingEscrow
     function tokenURI(uint256 _tokenId) external view returns (string memory) {
-        if (NFT._ownerOf(self, _tokenId) == address(0))
-            revert NonExistentToken();
-        return IVeArtProxy(self.artProxy).tokenURI(_tokenId);
+        return self.tokenURI(_tokenId);
     }
 
     /// @inheritdoc IVotingEscrow
@@ -370,15 +364,12 @@ abstract contract VotingEscrow is
         address _voter,
         address _distributor
     ) external {
-        if (_msgSender() != self.voter) revert NotVoter();
-        self.voter = _voter;
-        self.distributor = _distributor;
+        self.setVoterAndDistributor(_voter, _distributor, _msgSender());
     }
 
     /// @inheritdoc IVotingEscrow
     function voting(uint256 _tokenId, bool _voted) external {
-        if (_msgSender() != self.voter) revert NotVoter();
-        self.voted[_tokenId] = _voted;
+        self.setVoting(_tokenId, _voted, _msgSender());
     }
 
     /// @inheritdoc IVotingEscrow
