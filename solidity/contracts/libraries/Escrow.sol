@@ -81,7 +81,7 @@ library Escrow {
         // or if the lock is a permanent lock, then _oldLocked.end == 0
         // value == 0 (extend lock) or value > 0 (add to lock or extend lock)
         // newLocked.end > block.timestamp (always)
-        Escrow._checkpoint(self, _tokenId, _oldLocked, newLocked);
+        _checkpoint(self, _tokenId, _oldLocked, newLocked);
 
         if (_value != 0) {
             IERC20(self.token).safeTransferFrom(
@@ -321,7 +321,7 @@ library Escrow {
         uint256 _lockDuration,
         address _to,
         address _msgSender
-    ) internal returns (uint256) {
+    ) external returns (uint256) {
         uint256 unlockTime = ((block.timestamp + _lockDuration) / WEEK) * WEEK; // Locktime is rounded down to weeks
 
         if (_value == 0) revert IVotingEscrow.ZeroAmount();
@@ -601,7 +601,7 @@ library Escrow {
         VotingEscrowState.Storage storage self,
         address _to,
         IVotingEscrow.LockedBalance memory _newLocked
-    ) private returns (uint256 _tokenId) {
+    ) internal returns (uint256 _tokenId) {
         _tokenId = ++self.tokenId;
         self._locked[_tokenId] = _newLocked;
         _checkpoint(

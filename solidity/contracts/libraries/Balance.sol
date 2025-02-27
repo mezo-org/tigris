@@ -112,7 +112,7 @@ library Balance {
     function _balanceOfNFT(
         VotingEscrowState.Storage storage self,
         uint256 _tokenId
-    ) internal view returns (uint256) {
+    ) external view returns (uint256) {
         if (self.ownershipChange[_tokenId] == block.number) return 0;
         return _balanceOfNFTAt(self, _tokenId, block.timestamp);
     }

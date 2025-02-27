@@ -54,7 +54,7 @@ library NFT {
         uint256 _tokenId,
         bytes memory _data,
         address _msgSender
-    ) public {
+    ) external {
         _transferFrom(self, _from, _to, _tokenId, _msgSender);
 
         if (_isContract(_to)) {
