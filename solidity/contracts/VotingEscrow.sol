@@ -594,7 +594,4 @@ abstract contract VotingEscrow is
     function DELEGATION_TYPEHASH() external pure returns (bytes32) {
         return Delegation.DELEGATION_TYPEHASH;
     }
-
-    // TODO: Consider adding other getters. All the state variables accessible
-    //       before the refactor should be accessible.
 }
