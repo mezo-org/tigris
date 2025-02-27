@@ -56,7 +56,7 @@ contract Deployment is BaseSystemTest {
         assertEq(veBTCVoter.factoryRegistry(), address(factoryRegistry), "VeBTCVoter factory registry should be properly set");
         assertEq(veBTCVoter.governor(), address(governance), "VeBTCVoter governor should be properly set");
         assertEq(veBTCVoter.epochGovernor(), address(veBTCEpochGovernor), "VeBTCVoter epoch governor should be properly set");
-        assertEq(veBTCVoter.emergencyCouncil(), address(governance), "VeBTCVoter epoch governor should be properly set");
+        assertEq(veBTCVoter.emergencyCouncil(), address(governance), "VeBTCVoter emergency council should be properly set");
         assertEq(veBTCVoter.splitter(), address(chainFeeSplitter), "VeBTCVoter splitter should be properly set");
     }
 
