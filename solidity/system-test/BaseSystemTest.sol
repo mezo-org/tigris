@@ -1,6 +1,5 @@
 pragma solidity 0.8.24;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "forge-std/Script.sol";
 import "forge-std/Test.sol";
 import "forge-std/StdJson.sol";
@@ -16,9 +15,12 @@ import {Voter} from "contracts/Voter.sol";
 import {RewardsDistributor} from "contracts/RewardsDistributor.sol";
 import {ChainFeeSplitter} from "contracts/ChainFeeSplitter.sol";
 import {EpochGovernor} from "contracts/EpochGovernor.sol";
+import {TestERC20} from "contracts/test/TestERC20.sol";
 
 abstract contract BaseSystemTest is Script, Test {
     using stdJson for string;
+
+    uint256 public constant YEAR = 365 days;
 
     /// @dev RPC URL to the forked node.
     string public forkRpcUrl = vm.envString("FORK_RPC_URL");
@@ -34,7 +36,7 @@ abstract contract BaseSystemTest is Script, Test {
     address[] public accounts;
     address governance;
 
-    IERC20 public BTC;
+    TestERC20 public BTC;
     address public poolImplementation;
     PoolFactory public poolFactory;
     GaugeFactory public gaugeFactory;
@@ -54,7 +56,7 @@ abstract contract BaseSystemTest is Script, Test {
         deriveAccounts();
         governance = accounts[0];
 
-        BTC = IERC20(getDeploymentAddress("Bitcoin"));
+        BTC = TestERC20(getDeploymentAddress("Bitcoin"));
         poolImplementation = getDeploymentAddress("Pool");
         poolFactory = PoolFactory(getDeploymentAddress("PoolFactory"));
         gaugeFactory = GaugeFactory(getDeploymentAddress("GaugeFactory"));
@@ -84,5 +86,16 @@ abstract contract BaseSystemTest is Script, Test {
             address account = vm.addr(privateKey);
             accounts[i] = account;
         }
+    }
+
+    function withTokenPrecision(uint256 value) internal pure returns (uint256) {
+        return value * 1e18;
+    }
+
+    function skipToNextEpoch(uint256 offset) internal {
+        uint256 ts = block.timestamp;
+        uint256 nextEpoch = ts - (ts % (1 weeks)) + (1 weeks);
+        vm.warp(nextEpoch + offset);
+        vm.roll(block.number + 1);
     }
 }
