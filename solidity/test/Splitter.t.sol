@@ -9,13 +9,29 @@ contract SplitterTest is BaseTest {
     uint256 private constant MAXIMUM_GAUGE_SCALE = 100;
     uint256 private constant MINIMUM_GAUGE_SCALE = 1;
     MockEpochGovernor mockEpochGovernor;
+    address firstRecipient;
+    address secondRecipient;
+
+    IERC20 token;
 
     error AlreadyNudged();
     error NotEpochGovernor();
 
+    event PeriodUpdated(
+        uint256 oldPeriod,
+        uint256 newPeriod,
+        uint256 firstRecipientAmount,
+        uint256 secondRecipientAmount
+    );
+
     function _setUp() public override {
-         mockEpochGovernor = new MockEpochGovernor();
-         splitter.setMockEpochGovernor(address(mockEpochGovernor));
+        mockEpochGovernor = new MockEpochGovernor();
+        splitter.setMockEpochGovernor(address(mockEpochGovernor));
+        token = splitter.token();
+        firstRecipient = address(0x1);
+        secondRecipient = address(0x2);
+        splitter.setFirstRecipient(firstRecipient);
+        splitter.setSecondRecipient(secondRecipient);
     }
 
     function testInitialSetup() public {
@@ -91,9 +107,78 @@ contract SplitterTest is BaseTest {
 
         assertEq(splitter.needle(), initialNeedle);
     }
-}
 
-// TODO: test updatePeriod()
+    function testUpdatePeriod() public {
+        token.transfer(address(splitter), 1000);
+        assertEq(token.balanceOf(address(splitter)), 1000);
+
+        uint256 prevActivePeriod = splitter.activePeriod();
+
+        // Fast forward time by 1 week
+        vm.warp(block.timestamp + 1 weeks);
+
+        uint256 currentBalance = token.balanceOf(address(splitter));
+        splitter.updatePeriod();
+
+        uint256 newActivePeriod = splitter.activePeriod();
+        assertGt(newActivePeriod, prevActivePeriod, "Period should be updated");
+
+        uint256 expectedFirstRecipientAmount = (currentBalance * splitter.needle()) / MAXIMUM_GAUGE_SCALE;
+        uint256 expectedSecondRecipientAmount = currentBalance - expectedFirstRecipientAmount;
+
+        assertEq(token.balanceOf(firstRecipient), expectedFirstRecipientAmount, "Incorrect first recipient amount");
+        assertEq(token.balanceOf(secondRecipient), expectedSecondRecipientAmount, "Incorrect second recipient amount");
+    }
+
+    function testNoDistributionIfNoBalance() public {
+        assertEq(token.balanceOf(address(splitter)), 0);
+
+        // Fast forward time by 1 week
+        vm.warp(block.timestamp + 1 weeks);
+
+        uint256 prevFirstRecipientBalance = token.balanceOf(firstRecipient);
+        uint256 prevSecondRecipientBalance = token.balanceOf(secondRecipient);
+
+        splitter.updatePeriod();
+
+        assertEq(token.balanceOf(firstRecipient), prevFirstRecipientBalance, "First recipient balance should not change");
+        assertEq(token.balanceOf(secondRecipient), prevSecondRecipientBalance, "Second recipient balance should not change");
+    }
+
+    function testPeriodUpdatedEventEmitted() public {
+        // Fast forward time by 1 week
+        vm.warp(block.timestamp + 1 weeks);
+
+        uint256 currentBalance = token.balanceOf(address(splitter));
+        uint256 expectedFirstRecipientAmount = (currentBalance * splitter.needle()) / splitter.MAXIMUM_GAUGE_SCALE();
+        uint256 expectedSecondRecipientAmount = currentBalance - expectedFirstRecipientAmount;
+
+        vm.expectEmit(true, true, true, true);
+        emit PeriodUpdated(
+            splitter.activePeriod(),
+            (block.timestamp / 1 weeks) * 1 weeks,
+            expectedFirstRecipientAmount,
+            expectedSecondRecipientAmount
+        );
+
+        splitter.updatePeriod();
+    }
+
+    function testNoDistributionIfOldPeriodActive() public {
+        splitter.updatePeriod();
+
+        token.transfer(address(splitter), 1000);
+        assertEq(token.balanceOf(address(splitter)), 1000);
+
+        uint256 prevFirstRecipientBalance = token.balanceOf(firstRecipient);
+        uint256 prevSecondRecipientBalance = token.balanceOf(secondRecipient);
+
+        splitter.updatePeriod();
+
+        assertEq(token.balanceOf(firstRecipient), prevFirstRecipientBalance, "First recipient balance should not change");
+        assertEq(token.balanceOf(secondRecipient), prevSecondRecipientBalance, "Second recipient balance should not change");
+    }
+}
 
 contract MockEpochGovernor is IEpochGovernor {
     ProposalState public lastResult;

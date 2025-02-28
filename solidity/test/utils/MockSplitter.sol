@@ -10,9 +10,7 @@ contract MockSplitter is Splitter {
     address public secondRecipient;
     IEpochGovernor public mockEpochGovernor;
 
-    constructor(address _ve, address _firstRecipient, address _secondRecipient) Splitter(_ve) {
-        firstRecipient = _firstRecipient;
-        secondRecipient = _secondRecipient;
+    constructor(address _ve) Splitter(_ve) {
         needle = 33;
     }
 
@@ -20,8 +18,12 @@ contract MockSplitter is Splitter {
         mockEpochGovernor = IEpochGovernor(_mockEpochGovernor);
     }
 
-    function epochGovernor() internal override view returns (address) {
-        return address(mockEpochGovernor);
+    function setFirstRecipient(address _firstRecipient) public {
+        firstRecipient = _firstRecipient;
+    }
+
+    function setSecondRecipient(address _secondRecipient) public {
+        secondRecipient = _secondRecipient;
     }
 
     function transferFirstRecipient(uint256 amount) internal override {
@@ -30,6 +32,10 @@ contract MockSplitter is Splitter {
 
     function transferSecondRecipient(uint256 amount) internal override{
         token.transfer(secondRecipient, amount);
+    }
+
+    function epochGovernor() internal override view returns (address) {
+        return address(mockEpochGovernor);
     }
 
     function setNeedle(uint256 _needle) public {

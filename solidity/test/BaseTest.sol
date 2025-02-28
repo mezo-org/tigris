@@ -107,7 +107,7 @@ abstract contract BaseTest is Base, TestOwner {
         voter.setEpochGovernor(address(epochGovernor));
         voter.setGovernor(address(governor));
 
-        splitter = new MockSplitter(address(escrow), address(voter), address(distributor));
+        splitter = new MockSplitter(address(escrow));
 
         assertEq(factory.allPoolsLength(), 0);
         // TODO: Uncomment once Router implementation is complete.
