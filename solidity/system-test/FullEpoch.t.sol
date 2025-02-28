@@ -1,6 +1,8 @@
 pragma solidity 0.8.24;
 
 import {BaseSystemTest} from "./BaseSystemTest.sol";
+import {IGovernor} from "contracts/governance/IGovernor.sol";
+import {GovernorCountingMajority} from "contracts/governance/GovernorCountingMajority.sol";
 
 contract FullEpoch is BaseSystemTest {
     function testFullEpoch() public {
@@ -69,6 +71,58 @@ contract FullEpoch is BaseSystemTest {
         assertEq(BTC.balanceOf(user2), 0, "unexpected user2 BTC balance");
         assertEq(BTC.balanceOf(user3), 0, "unexpected user3 BTC balance");
         assertEq(BTC.balanceOf(address(veBTC)), withTokenPrecision(30), "unexpected veBTC contract BTC balance");
+
+        // Load the chain fee splitter with BTC.
+        vm.prank(governance);
+        BTC.mint(address(chainFeeSplitter), withTokenPrecision(100));
+
+        // Create a proposal to nudge the chain fee splitter.
+        uint256 proposalId = proposeChainFeeSplitterNudge(user3, user3TokenId);
+
+        // Assert state before the proposal voting:
+        // --- assert voting parameters:
+        (uint256 votingDelay, uint256 votingPeriod) = (15 minutes, 1 weeks);
+        assertEq(veBTCEpochGovernor.votingDelay(), votingDelay, "unexpected voting delay");
+        assertEq(veBTCEpochGovernor.votingPeriod(), votingPeriod, "unexpected voting period");
+        // --- assert proposal state:
+        assertEq(uint256(veBTCEpochGovernor.state(proposalId)), uint256(IGovernor.ProposalState.Pending), "unexpected proposal status");
+        assertEq(uint256(veBTCEpochGovernor.result()), uint256(IGovernor.ProposalState.Pending), "unexpected result");
+        // --- assert proposal votes:
+        (uint256 againstVotes, uint256 forVotes, uint256 abstainVotes) = veBTCEpochGovernor.proposalVotes(proposalId);
+        assertEq(againstVotes, 0, "unexpected against votes");
+        assertEq(forVotes, 0, "unexpected for votes");
+        assertEq(abstainVotes, 0, "unexpected abstain votes");
+        // --- assert proposal snapshot and deadline:
+        assertEq(veBTCEpochGovernor.proposalSnapshot(proposalId), vm.getBlockTimestamp() + votingDelay, "unexpected proposal snapshot");
+        assertEq(veBTCEpochGovernor.proposalDeadline(proposalId), vm.getBlockTimestamp() + votingDelay + votingPeriod, "unexpected proposal deadline");
+
+        // We must move the time forward past the voting delay to allow voting.
+        skip(votingDelay + 1);
+        assertEq(uint256(veBTCEpochGovernor.state(proposalId)), uint256(IGovernor.ProposalState.Active), "unexpected proposal status");
+
+        // Cast votes.
+        vm.prank(user1);
+        veBTCEpochGovernor.castVote(proposalId, user1TokenId, uint8(GovernorCountingMajority.VoteType.Against));
+        vm.prank(user2);
+        veBTCEpochGovernor.castVote(proposalId, user2TokenId, uint8(GovernorCountingMajority.VoteType.Against));
+        vm.prank(user3);
+        veBTCEpochGovernor.castVote(proposalId, user3TokenId, uint8(GovernorCountingMajority.VoteType.For));
+
+        // Assert proposal votes after voting. Voting power of all users
+        // decayed a bit since locks creation since we moved 15m (900s) ahead.
+        // The slope is the same for all users - 79274479959.
+        // That said, voting power per user decayed by 79274479959 * 900 = 71347031963100.
+        (againstVotes, forVotes, abstainVotes) = veBTCEpochGovernor.proposalVotes(proposalId);
+        // User1 and User2 with respective initial voting power of
+        // 2493150605644086441 and 4986301290562652841 were against.
+        // Total against including the 15m decay should be:
+        // (2493150605644086441 - 71347031963100) + (4986301290562652841 - 71347031963100) = 7479309202142813082
+        assertEq(againstVotes, 7479309202142813082, "unexpected against votes");
+        // User3 with initial voting power of 9972602660399785641 was for.
+        // Total for including the 15m decay should be:
+        // 9972602660399785641 - 71347031963100 = 9972531313367822541
+        assertEq(forVotes, 9972531313367822541, "unexpected for votes");
+        assertEq(abstainVotes, 0, "unexpected abstain votes");
     }
 
     function mintVeBTC(address user, uint256 amount, uint256 lockDuration) internal returns (uint256 tokenId) {
@@ -76,5 +130,30 @@ contract FullEpoch is BaseSystemTest {
         BTC.approve(address(veBTC), amount);
         tokenId = veBTC.createLock(amount, lockDuration);
         vm.stopPrank();
+    }
+
+    function proposeChainFeeSplitterNudge(
+        address user,
+        uint256 tokenId
+    ) internal returns (uint256 proposalId) {
+        address[] memory targets = new address[](1);
+        targets[0] = address(chainFeeSplitter);
+
+        uint256[] memory values = new uint256[](1);
+        values[0] = 0;
+
+        bytes[] memory calldatas = new bytes[](1);
+        calldatas[0] = abi.encodeWithSelector(chainFeeSplitter.nudge.selector);
+
+        string memory description = "nudge chain fee splitter";
+
+        vm.prank(user);
+        proposalId = veBTCEpochGovernor.propose(
+            tokenId,
+            targets,
+            values,
+            calldatas,
+            description
+        );
     }
 }
