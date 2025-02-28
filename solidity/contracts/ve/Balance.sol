@@ -49,22 +49,21 @@ library Balance {
 
     /// @notice Binary search to get the global point index at or prior to a given timestamp
     /// @dev If a checkpoint does not exist prior to the timestamp, this will return 0.
-    /// @param _epoch Current global point epoch
     /// @param _timestamp .
     /// @return Global point index
     function getPastGlobalPointIndex(
         VotingEscrowState.Storage storage self,
-        uint256 _epoch,
         uint256 _timestamp
     ) internal view returns (uint256) {
-        if (_epoch == 0) return 0;
+        if (self.epoch == 0) return 0;
         // First check most recent balance
-        if (self._pointHistory[_epoch].ts <= _timestamp) return (_epoch);
+        if (self._pointHistory[self.epoch].ts <= _timestamp)
+            return (self.epoch);
         // Next check implicit zero balance
         if (self._pointHistory[1].ts > _timestamp) return 0;
 
         uint256 lower = 0;
-        uint256 upper = _epoch;
+        uint256 upper = self.epoch;
         while (upper > lower) {
             uint256 center = upper - (upper - lower) / 2; // ceil, avoiding overflow
             IVotingEscrow.GlobalPoint storage globalPoint = self._pointHistory[
@@ -124,7 +123,7 @@ library Balance {
         VotingEscrowState.Storage storage self,
         uint256 _t
     ) external view returns (uint256) {
-        uint256 epoch_ = getPastGlobalPointIndex(self, self.epoch, _t);
+        uint256 epoch_ = getPastGlobalPointIndex(self, _t);
         // epoch 0 is an empty point
         if (epoch_ == 0) return 0;
         IVotingEscrow.GlobalPoint memory _point = self._pointHistory[epoch_];
