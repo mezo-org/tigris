@@ -7,8 +7,16 @@ import {GovernorCountingMajority} from "contracts/governance/GovernorCountingMaj
 contract FullEpoch is BaseSystemTest {
     function testFullEpoch() public {
         // Start Epoch 1 and move to it's first second.
-        // Assume this is timestamp T.
+        // Assume this is timestamp T + 1s, where T is Epoch 1 start.
         skipToNextEpoch(1);
+
+        // Update the period in the splitter as it was deployed in the previous epoch.
+        chainFeeSplitter.updatePeriod();
+        assertEq(
+            chainFeeSplitter.activePeriod(),
+            vm.getBlockTimestamp() - 1,
+            "unexpected chain fee splitter active period"
+        );
 
         // Define actors.
         address user1 = accounts[1];
@@ -42,25 +50,25 @@ contract FullEpoch is BaseSystemTest {
         //   (i.e. (lock_duration / 604800) * 604800) and offset by the
         //   difference between lock_start and epoch start.
 
-        // User1 balance calculation, at timestamp T:
+        // User1 balance calculation, at timestamp T + 1s:
         // - lock_duration = (((365 * 86400) / 604800) * 604800) - 1 = 52 (rounded) * 604800 - 1 (offset) = 31449599
         // - slope = (10 * 1e18) / (4 * 365 * 86400) = 79274479959
         // - bias = 79274479959 * 31449599 = 2493150605644086441
-        // - balance = 2493150605644086441 - 79274479959 * (T - T) = 2493150605644086441
+        // - balance = 2493150605644086441 - 79274479959 * 0 = 2493150605644086441
         assertEq(veBTC.balanceOfNFT(user1TokenId), 2493150605644086441, "unexpected user1 token veBTC balance");
 
-        // User2 balance calculation, at timestamp T:
+        // User2 balance calculation, at timestamp T + 1s:
         // - lock_duration = (((2 * 365 * 86400) / 604800) * 604800) - 1 = 104 (rounded) * 604800 - 1 (offset) = 62899199
         // - slope = (10 * 1e18) / (4 * 365 * 86400) = 79274479959
         // - bias = 79274479959 * 62899199 = 4986301290562652841
-        // - balance = 4986301290562652841 - 79274479959 * (T - T) = 4986301290562652841
+        // - balance = 4986301290562652841 - 79274479959 * 0 = 4986301290562652841
         assertEq(veBTC.balanceOfNFT(user2TokenId), 4986301290562652841, "unexpected user2 token veBTC balance");
 
-        // User3 balance calculation, at timestamp T:
+        // User3 balance calculation, at timestamp T + 1s:
         // - lock_duration = (((4 * 365 * 86400) / 604800) * 604800) - 1 = 208 (rounded) * 604800 - 1 (offset) = 125798399
         // - slope = (10 * 1e18) / (4 * 365 * 86400) = 79274479959
         // - bias = 79274479959 * 125798399 = 9972602660399785641
-        // - balance = 9972602660399785641 - 79274479959 * (T - T) = 9972602660399785641
+        // - balance = 9972602660399785641 - 79274479959 * 0 = 9972602660399785641
         assertEq(veBTC.balanceOfNFT(user3TokenId), 9972602660399785641, "unexpected user3 token veBTC balance");
 
         // Sum of all veBTC balances.
@@ -96,7 +104,9 @@ contract FullEpoch is BaseSystemTest {
         assertEq(veBTCEpochGovernor.proposalSnapshot(proposalId), vm.getBlockTimestamp() + votingDelay, "unexpected proposal snapshot");
         assertEq(veBTCEpochGovernor.proposalDeadline(proposalId), vm.getBlockTimestamp() + votingDelay + votingPeriod, "unexpected proposal deadline");
 
-        // We must move the time forward past the voting delay to allow voting.
+        // We must go past the voting delay (15m since proposal creation) to allow voting.
+        // We created the proposal at T + 1s, we need to jump 15m1s at least.
+        // We land at T + 15m2s after the jump.
         skip(votingDelay + 1);
         assertEq(uint256(veBTCEpochGovernor.state(proposalId)), uint256(IGovernor.ProposalState.Active), "unexpected proposal status");
 
@@ -109,7 +119,8 @@ contract FullEpoch is BaseSystemTest {
         veBTCEpochGovernor.castVote(proposalId, user3TokenId, uint8(GovernorCountingMajority.VoteType.For));
 
         // Assert proposal votes after voting. Voting power of all users
-        // decayed a bit since locks creation since we moved 15m (900s) ahead.
+        // decayed a bit since locks creation (which happened at T + 1s)
+        // because we actually moved 15m (900s) ahead from this point.
         // The slope is the same for all users - 79274479959.
         // That said, voting power per user decayed by 79274479959 * 900 = 71347031963100.
         (againstVotes, forVotes, abstainVotes) = veBTCEpochGovernor.proposalVotes(proposalId);
@@ -123,6 +134,75 @@ contract FullEpoch is BaseSystemTest {
         // 9972602660399785641 - 71347031963100 = 9972531313367822541
         assertEq(forVotes, 9972531313367822541, "unexpected for votes");
         assertEq(abstainVotes, 0, "unexpected abstain votes");
+
+        // Gauge voting can start at T + 1h1s (see TimeLibrary.epochVoteStart).
+        // We are already at T + 15m2s, so we need to jump 44m59s ahead.
+        skip(45 minutes - 1);
+
+        // Assert pools state.
+        assertEq(veBTCVoter.length(), 3, "unexpected pools count");
+
+        // User1 splits its voting power on all pools evenly.
+        address[] memory poolVote = new address[](3);
+        poolVote[0] = pool_BTC_mUSD;
+        poolVote[1] = pool_mUSD_LIMPETH;
+        poolVote[2] = pool_mUSD_wtBTC;
+        uint256[] memory weights = new uint256[](3);
+        weights[0] = 3333; // 3333 BPS
+        weights[1] = 3333;
+        weights[2] = 3334;
+        vm.prank(user1);
+        veBTCVoter.vote(user1TokenId, poolVote, weights);
+
+        // User2 splits its voting power on the first two pools evenly.
+        poolVote = new address[](2);
+        poolVote[0] = pool_BTC_mUSD;
+        poolVote[1] = pool_mUSD_LIMPETH;
+        weights = new uint256[](2);
+        weights[0] = 5000; // 5000 BPS
+        weights[1] = 5000;
+        vm.prank(user2);
+        veBTCVoter.vote(user2TokenId, poolVote, weights);
+
+        // User3 allocates its entire voting power to the last pool.
+        poolVote = new address[](1);
+        poolVote[0] = pool_mUSD_wtBTC;
+        weights = new uint256[](1);
+        weights[0] = 10000; // 10000 BPS
+        vm.prank(user3);
+        veBTCVoter.vote(user3TokenId, poolVote, weights);
+
+        // Assert pool weights after voting. Voting power of all users
+        // decayed a bit since locks creation (which happened at T + 1s)
+        // because we actually moved 1h (3600s) ahead from this point.
+        // The slope is the same for all users - 79274479959.
+        // That said, voting power per user decayed by 79274479959 * 3600 = 285388127852400.
+        // Current voting power of users:
+        // - User1: 2493150605644086441 - 285388127852400 = 2492865217516234041
+        // - User2: 4986301290562652841 - 285388127852400 = 4986015902434800441
+        // - User3: 9972602660399785641 - 285388127852400 = 9972317272271933241
+
+        // Total weight of the first pool should be a sum of:
+        // - User1: 3333 * 2492865217516234041 / 10000 = 830871976998160805 (rounded down)
+        // - User2: 5000 * 4986015902434800441 / 10000 = 2493007951217400220 (rounded down)
+        // So, 830871976998160805 + 2493007951217400220 = 3323879928215561025
+        assertEq(veBTCVoter.weights(pool_BTC_mUSD), 3323879928215561025, "unexpected BTC_mUSD pool weight");
+        // Total weight of the second pool should be a sum of:
+        // - User1: 3333 * 2492865217516234041 / 10000 = 830871976998160805 (rounded down)
+        // - User2: 5000 * 4986015902434800441 / 10000 = 2493007951217400220 (rounded down)
+        // So, 830871976998160805 + 2493007951217400220 = 3323879928215561025
+        assertEq(veBTCVoter.weights(pool_mUSD_LIMPETH), 3323879928215561025, "unexpected mUSD_LIMPETH pool weight");
+        // Total weight of the third pool should be a sum of:
+        // - User1: 3334 * 2492865217516234041 / 10000 = 831121263519912429 (rounded down)
+        // - User3: 10000 * 9972317272271933241 / 10000 = 9972317272271933241 (rounded down)
+        // So, 831121263519912429 + 9972317272271933241 = 10803438535791845670
+        assertEq(veBTCVoter.weights(pool_mUSD_wtBTC), 10803438535791845670, "unexpected mUSD_wtBTC pool weight");
+        // Sum of all pool weights:
+        // 3323879928215561025 + 3323879928215561025 + 10803438535791845670 = 17451198392222967720.
+        assertEq(veBTCVoter.totalWeight(), 17451198392222967720, "unexpected voter total weight");
+
+        // TODO: Skip to the end of the epoch and distribute rewards.
+        // veBTCVoter.distribute(0, veBTCVoter.length());
     }
 
     function mintVeBTC(address user, uint256 amount, uint256 lockDuration) internal returns (uint256 tokenId) {

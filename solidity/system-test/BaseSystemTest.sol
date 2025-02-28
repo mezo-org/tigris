@@ -37,6 +37,9 @@ abstract contract BaseSystemTest is Script, Test {
     address governance;
 
     TestERC20 public BTC;
+    TestERC20 public mUSD;
+    TestERC20 public LIMPETH;
+    TestERC20 public wtBTC;
     address public poolImplementation;
     PoolFactory public poolFactory;
     GaugeFactory public gaugeFactory;
@@ -50,6 +53,10 @@ abstract contract BaseSystemTest is Script, Test {
     ChainFeeSplitter public chainFeeSplitter;
     EpochGovernor public veBTCEpochGovernor;
 
+    address public pool_BTC_mUSD;
+    address public pool_mUSD_LIMPETH;
+    address public pool_mUSD_wtBTC;
+
     function setUp() public {
         vm.createSelectFork(forkRpcUrl);
 
@@ -57,6 +64,9 @@ abstract contract BaseSystemTest is Script, Test {
         governance = accounts[0];
 
         BTC = TestERC20(getDeploymentAddress("Bitcoin"));
+        mUSD = new TestERC20("mUSD", "mUSD");
+        LIMPETH = new TestERC20("LIMPETH", "LIMPETH");
+        wtBTC = new TestERC20("wtBTC", "wtBTC");
         poolImplementation = getDeploymentAddress("Pool");
         poolFactory = PoolFactory(getDeploymentAddress("PoolFactory"));
         gaugeFactory = GaugeFactory(getDeploymentAddress("GaugeFactory"));
@@ -69,6 +79,10 @@ abstract contract BaseSystemTest is Script, Test {
         veBTCRewardsDistributor = RewardsDistributor(getDeploymentAddress("VeBTCRewardsDistributor"));
         chainFeeSplitter = ChainFeeSplitter(getDeploymentAddress("ChainFeeSplitter"));
         veBTCEpochGovernor = EpochGovernor(payable(getDeploymentAddress("VeBTCEpochGovernor")));
+
+        pool_BTC_mUSD = createPoolWithGauge(address(BTC), address(mUSD), false);
+        pool_mUSD_LIMPETH = createPoolWithGauge(address(mUSD), address(LIMPETH), false);
+        pool_mUSD_wtBTC = createPoolWithGauge(address(mUSD), address(wtBTC), false);
     }
 
     function getDeploymentAddress(string memory deploymentName) internal view returns (address) {
@@ -97,5 +111,17 @@ abstract contract BaseSystemTest is Script, Test {
         uint256 nextEpoch = ts - (ts % (1 weeks)) + (1 weeks);
         vm.warp(nextEpoch + offset);
         vm.roll(block.number + 1);
+    }
+
+    function createPoolWithGauge(address token1, address token2, bool stable) internal returns (address pool) {
+        vm.startPrank(governance);
+        pool = poolFactory.createPair(token1, token2, stable);
+        veBTCVoter.createGauge(
+            address(poolFactory),
+            address(votingRewardsFactory),
+            address(gaugeFactory),
+            pool
+        );
+        vm.stopPrank();
     }
 }
