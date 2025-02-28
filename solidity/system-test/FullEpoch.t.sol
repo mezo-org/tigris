@@ -2,26 +2,32 @@ pragma solidity 0.8.24;
 
 import {BaseSystemTest} from "./BaseSystemTest.sol";
 import {IGovernor} from "contracts/governance/IGovernor.sol";
+import {Splitter} from "contracts/Splitter.sol";
 import {GovernorCountingMajority} from "contracts/governance/GovernorCountingMajority.sol";
 
 contract FullEpoch is BaseSystemTest {
+    address public user1;
+    address public user2;
+    address public user3;
+
     function testFullEpoch() public {
         // Start Epoch 1 and move to it's first second.
         // Assume this is timestamp T + 1s, where T is Epoch 1 start.
         skipToNextEpoch(1);
+        uint256 epoch1Start = vm.getBlockTimestamp() - 1;
 
         // Update the period in the splitter as it was deployed in the previous epoch.
         chainFeeSplitter.updatePeriod();
         assertEq(
             chainFeeSplitter.activePeriod(),
-            vm.getBlockTimestamp() - 1,
+            epoch1Start,
             "unexpected chain fee splitter active period"
         );
 
         // Define actors.
-        address user1 = accounts[1];
-        address user2 = accounts[2];
-        address user3 = accounts[3];
+        user1 = accounts[1];
+        user2 = accounts[2];
+        user3 = accounts[3];
 
         // Mint BTC to the users.
         vm.startPrank(governance);
@@ -201,8 +207,72 @@ contract FullEpoch is BaseSystemTest {
         // 3323879928215561025 + 3323879928215561025 + 10803438535791845670 = 17451198392222967720.
         assertEq(veBTCVoter.totalWeight(), 17451198392222967720, "unexpected voter total weight");
 
-        // TODO: Skip to the end of the epoch and distribute rewards.
-        // veBTCVoter.distribute(0, veBTCVoter.length());
+        // We are at T + 1h1s and we want to jump to the place were the
+        // ChainFeeSplitter nudge proposal can be executed:
+        // - proposal_creation = T + 1s (proposal was created during the first second of Epoch 1)
+        // - proposal_deadline = proposal_creation + voting_delay + voting_period =
+        //   T + 1s + 15m + 1w = T + 1w15m1s
+        // - Execution is possible past proposal_deadline so we need to
+        //   jump to T + 1w15m2s.
+        //
+        // First, we jump to the beginning of Epoch 2 which is effectively T + 1w
+        skipToNextEpoch(0);
+        uint256 epoch2Start = vm.getBlockTimestamp();
+        // Then, we jump the remaining 15m2s. We are at T + 1w15m2s.
+        skip(votingDelay + 2);
+
+        // Assert needle state before proposal execution.
+        assertEq(chainFeeSplitter.needle(), 33, "unexpected needle value");
+        // Execute the proposal and assert the new needle is as expected.
+        executeChainFeeSplitterNudge();
+        assertEq(uint256(veBTCEpochGovernor.state(proposalId)), uint256(IGovernor.ProposalState.Executed));
+        assertEq(uint256(veBTCEpochGovernor.result()), uint256(IGovernor.ProposalState.Succeeded));
+        assertEq(chainFeeSplitter.needle(), 34, "unexpected needle value");
+
+        // Prepare for period update in the ChainFeeSplitter. Assert
+        // we are still in the old period inside.
+        assertEq(
+            chainFeeSplitter.activePeriod(),
+            epoch1Start,
+            "unexpected chain fee splitter active period"
+        );
+        // Update period in the ChainFeeSplitter and distribute the accumulated
+        // fees among gauges and veBTC holders.
+        vm.expectEmit(true, true, true, true, address(chainFeeSplitter));
+        // The needle is 34 so we expect 34% of 100 BTC accumulated on the
+        // splitter to go veBTC holders (through the RewardsDistributor contract)
+        // and the remaining 66% to gauges.
+        emit Splitter.PeriodUpdated(epoch1Start, epoch2Start, withTokenPrecision(34), withTokenPrecision(66));
+        veBTCVoter.distribute(0, veBTCVoter.length());
+
+        // ChainFeeSplitter's BTC balance should be zeroed out.
+        assertEq(BTC.balanceOf(address(chainFeeSplitter)), 0, "unexpected chain fee splitter BTC balance");
+
+        // 34 BTC should be pushed to RewardsDistributor so veBTC holders
+        // can claim their share from there in the next epoch.
+        assertEq(BTC.balanceOf(address(veBTCRewardsDistributor)), withTokenPrecision(34), "unexpected rewards distributor BTC balance");
+
+        // Claims will be available in the next epoch. For now, it should be 0 for all.
+        assertEq(veBTCRewardsDistributor.claimable(user1TokenId), 0, "unexpected claimable for user1 token");
+        assertEq(veBTCRewardsDistributor.claimable(user2TokenId), 0, "unexpected claimable for user2 token");
+        assertEq(veBTCRewardsDistributor.claimable(user3TokenId), 0, "unexpected claimable for user3 token");
+
+        // Gauge BTC share is calculated as follows:
+        // - ratio = total_btc_reward * 1e18 / total_pool_weight
+        // - share = (pool_weight * ratio) / 1e18
+        // In our case, total_btc_reward is the 66 BTC distributed to gauges,
+        // and total_pool_weight is 17451198392222967720 (computed after gauge voting earlier).
+        // That said, ratio = 66 * 1e18 * 1e18 / 17451198392222967720 = 3781975226951321774 (rounded down)
+
+        // The BTC_mUSD pool vote weight was 3323879928215561025.
+        // share = (3323879928215561025 * 3781975226951321774) / 1e18 = 12570831545871989534 (rounded down)
+        assertEq(BTC.balanceOf(address(veBTCVoter.gauges(pool_BTC_mUSD))), 12570831545871989534, "unexpected BTC_mUSD gauge BTC balance");
+        // The mUSD_LIMPETH pool vote weight was 3323879928215561025.
+        // share = (3323879928215561025 * 3781975226951321774) / 1e18 = 12570831545871989534 (rounded down)
+        assertEq(BTC.balanceOf(address(veBTCVoter.gauges(pool_mUSD_LIMPETH))), 12570831545871989534, "unexpected mUSD_LIMPETH gauge BTC balance");
+        // The mUSD_wtBTC pool vote weight was 10803438535791845670.
+        // share = (10803438535791845670 * 3781975226951321774) / 1e18 = 40858336908256020929 (rounded down)
+        assertEq(BTC.balanceOf(address(veBTCVoter.gauges(pool_mUSD_wtBTC))), 40858336908256020929, "unexpected mUSD_wtBTC gauge BTC balance");
     }
 
     function mintVeBTC(address user, uint256 amount, uint256 lockDuration) internal returns (uint256 tokenId) {
@@ -234,6 +304,26 @@ contract FullEpoch is BaseSystemTest {
             values,
             calldatas,
             description
+        );
+    }
+
+    function executeChainFeeSplitterNudge() internal {
+        address[] memory targets = new address[](1);
+        targets[0] = address(chainFeeSplitter);
+
+        uint256[] memory values = new uint256[](1);
+        values[0] = 0;
+
+        bytes[] memory calldatas = new bytes[](1);
+        calldatas[0] = abi.encodeWithSelector(chainFeeSplitter.nudge.selector);
+
+        string memory description = "nudge chain fee splitter";
+
+        veBTCEpochGovernor.execute(
+            targets,
+            values,
+            calldatas,
+            keccak256(bytes(description))
         );
     }
 }
