@@ -10,6 +10,21 @@ contract FullEpoch is BaseSystemTest {
     address public user2;
     address public user3;
 
+    /// @dev This test executes a full protocol epoch with actions like
+    ///      - locking BTC into veBTC
+    ///      - voting on the chain fee splitter needle movement
+    ///      - voting on pool gauges
+    ///      - distributing the BTC chain fees between gauges and reward distributor
+    ///
+    /// The above are basic actions that occur on every protocol epoch.
+    /// This scenario DOES NOT stress extended actions like:
+    ///      - claiming BTC rewards from the reward distributor (veBTC holders)
+    ///      - adding liquidity into the pools (liquidity providers)
+    ///      - claiming trading fees from pools (non-staking liquidity providers)
+    ///      - staking LP tokens into gauges (liquidity providers)
+    ///      - claiming trading fees from gauges (veBTC voters)
+    ///      - claiming bribes from gauges (veBTC voters)
+    ///      - claiming BTC rewards from gauges (staking liquidity providers)
     function testFullEpoch() public {
         // Start Epoch 1 and move to it's first second.
         // Assume this is timestamp T + 1s, where T is Epoch 1 start.
