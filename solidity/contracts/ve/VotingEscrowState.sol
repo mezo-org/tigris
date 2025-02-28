@@ -7,42 +7,47 @@ import {IERC4906} from "@openzeppelin/contracts/interfaces/IERC4906.sol";
 
 library VotingEscrowState {
     struct Storage {
-        /// @inheritdoc IVotingEscrow
+        /// @dev Address of Meta-tx Forwarder
         address forwarder;
-        /// @inheritdoc IVotingEscrow
+        /// @dev Address of FactoryRegistry.sol
         address factoryRegistry;
-        /// @inheritdoc IVotingEscrow
+        /// @dev Address of token used to create a veNFT
         address token;
-        /// @inheritdoc IVotingEscrow
+        /// @dev Address of RewardsDistributor.sol
         address distributor;
-        /// @inheritdoc IVotingEscrow
+        /// @dev Address of Voter.sol
         address voter;
-        /// @inheritdoc IVotingEscrow
+        /// @dev Address of Protocol Team multisig
         address team;
-        /// @inheritdoc IVotingEscrow
+        /// @dev Address of art proxy used for on-chain art generation
         address artProxy;
-        /// @inheritdoc IVotingEscrow
+        /// @dev Address which can create managed NFTs
         address allowedManager;
-        mapping(uint256 => IVotingEscrow.GlobalPoint) _pointHistory; // epoch -> unsigned global point
+        /// @dev Global point history at a given index (epoch -> unsigned global point)
+        mapping(uint256 => IVotingEscrow.GlobalPoint) _pointHistory;
         /// @dev Mapping of interface id to bool about whether or not it's supported
         mapping(bytes4 => bool) supportedInterfaces;
-        /// @inheritdoc IVotingEscrow
+        /// @dev Current count of token
         uint256 tokenId;
         /*///////////////////////////////////////////////////////////////
                                 MANAGED NFT
         //////////////////////////////////////////////////////////////*/
 
-        /// @inheritdoc IVotingEscrow
+        /// @dev Mapping of token id to escrow type
+        ///      Takes advantage of the fact default value is EscrowType.NORMAL
         mapping(uint256 => IVotingEscrow.EscrowType) escrowType;
-        /// @inheritdoc IVotingEscrow
+        /// @dev Mapping of token id to managed id
         mapping(uint256 => uint256) idToManaged;
-        /// @inheritdoc IVotingEscrow
+        /// @dev Mapping of user token id to managed token id to weight of token id
         mapping(uint256 => mapping(uint256 => uint256)) weights;
-        /// @inheritdoc IVotingEscrow
+        /// @dev Mapping of managed id to deactivated state
         mapping(uint256 => bool) deactivated;
-        /// @inheritdoc IVotingEscrow
+        /// @dev Mapping from managed nft id to locked managed rewards
+        ///      `token` denominated rewards (rebases/rewards) stored in locked
+        ///      managed rewards contract to prevent co-mingling of assets
         mapping(uint256 => address) managedToLocked;
-        /// @inheritdoc IVotingEscrow
+        /// @dev Mapping from managed nft id to free managed rewards contract
+        ///      these rewards can be freely withdrawn by users
         mapping(uint256 => address) managedToFree;
         /*//////////////////////////////////////////////////////////////
                             ERC721 BALANCE/OWNER
@@ -65,7 +70,7 @@ library VotingEscrowState {
                             INTERNAL MINT/BURN
         //////////////////////////////////////////////////////////////*/
 
-        /// @inheritdoc IVotingEscrow
+        /// @dev Mapping from owner address to mapping of index to tokenId
         mapping(address => mapping(uint256 => uint256)) ownerToNFTokenIdList;
         /// @dev Mapping from NFT ID to index of owner
         mapping(uint256 => uint256) tokenToOwnerIndex;
@@ -73,36 +78,36 @@ library VotingEscrowState {
                                     ESCROW
         //////////////////////////////////////////////////////////////*/
 
-        /// @inheritdoc IVotingEscrow
+        /// @dev Total count of epochs witnessed since contract creation
         uint256 epoch;
-        /// @inheritdoc IVotingEscrow
+        /// @dev Total amount of token() deposited
         uint256 supply;
         mapping(uint256 => IVotingEscrow.LockedBalance) _locked;
         mapping(uint256 => IVotingEscrow.UserPoint[1000000000]) _userPointHistory;
         mapping(uint256 => uint256) userPointEpoch;
-        /// @inheritdoc IVotingEscrow
+        /// @dev time -> signed slope change
         mapping(uint256 => int128) slopeChanges;
-        /// @inheritdoc IVotingEscrow
+        /// @dev account -> can split
         mapping(address => bool) canSplit;
-        /// @inheritdoc IVotingEscrow
+        /// @dev Aggregate permanent locked balances
         uint256 permanentLockBalance;
         /*///////////////////////////////////////////////////////////////
                                     DAO VOTING
         //////////////////////////////////////////////////////////////*/
 
-        /// @notice A record of each accounts delegate
+        /// @dev A record of each accounts delegate
         mapping(uint256 => uint256) _delegates;
-        /// @notice A record of delegated token checkpoints for each tokenId, by index
+        /// @dev A record of delegated token checkpoints for each tokenId, by index
         mapping(uint256 => mapping(uint48 => IVotingEscrow.Checkpoint)) _checkpoints;
-        /// @inheritdoc IVotingEscrow
+        /// @dev The number of checkpoints for each tokenId
         mapping(uint256 => uint48) numCheckpoints;
-        /// @inheritdoc IVotingEscrow
+        /// @dev A record of states for signing / validating signatures
         mapping(address => uint256) nonces;
         /*///////////////////////////////////////////////////////////////
                                 GAUGE VOTING
         //////////////////////////////////////////////////////////////*/
 
-        /// @inheritdoc IVotingEscrow
+        /// @dev Information on whether a tokenId has already voted
         mapping(uint256 => bool) voted;
     }
 
