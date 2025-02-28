@@ -50,7 +50,6 @@ library Delegation {
         SignatureData calldata signatureData,
         string calldata contractName,
         string calldata contractVersion,
-        address contractAddress,
         address msgSender
     ) external {
         // EIP-2 still allows signature malleability for ecrecover(). Remove this possibility and make the signature
@@ -72,7 +71,7 @@ library Delegation {
                 keccak256(bytes(contractName)),
                 keccak256(bytes(contractVersion)),
                 block.chainid,
-                contractAddress
+                address(this)
             )
         );
         bytes32 structHash = keccak256(

@@ -429,7 +429,6 @@ abstract contract VotingEscrow is
                 }),
                 this.name(),
                 this.version(),
-                address(this),
                 _msgSender()
             );
     }
