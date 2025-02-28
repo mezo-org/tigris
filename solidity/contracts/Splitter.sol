@@ -86,9 +86,15 @@ abstract contract Splitter is ISplitter {
 
     /// @notice Updates the period of the current epoch. This function can be called
     ///         by anyone. Chain fees accumulate in this contract continuously and
-    ///         are distributed to veBTC holders and stake gauges over a specified
-    ///         period. In other words, the release of accumulated fees must wait
-    ///         until the end of the period.
+    ///         can be distributed between the first and second recipient after
+    ///         the end of the specified period. In other words, the release of
+    ///         the accumulated fees must wait until the end of the period.
+    /// @dev    Needle position is used to determine the distribution ratio between
+    ///         the first and second recipient.
+    ///         1...first recipient amount..|..second recipient amount..100 [%]
+    ///                                     ^
+    ///                                   needle
+
     function updatePeriod() external returns (uint256 period) {
         period = activePeriod;
         if (block.timestamp >= period + WEEK) {
@@ -120,6 +126,7 @@ abstract contract Splitter is ISplitter {
     }
 
     /// @notice Returns the address of the epoch governor.
+    ///         Must adhere to a 1 week epoch of a splitter.
     function epochGovernor() internal view virtual returns (address);
 
     /// @notice Transfers amount to the first recipient.
