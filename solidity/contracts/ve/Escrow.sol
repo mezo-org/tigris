@@ -445,8 +445,7 @@ library Escrow {
         uint256 _tokenId,
         address _msgSender
     ) external {
-        address sender = _msgSender;
-        if (!self._isApprovedOrOwner(sender, _tokenId))
+        if (!self._isApprovedOrOwner(_msgSender, _tokenId))
             revert IVotingEscrow.NotApprovedOrOwner();
         if (self.voted[_tokenId]) revert IVotingEscrow.AlreadyVoted();
         if (self.escrowType[_tokenId] != IVotingEscrow.EscrowType.NORMAL)
@@ -474,9 +473,14 @@ library Escrow {
             IVotingEscrow.LockedBalance(0, 0, false)
         );
 
-        IERC20(self.token).safeTransfer(sender, value);
+        IERC20(self.token).safeTransfer(_msgSender, value);
 
-        emit IVotingEscrow.Withdraw(sender, _tokenId, value, block.timestamp);
+        emit IVotingEscrow.Withdraw(
+            _msgSender,
+            _tokenId,
+            value,
+            block.timestamp
+        );
         emit IVotingEscrow.Supply(supplyBefore, supplyBefore - value);
     }
 
