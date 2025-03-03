@@ -3,6 +3,8 @@ pragma solidity 0.8.24;
 
 import "./BaseTest.sol";
 import {IEpochGovernor} from "../contracts/interfaces/IEpochGovernor.sol";
+import {ISplitter} from "../contracts/interfaces/ISplitter.sol";
+
 contract SplitterTest is BaseTest {
 
     uint256 private constant TICK = 1;
@@ -13,9 +15,6 @@ contract SplitterTest is BaseTest {
     address secondRecipient;
 
     IERC20 token;
-
-    error AlreadyNudged();
-    error NotEpochGovernor();
 
     event PeriodUpdated(
         uint256 oldPeriod,
@@ -83,7 +82,7 @@ contract SplitterTest is BaseTest {
     }
 
     function testNudgeRevertsIfNotEpochGovernor() public {
-        vm.expectRevert(NotEpochGovernor.selector);
+        vm.expectRevert(ISplitter.NotEpochGovernor.selector);
         splitter.nudge();
     }
 
@@ -93,7 +92,7 @@ contract SplitterTest is BaseTest {
         vm.prank(address(mockEpochGovernor));
         splitter.nudge();
 
-        vm.expectRevert(AlreadyNudged.selector);
+        vm.expectRevert(ISplitter.AlreadyNudged.selector);
         vm.prank(address(mockEpochGovernor));
         splitter.nudge();
     }
