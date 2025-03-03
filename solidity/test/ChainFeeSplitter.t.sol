@@ -24,7 +24,7 @@ contract ChainFeeSplitterTest is BaseTest {
 
         uint256 prevActivePeriod = chainFeeSplitter.activePeriod();
 
-        vm.warp(block.timestamp + 1 weeks);
+        skip(1 weeks);
 
         uint256 currentBalance = token.balanceOf(address(chainFeeSplitter));
         
