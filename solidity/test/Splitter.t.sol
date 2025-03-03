@@ -2,8 +2,8 @@
 pragma solidity 0.8.24;
 
 import "./BaseTest.sol";
-import {IEpochGovernor} from "../contracts/interfaces/IEpochGovernor.sol";
 import {ISplitter} from "../contracts/interfaces/ISplitter.sol";
+import {MockEpochGovernor} from "./utils/MockEpochGovernor.sol";
 
 contract SplitterTest is BaseTest {
 
@@ -176,25 +176,5 @@ contract SplitterTest is BaseTest {
 
         assertEq(token.balanceOf(firstRecipient), prevFirstRecipientBalance, "First recipient balance should not change");
         assertEq(token.balanceOf(secondRecipient), prevSecondRecipientBalance, "Second recipient balance should not change");
-    }
-}
-
-contract MockEpochGovernor is IEpochGovernor {
-    ProposalState public lastResult;
-
-    function simulateSuccessfulProposal() external {
-        lastResult = ProposalState.Succeeded;
-    }
-
-    function simulateDefeatedProposal() external {
-        lastResult = ProposalState.Defeated;
-    }
-
-    function simulateExpiredProposal() external {
-        lastResult = ProposalState.Expired;
-    }
-
-    function result() external view override returns (ProposalState) {
-        return lastResult;
     }
 }
