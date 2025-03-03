@@ -3,9 +3,9 @@ pragma solidity 0.8.24;
 
 import "contracts/Splitter.sol";
 
-// MockSplitter contract inheriting from Splitter to test the functionality of
+// TestSplitter contract inheriting from Splitter to test the functionality of
 // the Splitter contract.
-contract MockSplitter is Splitter {
+contract TestSplitter is Splitter {
     address public firstRecipient;
     address public secondRecipient;
     IEpochGovernor public mockEpochGovernor;
