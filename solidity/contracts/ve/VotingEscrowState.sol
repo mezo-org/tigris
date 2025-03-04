@@ -112,7 +112,6 @@ library VotingEscrowState {
 
         /// @dev Information on whether a tokenId has already voted
         mapping(uint256 => bool) voted;
-
         // Reserved storage space in case we need to add more variables.
         // The convention from OpenZeppelin suggests the storage space should
         // add up to 50 slots. Here we want to have more slots as there are

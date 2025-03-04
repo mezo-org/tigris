@@ -24,6 +24,7 @@ import {EpochGovernor} from "contracts/EpochGovernor.sol";
 import {SafeCastLibrary} from "contracts/libraries/SafeCastLibrary.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {SigUtils} from "test/utils/SigUtils.sol";
 import {MockVeArtProxy} from "test/utils/MockVeArtProxy.sol";
 import {TestSplitter} from "test/utils/TestSplitter.sol";
@@ -68,12 +69,28 @@ abstract contract Base is Script, Test {
     /// @dev Global address to set
     address public allowedManager;
 
+    /// @dev Dummy address of the proxy admin
+    address public constant proxyAdmin = 0x1234567890123456789012345678901234567890;
+
     function _coreSetup() public {
         deployFactories();
 
         forwarder = new MezoForwarder();
 
-        escrow = new VeBTC(address(forwarder), address(BTC), address(factoryRegistry));
+        VeBTC impl = new VeBTC();
+        bytes memory initData = abi.encodeWithSelector(
+            impl.initialize.selector,
+            address(forwarder),
+            address(BTC),
+            address(factoryRegistry)
+        );
+        TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
+            address(impl),
+            proxyAdmin,
+            initData
+        );
+        escrow = VeBTC(address(proxy));
+
         artProxy = new MockVeArtProxy(address(escrow));
         escrow.setArtProxy(address(artProxy));
 

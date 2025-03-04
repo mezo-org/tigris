@@ -20,7 +20,11 @@ import {VeERC2771Context} from "./ve/VeERC2771Context.sol";
 /// @author Modified from Curve (https://github.com/curvefi/curve-dao-contracts/blob/master/contracts/VotingEscrow.vy)
 /// @author velodrome.finance, @figs999, @pegahcarter
 /// @dev Vote weight decays linearly over time. Lock time cannot be more than `MAXTIME` (4 years).
-abstract contract VotingEscrow is IVotingEscrow, Initializable, ReentrancyGuardUpgradeable {
+abstract contract VotingEscrow is
+    IVotingEscrow,
+    Initializable,
+    ReentrancyGuardUpgradeable
+{
     using VotingEscrowState for VotingEscrowState.Storage;
     using NFT for VotingEscrowState.Storage;
     using ManagedNFT for VotingEscrowState.Storage;
