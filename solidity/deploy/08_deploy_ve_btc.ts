@@ -1,4 +1,4 @@
-import { DeployFunction } from "hardhat-deploy/dist/types"
+import { DeployFunction, DeployOptions } from "hardhat-deploy/dist/types"
 import { HardhatRuntimeEnvironment } from "hardhat/types"
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -16,20 +16,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     .address
   log(`FactoryRegistry address is ${factoryRegistryAddress}`)
 
-  const balanceLogicLibraryDeployment = await deploy("BalanceLogicLibrary", {
+  const deployOptions: DeployOptions = {
     from: deployer,
     log: true,
     waitConfirmations: 1,
-  })
+  }
 
-  const delegationLogicLibraryDeployment = await deploy(
-    "DelegationLogicLibrary",
-    {
-      from: deployer,
-      log: true,
-      waitConfirmations: 1,
-    },
-  )
+  const balanceDeployment = await deploy("Balance", deployOptions)
+  const delegationDeployment = await deploy("Delegation", deployOptions)
+  const escrowDeployment = await deploy("Escrow", deployOptions)
+  const managedNFTDeployment = await deploy("ManagedNFT", deployOptions)
+  const nftDeployment = await deploy("NFT", deployOptions)
 
   const VeBTC = await deployments.getOrNull("VeBTC")
 
@@ -46,16 +43,22 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     log: true,
     waitConfirmations: 1,
     libraries: {
-      BalanceLogicLibrary: balanceLogicLibraryDeployment.address,
-      DelegationLogicLibrary: delegationLogicLibraryDeployment.address,
+      Balance: balanceDeployment.address,
+      Delegation: delegationDeployment.address,
+      Escrow: escrowDeployment.address,
+      ManagedNFT: managedNFTDeployment.address,
+      NFT: nftDeployment.address,
     },
   })
 
   if (hre.network.name !== "hardhat") {
     // Verify contract in Blockscout
     await helpers.etherscan.verify(veBTCDeployment)
-    await helpers.etherscan.verify(balanceLogicLibraryDeployment)
-    await helpers.etherscan.verify(delegationLogicLibraryDeployment)
+    await helpers.etherscan.verify(balanceDeployment)
+    await helpers.etherscan.verify(delegationDeployment)
+    await helpers.etherscan.verify(escrowDeployment)
+    await helpers.etherscan.verify(managedNFTDeployment)
+    await helpers.etherscan.verify(nftDeployment)
   }
 }
 
