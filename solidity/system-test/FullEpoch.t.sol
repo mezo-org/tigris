@@ -26,7 +26,7 @@ contract FullEpoch is BaseSystemTest {
     ///      - claiming bribes from gauges (veBTC voters)
     ///      - claiming BTC rewards from gauges (staking liquidity providers)
     function testFullEpoch() public {
-        // Start Epoch 1 and move to it's first second.
+        // Start Epoch 1 and move to its first second.
         // Assume this is timestamp T + 1s, where T is Epoch 1 start.
         skipToNextEpoch(1);
         uint256 epoch1Start = vm.getBlockTimestamp() - 1;
@@ -57,13 +57,13 @@ contract FullEpoch is BaseSystemTest {
         uint256 user3TokenId = mintVeBTC(user3, withTokenPrecision(10), 4 * YEAR); // max lock duration
 
         // Check veBTC balances and total supply.
-        // Balance of NFT is a function defined as:
+        // Balance of NFT is a function at timestamp t defined as:
         // - balance(t) = bias - slope * (t - last_checkpoint).
         //
         // Upon lock creation, function parameters are set as follows:
         // - slope = locked_amount / max_lock_duration
         // - bias = slope * (lock_end - lock_start) = slope * lock_duration
-        // - last_checkpoint = lock_start
+        // - last_checkpoint = lock_start (this is NFT-specific)
         //
         // Notes:
         // - The slope and bias parameters are modified upon each checkpoint.
@@ -222,7 +222,7 @@ contract FullEpoch is BaseSystemTest {
         // 3323879928215561025 + 3323879928215561025 + 10803438535791845670 = 17451198392222967720.
         assertEq(veBTCVoter.totalWeight(), 17451198392222967720, "unexpected voter total weight");
 
-        // We are at T + 1h1s and we want to jump to the place were the
+        // We are at T + 1h1s and we want to jump to the place where the
         // ChainFeeSplitter nudge proposal can be executed:
         // - proposal_creation = T + 1s (proposal was created during the first second of Epoch 1)
         // - proposal_deadline = proposal_creation + voting_delay + voting_period =
