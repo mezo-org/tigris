@@ -119,7 +119,7 @@ library VotingEscrowState {
         // added to the struct in the upcoming versions we need to reduce
         // the array size.
         // See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
-        uint256[49] __gap;
+        uint256[50] __gap;
     }
 
     function setTeam(
