@@ -5,10 +5,8 @@ pragma solidity 0.8.24;
 import {VotingEscrow} from "./VotingEscrow.sol";
 
 contract VeBTC is VotingEscrow {
-    // Notice that the same forwarder address must be used in the constructor and
-    // in the `initialize` function.
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor(address _forwarder) VotingEscrow(_forwarder) {
+    constructor() {
         _disableInitializers();
     }
 

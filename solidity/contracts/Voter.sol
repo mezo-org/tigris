@@ -6,7 +6,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {IVotingRewardsFactory} from "./interfaces/factories/IVotingRewardsFactory.sol";
 import {IGauge} from "./interfaces/IGauge.sol";
 import {IGaugeFactory} from "./interfaces/factories/IGaugeFactory.sol";
-import {IMinter} from "./interfaces/IMinter.sol";
+import {ISplitter} from "./interfaces/ISplitter.sol";
 import {IPool} from "./interfaces/IPool.sol";
 import {IPoolFactory} from "./interfaces/factories/IPoolFactory.sol";
 import {IReward} from "./interfaces/IReward.sol";
@@ -36,7 +36,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
     /// @notice Rewards are released over 7 days
     uint256 internal constant DURATION = 7 days;
     /// @inheritdoc IVoter
-    address public minter;
+    address public splitter;
     /// @inheritdoc IVoter
     address public governor;
     /// @inheritdoc IVoter
@@ -95,7 +95,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
         factoryRegistry = _factoryRegistry;
         rewardToken = IVotingEscrow(_ve).token();
         address _sender = _msgSender();
-        minter = _sender;
+        splitter = _sender;
         governor = _sender;
         epochGovernor = _sender;
         emergencyCouncil = _sender;
@@ -130,13 +130,16 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
     }
 
     /// @dev requires initialization with at least rewardToken
-    function initialize(address[] calldata _tokens, address _minter) external {
-        if (_msgSender() != minter) revert NotMinter();
+    function initialize(
+        address[] calldata _tokens,
+        address _splitter
+    ) external {
+        if (_msgSender() != splitter) revert NotSplitter();
         uint256 _length = _tokens.length;
         for (uint256 i = 0; i < _length; i++) {
             _whitelistToken(_tokens[i], true);
         }
-        minter = _minter;
+        splitter = _splitter;
     }
 
     /// @inheritdoc IVoter
@@ -449,10 +452,10 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
     function killGauge(address _gauge) external {
         if (_msgSender() != emergencyCouncil) revert NotEmergencyCouncil();
         if (!isAlive[_gauge]) revert GaugeAlreadyKilled();
-        // Return claimable back to minter
+        // Return claimable back to splitter
         uint256 _claimable = claimable[_gauge];
         if (_claimable > 0) {
-            IERC20(rewardToken).safeTransfer(minter, _claimable);
+            IERC20(rewardToken).safeTransfer(splitter, _claimable);
             delete claimable[_gauge];
         }
         isAlive[_gauge] = false;
@@ -475,7 +478,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
     /// @inheritdoc IVoter
     function notifyRewardAmount(uint256 _amount) external {
         address sender = _msgSender();
-        if (sender != minter) revert NotMinter();
+        if (sender != splitter) revert NotSplitter();
         IERC20(rewardToken).safeTransferFrom(sender, address(this), _amount); // transfer the distribution in
         uint256 _ratio = (_amount * 1e18) / Math.max(totalWeight, 1); // 1e18 adjustment is removed during claim
         if (_ratio > 0) {
@@ -517,7 +520,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
                 if (isAlive[_gauge]) {
                     claimable[_gauge] += _share;
                 } else {
-                    IERC20(rewardToken).safeTransfer(minter, _share); // send rewards back to Minter so they're not stuck in Voter
+                    IERC20(rewardToken).safeTransfer(splitter, _share); // send rewards back to Splitter so they're not stuck in Voter
                 }
             }
         } else {
@@ -575,7 +578,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
 
     /// @inheritdoc IVoter
     function distribute(uint256 _start, uint256 _finish) external nonReentrant {
-        IMinter(minter).updatePeriod();
+        ISplitter(splitter).updatePeriod();
         for (uint256 x = _start; x < _finish; x++) {
             _distribute(gauges[pools[x]]);
         }
@@ -583,7 +586,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
 
     /// @inheritdoc IVoter
     function distribute(address[] memory _gauges) external nonReentrant {
-        IMinter(minter).updatePeriod();
+        ISplitter(splitter).updatePeriod();
         uint256 _length = _gauges.length;
         for (uint256 x = 0; x < _length; x++) {
             _distribute(_gauges[x]);

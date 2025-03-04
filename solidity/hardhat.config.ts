@@ -2,6 +2,12 @@ import { HardhatUserConfig } from "hardhat/config"
 import "@keep-network/hardhat-helpers"
 import "@nomicfoundation/hardhat-toolbox"
 import "@nomicfoundation/hardhat-chai-matchers"
+// The @nomicfoundation/hardhat-foundry plugin provides the `hardhat init-foundry`
+// command that was used to initialize foundry.toml. Moreover, this plugin
+// allows Hardhat to use dependencies installed by Foundry (the `lib` directory)
+// and understand Foundry dependency remappings. Last but not least, it lets
+// Foundry use Hardhat dependencies from `node_modules`.
+import "@nomicfoundation/hardhat-foundry"
 import "@openzeppelin/hardhat-upgrades"
 import "hardhat-deploy"
 import "hardhat-contract-sizer"
@@ -22,14 +28,9 @@ const config: HardhatUserConfig = {
   solidity: {
     version: "0.8.24",
     settings: {
-      // `viaIR` is a temporary fix for `VeBTC` exceeding max contract size.
-      // TODO: remove once `veBTC` is refactored.
-      viaIR: true,
       optimizer: {
         enabled: true,
-        // number of runs is lowered as a temporary fix for `VeBTC` exceeding max contract size.
-        // TODO: set to `100` once `veBTC` is refactored.
-        runs: 20,
+        runs: 100,
       },
       evmVersion: "london", // latest EVM version supported on Matsnet is London
     },
