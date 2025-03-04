@@ -4,6 +4,7 @@ pragma solidity 0.8.24;
 
 import {VotingEscrowState} from "./VotingEscrowState.sol";
 import {NFT} from "./NFT.sol";
+import {VeERC2771Context} from "./VeERC2771Context.sol";
 import {SafeCastLibrary} from "../libraries/SafeCastLibrary.sol";
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 import {IVotes} from "../governance/IVotes.sol";
@@ -11,6 +12,7 @@ import {IVotes} from "../governance/IVotes.sol";
 library Delegation {
     using SafeCastLibrary for int128;
     using NFT for VotingEscrowState.Storage;
+    using VeERC2771Context for VotingEscrowState.Storage;
 
     struct SignatureData {
         uint256 delegator;
@@ -37,20 +39,18 @@ library Delegation {
     function delegate(
         VotingEscrowState.Storage storage self,
         uint256 delegator,
-        uint256 delegatee,
-        address _msgSender
+        uint256 delegatee
     ) external {
-        if (!self._isApprovedOrOwner(_msgSender, delegator))
+        if (!self._isApprovedOrOwner(self._msgSender(), delegator))
             revert IVotingEscrow.NotApprovedOrOwner();
-        return _delegate(self, delegator, delegatee, _msgSender);
+        return _delegate(self, delegator, delegatee);
     }
 
     function delegateBySig(
         VotingEscrowState.Storage storage self,
         SignatureData calldata signatureData,
         string calldata contractName,
-        string calldata contractVersion,
-        address msgSender
+        string calldata contractVersion
     ) external {
         // EIP-2 still allows signature malleability for ecrecover(). Remove this possibility and make the signature
         // unique. Appendix F in the Ethereum Yellow paper (https://ethereum.github.io/yellowpaper/paper.pdf), defines
@@ -100,12 +100,7 @@ library Delegation {
         if (block.timestamp > signatureData.expiry)
             revert IVotingEscrow.SignatureExpired();
         return
-            _delegate(
-                self,
-                signatureData.delegator,
-                signatureData.delegatee,
-                msgSender
-            );
+            _delegate(self, signatureData.delegator, signatureData.delegatee);
     }
 
     /// @notice Record user delegation checkpoints. Used by voting system.
@@ -113,8 +108,7 @@ library Delegation {
     function _delegate(
         VotingEscrowState.Storage storage self,
         uint256 _delegator,
-        uint256 _delegatee,
-        address _msgSender
+        uint256 _delegatee
     ) internal {
         IVotingEscrow.LockedBalance memory delegateLocked = self._locked[
             _delegator
@@ -138,7 +132,11 @@ library Delegation {
         );
         _checkpointDelegatee(self, _delegatee, delegatedBalance, true);
 
-        emit IVotes.DelegateChanged(_msgSender, currentDelegate, _delegatee);
+        emit IVotes.DelegateChanged(
+            self._msgSender(),
+            currentDelegate,
+            _delegatee
+        );
     }
 
     /// @notice Used by `_mint`, `_transferFrom`, `_burn` and `delegate`
