@@ -3,7 +3,6 @@
 pragma solidity 0.8.24;
 
 import {IVotingEscrow} from "./interfaces/IVotingEscrow.sol";
-import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {VotingEscrowState} from "./ve/VotingEscrowState.sol";
 import {ManagedNFT} from "./ve/ManagedNFT.sol";
@@ -11,6 +10,7 @@ import {NFT} from "./ve/NFT.sol";
 import {Escrow} from "./ve/Escrow.sol";
 import {Delegation} from "./ve/Delegation.sol";
 import {Balance} from "./ve/Balance.sol";
+import {ERC2771Context} from "./ve/ERC2771Context.sol";
 
 /// @title Voting Escrow
 /// @notice veNFT implementation that escrows ERC-20 tokens in the form of an ERC-721 NFT
@@ -19,17 +19,14 @@ import {Balance} from "./ve/Balance.sol";
 /// @author Modified from Curve (https://github.com/curvefi/curve-dao-contracts/blob/master/contracts/VotingEscrow.vy)
 /// @author velodrome.finance, @figs999, @pegahcarter
 /// @dev Vote weight decays linearly over time. Lock time cannot be more than `MAXTIME` (4 years).
-abstract contract VotingEscrow is
-    IVotingEscrow,
-    ERC2771Context,
-    ReentrancyGuard
-{
+abstract contract VotingEscrow is IVotingEscrow, ReentrancyGuard {
     using VotingEscrowState for VotingEscrowState.Storage;
     using NFT for VotingEscrowState.Storage;
     using ManagedNFT for VotingEscrowState.Storage;
     using Escrow for VotingEscrowState.Storage;
     using Delegation for VotingEscrowState.Storage;
     using Balance for VotingEscrowState.Storage;
+    using ERC2771Context for VotingEscrowState.Storage;
 
     VotingEscrowState.Storage internal self;
 
@@ -48,19 +45,19 @@ abstract contract VotingEscrow is
     /// @dev ERC165 interface ID of ERC6372
     bytes4 internal constant ERC6372_INTERFACE_ID = 0xda287a1d;
 
-    /// @param _forwarder address of trusted forwarder
+    /// @param _trustedForwarder address of trusted forwarder
     /// @param _token token address
     /// @param _factoryRegistry Factory Registry address
     constructor(
-        address _forwarder,
+        address _trustedForwarder,
         address _token,
         address _factoryRegistry
-    ) ERC2771Context(_forwarder) {
-        self.forwarder = _forwarder;
+    ) {
+        self.trustedForwarder = _trustedForwarder;
         self.token = _token;
         self.factoryRegistry = _factoryRegistry;
-        self.team = _msgSender();
-        self.voter = _msgSender();
+        self.team = self._msgSender();
+        self.voter = self._msgSender();
 
         self._pointHistory[0].blk = block.number;
         self._pointHistory[0].ts = block.timestamp;
@@ -85,7 +82,7 @@ abstract contract VotingEscrow is
     function createManagedLockFor(
         address _to
     ) external nonReentrant returns (uint256 _mTokenId) {
-        return self.createManagedLockFor(_to, _msgSender());
+        return self.createManagedLockFor(_to);
     }
 
     /// @inheritdoc IVotingEscrow
@@ -93,22 +90,22 @@ abstract contract VotingEscrow is
         uint256 _tokenId,
         uint256 _mTokenId
     ) external nonReentrant {
-        self.depositManaged(_tokenId, _mTokenId, _msgSender());
+        self.depositManaged(_tokenId, _mTokenId);
     }
 
     /// @inheritdoc IVotingEscrow
     function withdrawManaged(uint256 _tokenId) external nonReentrant {
-        self.withdrawManaged(_tokenId, _msgSender());
+        self.withdrawManaged(_tokenId);
     }
 
     /// @inheritdoc IVotingEscrow
     function setAllowedManager(address _allowedManager) external {
-        self.setAllowedManager(_allowedManager, _msgSender());
+        self.setAllowedManager(_allowedManager);
     }
 
     /// @inheritdoc IVotingEscrow
     function setManagedState(uint256 _mTokenId, bool _state) external {
-        self.setManagedState(_mTokenId, _state, _msgSender());
+        self.setManagedState(_mTokenId, _state);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -116,11 +113,11 @@ abstract contract VotingEscrow is
     //////////////////////////////////////////////////////////////*/
 
     function setTeam(address _team) external {
-        self.setTeam(_team, _msgSender());
+        self.setTeam(_team);
     }
 
     function setArtProxy(address _proxy) external {
-        self.setArtProxy(_proxy, _msgSender());
+        self.setArtProxy(_proxy);
     }
 
     /// @inheritdoc IVotingEscrow
@@ -165,12 +162,12 @@ abstract contract VotingEscrow is
 
     /// @inheritdoc IVotingEscrow
     function approve(address _approved, uint256 _tokenId) external {
-        self.approve(_approved, _tokenId, _msgSender());
+        self.approve(_approved, _tokenId);
     }
 
     /// @inheritdoc IVotingEscrow
     function setApprovalForAll(address _operator, bool _approved) external {
-        self.setApprovalForAll(_operator, _approved, _msgSender());
+        self.setApprovalForAll(_operator, _approved);
     }
 
     /* TRANSFER FUNCTIONS */
@@ -181,7 +178,7 @@ abstract contract VotingEscrow is
         address _to,
         uint256 _tokenId
     ) external {
-        self._transferFrom(_from, _to, _tokenId, _msgSender());
+        self._transferFrom(_from, _to, _tokenId, self._msgSender());
     }
 
     /// @inheritdoc IVotingEscrow
@@ -200,7 +197,7 @@ abstract contract VotingEscrow is
         uint256 _tokenId,
         bytes memory _data
     ) public {
-        self.safeTransferFrom(_from, _to, _tokenId, _data, _msgSender());
+        self.safeTransferFrom(_from, _to, _tokenId, _data);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -254,7 +251,7 @@ abstract contract VotingEscrow is
         uint256 _tokenId,
         uint256 _value
     ) external nonReentrant {
-        self.depositFor(_tokenId, _value, _msgSender());
+        self.depositFor(_tokenId, _value);
     }
 
     /// @inheritdoc IVotingEscrow
@@ -262,8 +259,7 @@ abstract contract VotingEscrow is
         uint256 _value,
         uint256 _lockDuration
     ) external nonReentrant returns (uint256) {
-        return
-            self._createLock(_value, _lockDuration, _msgSender(), _msgSender());
+        return self._createLock(_value, _lockDuration, self._msgSender());
     }
 
     /// @inheritdoc IVotingEscrow
@@ -272,7 +268,7 @@ abstract contract VotingEscrow is
         uint256 _lockDuration,
         address _to
     ) external nonReentrant returns (uint256) {
-        return self._createLock(_value, _lockDuration, _to, _msgSender());
+        return self._createLock(_value, _lockDuration, _to);
     }
 
     /// @inheritdoc IVotingEscrow
@@ -280,7 +276,7 @@ abstract contract VotingEscrow is
         uint256 _tokenId,
         uint256 _value
     ) external nonReentrant {
-        self.increaseAmount(_tokenId, _value, _msgSender());
+        self.increaseAmount(_tokenId, _value);
     }
 
     /// @inheritdoc IVotingEscrow
@@ -288,17 +284,17 @@ abstract contract VotingEscrow is
         uint256 _tokenId,
         uint256 _lockDuration
     ) external nonReentrant {
-        self.increaseUnlockTime(_tokenId, _lockDuration, _msgSender());
+        self.increaseUnlockTime(_tokenId, _lockDuration);
     }
 
     /// @inheritdoc IVotingEscrow
     function withdraw(uint256 _tokenId) external nonReentrant {
-        self.withdraw(_tokenId, _msgSender());
+        self.withdraw(_tokenId);
     }
 
     /// @inheritdoc IVotingEscrow
     function merge(uint256 _from, uint256 _to) external nonReentrant {
-        self.merge(_from, _to, _msgSender());
+        self.merge(_from, _to);
     }
 
     /// @inheritdoc IVotingEscrow
@@ -306,22 +302,22 @@ abstract contract VotingEscrow is
         uint256 _from,
         uint256 _amount
     ) external nonReentrant returns (uint256 _tokenId1, uint256 _tokenId2) {
-        return self.split(_from, _amount, _msgSender());
+        return self.split(_from, _amount);
     }
 
     /// @inheritdoc IVotingEscrow
     function toggleSplit(address _account, bool _bool) external {
-        self.toggleSplit(_account, _bool, _msgSender());
+        self.toggleSplit(_account, _bool);
     }
 
     /// @inheritdoc IVotingEscrow
     function lockPermanent(uint256 _tokenId) external {
-        self.lockPermanent(_tokenId, _msgSender());
+        self.lockPermanent(_tokenId);
     }
 
     /// @inheritdoc IVotingEscrow
     function unlockPermanent(uint256 _tokenId) external {
-        self.unlockPermanent(_tokenId, _msgSender());
+        self.unlockPermanent(_tokenId);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -360,12 +356,12 @@ abstract contract VotingEscrow is
         address _voter,
         address _distributor
     ) external {
-        self.setVoterAndDistributor(_voter, _distributor, _msgSender());
+        self.setVoterAndDistributor(_voter, _distributor);
     }
 
     /// @inheritdoc IVotingEscrow
     function voting(uint256 _tokenId, bool _voted) external {
-        self.setVoting(_tokenId, _voted, _msgSender());
+        self.setVoting(_tokenId, _voted);
     }
 
     /// @inheritdoc IVotingEscrow
@@ -403,7 +399,7 @@ abstract contract VotingEscrow is
 
     /// @inheritdoc IVotingEscrow
     function delegate(uint256 delegator, uint256 delegatee) external {
-        return self.delegate(delegator, delegatee, _msgSender());
+        return self.delegate(delegator, delegatee);
     }
 
     /// @inheritdoc IVotingEscrow
@@ -428,8 +424,7 @@ abstract contract VotingEscrow is
                     s: s
                 }),
                 this.name(),
-                this.version(),
-                _msgSender()
+                this.version()
             );
     }
 
@@ -495,7 +490,7 @@ abstract contract VotingEscrow is
 
     /// @inheritdoc IVotingEscrow
     function forwarder() external view returns (address) {
-        return self.forwarder;
+        return self.trustedForwarder;
     }
 
     /// @inheritdoc IVotingEscrow

@@ -4,6 +4,7 @@ pragma solidity 0.8.24;
 
 import {VotingEscrowState} from "./VotingEscrowState.sol";
 import {Delegation} from "./Delegation.sol";
+import {ERC2771Context} from "./ERC2771Context.sol";
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 import {IVeArtProxy} from "../interfaces/IVeArtProxy.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
@@ -11,23 +12,22 @@ import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Recei
 
 library NFT {
     using Delegation for VotingEscrowState.Storage;
+    using ERC2771Context for VotingEscrowState.Storage;
 
     function approve(
         VotingEscrowState.Storage storage self,
         address _approved,
-        uint256 _tokenId,
-        address _msgSender
+        uint256 _tokenId
     ) external {
+        address sender = self._msgSender();
         address owner = _ownerOf(self, _tokenId);
         // Throws if `_tokenId` is not a valid NFT
         if (owner == address(0)) revert IVotingEscrow.ZeroAddress();
         // Throws if `_approved` is the current owner
         if (owner == _approved) revert IVotingEscrow.SameAddress();
         // Check requirements
-        bool senderIsOwner = (_ownerOf(self, _tokenId) == _msgSender);
-        bool senderIsApprovedForAll = (self.ownerToOperators[owner])[
-            _msgSender
-        ];
+        bool senderIsOwner = (_ownerOf(self, _tokenId) == sender);
+        bool senderIsApprovedForAll = (self.ownerToOperators[owner])[sender];
         if (!senderIsOwner && !senderIsApprovedForAll)
             revert IVotingEscrow.NotApprovedOrOwner();
         // Set the approval
@@ -38,13 +38,13 @@ library NFT {
     function setApprovalForAll(
         VotingEscrowState.Storage storage self,
         address _operator,
-        bool _approved,
-        address _msgSender
+        bool _approved
     ) external {
+        address sender = self._msgSender();
         // Throws if `_operator` is the `msg.sender`
-        if (_operator == _msgSender) revert IVotingEscrow.SameAddress();
-        self.ownerToOperators[_msgSender][_operator] = _approved;
-        emit IERC721.ApprovalForAll(_msgSender, _operator, _approved);
+        if (_operator == sender) revert IVotingEscrow.SameAddress();
+        self.ownerToOperators[sender][_operator] = _approved;
+        emit IERC721.ApprovalForAll(sender, _operator, _approved);
     }
 
     function safeTransferFrom(
@@ -52,16 +52,16 @@ library NFT {
         address _from,
         address _to,
         uint256 _tokenId,
-        bytes memory _data,
-        address _msgSender
+        bytes memory _data
     ) external {
-        _transferFrom(self, _from, _to, _tokenId, _msgSender);
+        address sender = self._msgSender();
+        _transferFrom(self, _from, _to, _tokenId, sender);
 
         if (_isContract(_to)) {
             // Throws if transfer destination is a contract which does not implement 'onERC721Received'
             try
                 IERC721Receiver(_to).onERC721Received(
-                    _msgSender,
+                    sender,
                     _from,
                     _tokenId,
                     _data
@@ -197,10 +197,10 @@ library NFT {
     /// @dev Must be called prior to updating `LockedBalance`
     function _burn(
         VotingEscrowState.Storage storage self,
-        uint256 _tokenId,
-        address _msgSender
+        uint256 _tokenId
     ) internal {
-        if (!_isApprovedOrOwner(self, _msgSender, _tokenId))
+        address sender = self._msgSender();
+        if (!_isApprovedOrOwner(self, sender, _tokenId))
             revert IVotingEscrow.NotApprovedOrOwner();
         address owner = _ownerOf(self, _tokenId);
 
