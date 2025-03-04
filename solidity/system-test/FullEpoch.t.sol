@@ -46,15 +46,15 @@ contract FullEpoch is BaseSystemTest {
 
         // Mint BTC to the users.
         vm.startPrank(governance);
-        BTC.mint(user1, withTokenPrecision(10));
-        BTC.mint(user2, withTokenPrecision(10));
-        BTC.mint(user3, withTokenPrecision(10));
+        BTC.mint(user1, withTokenPrecision18(10));
+        BTC.mint(user2, withTokenPrecision18(10));
+        BTC.mint(user3, withTokenPrecision18(10));
         vm.stopPrank();
 
         // Mint veBTC to the users.
-        uint256 user1TokenId = mintVeBTC(user1, withTokenPrecision(10), YEAR);
-        uint256 user2TokenId = mintVeBTC(user2, withTokenPrecision(10), 2 * YEAR);
-        uint256 user3TokenId = mintVeBTC(user3, withTokenPrecision(10), 4 * YEAR); // max lock duration
+        uint256 user1TokenId = mintVeBTC(user1, withTokenPrecision18(10), YEAR);
+        uint256 user2TokenId = mintVeBTC(user2, withTokenPrecision18(10), 2 * YEAR);
+        uint256 user3TokenId = mintVeBTC(user3, withTokenPrecision18(10), 4 * YEAR); // max lock duration
 
         // Check veBTC balances and total supply.
         // Balance of NFT is a function at timestamp t defined as:
@@ -99,11 +99,11 @@ contract FullEpoch is BaseSystemTest {
         assertEq(BTC.balanceOf(user1), 0, "unexpected user1 BTC balance");
         assertEq(BTC.balanceOf(user2), 0, "unexpected user2 BTC balance");
         assertEq(BTC.balanceOf(user3), 0, "unexpected user3 BTC balance");
-        assertEq(BTC.balanceOf(address(veBTC)), withTokenPrecision(30), "unexpected veBTC contract BTC balance");
+        assertEq(BTC.balanceOf(address(veBTC)), withTokenPrecision18(30), "unexpected veBTC contract BTC balance");
 
         // Load the chain fee splitter with BTC.
         vm.prank(governance);
-        BTC.mint(address(chainFeeSplitter), withTokenPrecision(100));
+        BTC.mint(address(chainFeeSplitter), withTokenPrecision18(100));
 
         // Create a proposal to nudge the chain fee splitter.
         uint256 proposalId = proposeChainFeeSplitterNudge(user3, user3TokenId);
@@ -257,7 +257,7 @@ contract FullEpoch is BaseSystemTest {
         // The needle is 34 so we expect 34% of 100 BTC accumulated on the
         // splitter to go veBTC holders (through the RewardsDistributor contract)
         // and the remaining 66% to gauges.
-        emit Splitter.PeriodUpdated(epoch1Start, epoch2Start, withTokenPrecision(34), withTokenPrecision(66));
+        emit Splitter.PeriodUpdated(epoch1Start, epoch2Start, withTokenPrecision18(34), withTokenPrecision18(66));
         veBTCVoter.distribute(0, veBTCVoter.length());
 
         // ChainFeeSplitter's BTC balance should be zeroed out.
@@ -265,7 +265,7 @@ contract FullEpoch is BaseSystemTest {
 
         // 34 BTC should be pushed to RewardsDistributor so veBTC holders
         // can claim their share from there in the next epoch.
-        assertEq(BTC.balanceOf(address(veBTCRewardsDistributor)), withTokenPrecision(34), "unexpected rewards distributor BTC balance");
+        assertEq(BTC.balanceOf(address(veBTCRewardsDistributor)), withTokenPrecision18(34), "unexpected rewards distributor BTC balance");
 
         // Claims will be available in the next epoch. For now, it should be 0 for all.
         assertEq(veBTCRewardsDistributor.claimable(user1TokenId), 0, "unexpected claimable for user1 token");

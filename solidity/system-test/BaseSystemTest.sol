@@ -102,7 +102,7 @@ abstract contract BaseSystemTest is Script, Test {
         }
     }
 
-    function withTokenPrecision(uint256 value) internal pure returns (uint256) {
+    function withTokenPrecision18(uint256 value) internal pure returns (uint256) {
         return value * 1e18;
     }
 
