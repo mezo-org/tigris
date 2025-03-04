@@ -33,6 +33,7 @@ contract ChainFeeSplitter is Splitter {
         needle = 33;
         rewardsDistributor = IRewardsDistributor(_rewardsDistributor);
         voter = IVoter(_voter);
+        activePeriod = ((block.timestamp) / WEEK) * WEEK;
     }
 
     /// @notice Returns the address of the epoch governor.
