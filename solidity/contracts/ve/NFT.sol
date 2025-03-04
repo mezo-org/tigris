@@ -4,7 +4,7 @@ pragma solidity 0.8.24;
 
 import {VotingEscrowState} from "./VotingEscrowState.sol";
 import {Delegation} from "./Delegation.sol";
-import {ERC2771Context} from "./ERC2771Context.sol";
+import {VeERC2771Context} from "./VeERC2771Context.sol";
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 import {IVeArtProxy} from "../interfaces/IVeArtProxy.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
@@ -12,7 +12,7 @@ import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Recei
 
 library NFT {
     using Delegation for VotingEscrowState.Storage;
-    using ERC2771Context for VotingEscrowState.Storage;
+    using VeERC2771Context for VotingEscrowState.Storage;
 
     function approve(
         VotingEscrowState.Storage storage self,

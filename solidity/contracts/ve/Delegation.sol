@@ -4,7 +4,7 @@ pragma solidity 0.8.24;
 
 import {VotingEscrowState} from "./VotingEscrowState.sol";
 import {NFT} from "./NFT.sol";
-import {ERC2771Context} from "./ERC2771Context.sol";
+import {VeERC2771Context} from "./VeERC2771Context.sol";
 import {SafeCastLibrary} from "../libraries/SafeCastLibrary.sol";
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 import {IVotes} from "../governance/IVotes.sol";
@@ -12,7 +12,7 @@ import {IVotes} from "../governance/IVotes.sol";
 library Delegation {
     using SafeCastLibrary for int128;
     using NFT for VotingEscrowState.Storage;
-    using ERC2771Context for VotingEscrowState.Storage;
+    using VeERC2771Context for VotingEscrowState.Storage;
 
     struct SignatureData {
         uint256 delegator;

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Partially copied from openzeppelin-contracts/contracts/metatx/ERC2771Context.sol
+// Based on openzeppelin-contracts/contracts/metatx/ERC2771Context.sol
 
 pragma solidity 0.8.24;
 
@@ -9,7 +9,7 @@ import {VotingEscrowState} from "./VotingEscrowState.sol";
  * @dev Context variant with ERC2771 support. Extracted to library to allow
  *      easy application inside libraries.
  */
-library ERC2771Context {
+library VeERC2771Context {
     function isTrustedForwarder(
         VotingEscrowState.Storage storage self,
         address forwarder

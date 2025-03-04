@@ -3,11 +3,11 @@
 pragma solidity 0.8.24;
 
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
-import {ERC2771Context} from "./ERC2771Context.sol";
+import {VeERC2771Context} from "./VeERC2771Context.sol";
 import {IERC4906} from "@openzeppelin/contracts/interfaces/IERC4906.sol";
 
 library VotingEscrowState {
-    using ERC2771Context for Storage;
+    using VeERC2771Context for Storage;
 
     struct Storage {
         /// @dev Address of Meta-tx Forwarder

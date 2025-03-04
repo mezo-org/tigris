@@ -5,7 +5,7 @@ pragma solidity 0.8.24;
 import {VotingEscrowState} from "./VotingEscrowState.sol";
 import {Delegation} from "./Delegation.sol";
 import {NFT} from "./NFT.sol";
-import {ERC2771Context} from "./ERC2771Context.sol";
+import {VeERC2771Context} from "./VeERC2771Context.sol";
 import {SafeCastLibrary} from "../libraries/SafeCastLibrary.sol";
 import {IReward} from "../interfaces/IReward.sol";
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
@@ -19,7 +19,7 @@ library Escrow {
     using SafeCastLibrary for int128;
     using NFT for VotingEscrowState.Storage;
     using Delegation for VotingEscrowState.Storage;
-    using ERC2771Context for VotingEscrowState.Storage;
+    using VeERC2771Context for VotingEscrowState.Storage;
 
     uint256 internal constant WEEK = 1 weeks;
     uint256 internal constant MAXTIME = 4 * 365 * 86400;

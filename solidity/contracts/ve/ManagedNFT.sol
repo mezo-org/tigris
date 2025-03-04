@@ -7,7 +7,7 @@ import {Escrow} from "./Escrow.sol";
 import {NFT} from "./NFT.sol";
 import {Delegation} from "./Delegation.sol";
 import {Balance} from "./Balance.sol";
-import {ERC2771Context} from "./ERC2771Context.sol";
+import {VeERC2771Context} from "./VeERC2771Context.sol";
 import {SafeCastLibrary} from "../libraries/SafeCastLibrary.sol";
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 import {IReward} from "../interfaces/IReward.sol";
@@ -23,7 +23,7 @@ library ManagedNFT {
     using Escrow for VotingEscrowState.Storage;
     using Delegation for VotingEscrowState.Storage;
     using Balance for VotingEscrowState.Storage;
-    using ERC2771Context for VotingEscrowState.Storage;
+    using VeERC2771Context for VotingEscrowState.Storage;
 
     function createManagedLockFor(
         VotingEscrowState.Storage storage self,

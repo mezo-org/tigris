@@ -10,7 +10,7 @@ import {NFT} from "./ve/NFT.sol";
 import {Escrow} from "./ve/Escrow.sol";
 import {Delegation} from "./ve/Delegation.sol";
 import {Balance} from "./ve/Balance.sol";
-import {ERC2771Context} from "./ve/ERC2771Context.sol";
+import {VeERC2771Context} from "./ve/VeERC2771Context.sol";
 
 /// @title Voting Escrow
 /// @notice veNFT implementation that escrows ERC-20 tokens in the form of an ERC-721 NFT
@@ -26,7 +26,7 @@ abstract contract VotingEscrow is IVotingEscrow, ReentrancyGuard {
     using Escrow for VotingEscrowState.Storage;
     using Delegation for VotingEscrowState.Storage;
     using Balance for VotingEscrowState.Storage;
-    using ERC2771Context for VotingEscrowState.Storage;
+    using VeERC2771Context for VotingEscrowState.Storage;
 
     VotingEscrowState.Storage internal self;
 
