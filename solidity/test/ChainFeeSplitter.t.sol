@@ -14,7 +14,7 @@ contract ChainFeeSplitterTest is BaseTest {
 
     function testInitialSetup() public {
         assertEq(chainFeeSplitter.needle(), 33);
-        assertEq(chainFeeSplitter.activePeriod(), 0);
+        assertEq(chainFeeSplitter.activePeriod(), ((block.timestamp) / WEEK) * WEEK);
         assertEq(address(chainFeeSplitter.token()), address(BTC));
     }
 
