@@ -53,7 +53,7 @@ abstract contract VotingEscrow is
     /// @param _trustedForwarder address of trusted forwarder
     /// @param _token token address
     /// @param _factoryRegistry Factory Registry address
-    function __initializeVotingEscrow(
+    function __VotingEscrow_initialize(
         address _trustedForwarder,
         address _token,
         address _factoryRegistry
