@@ -3,7 +3,8 @@
 pragma solidity 0.8.24;
 
 import {IVotingEscrow} from "./interfaces/IVotingEscrow.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {VotingEscrowState} from "./ve/VotingEscrowState.sol";
 import {ManagedNFT} from "./ve/ManagedNFT.sol";
 import {NFT} from "./ve/NFT.sol";
@@ -19,7 +20,11 @@ import {VeERC2771Context} from "./ve/VeERC2771Context.sol";
 /// @author Modified from Curve (https://github.com/curvefi/curve-dao-contracts/blob/master/contracts/VotingEscrow.vy)
 /// @author velodrome.finance, @figs999, @pegahcarter
 /// @dev Vote weight decays linearly over time. Lock time cannot be more than `MAXTIME` (4 years).
-abstract contract VotingEscrow is IVotingEscrow, ReentrancyGuard {
+abstract contract VotingEscrow is
+    IVotingEscrow,
+    Initializable,
+    ReentrancyGuardUpgradeable
+{
     using VotingEscrowState for VotingEscrowState.Storage;
     using NFT for VotingEscrowState.Storage;
     using ManagedNFT for VotingEscrowState.Storage;
@@ -48,11 +53,13 @@ abstract contract VotingEscrow is IVotingEscrow, ReentrancyGuard {
     /// @param _trustedForwarder address of trusted forwarder
     /// @param _token token address
     /// @param _factoryRegistry Factory Registry address
-    constructor(
+    function __VotingEscrow_initialize(
         address _trustedForwarder,
         address _token,
         address _factoryRegistry
-    ) {
+    ) internal {
+        __ReentrancyGuard_init();
+
         self.trustedForwarder = _trustedForwarder;
         self.token = _token;
         self.factoryRegistry = _factoryRegistry;

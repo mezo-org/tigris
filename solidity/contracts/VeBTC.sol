@@ -5,11 +5,18 @@ pragma solidity 0.8.24;
 import {VotingEscrow} from "./VotingEscrow.sol";
 
 contract VeBTC is VotingEscrow {
-    constructor(
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(
         address _forwarder,
         address _btc,
         address _factoryRegistry
-    ) VotingEscrow(_forwarder, _btc, _factoryRegistry) {}
+    ) external initializer {
+        __VotingEscrow_initialize(_forwarder, _btc, _factoryRegistry);
+    }
 
     function name() external pure returns (string memory) {
         return "veBTC";

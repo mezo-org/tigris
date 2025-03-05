@@ -2,7 +2,7 @@ import { DeployFunction, DeployOptions } from "hardhat-deploy/dist/types"
 import { HardhatRuntimeEnvironment } from "hardhat/types"
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  const { deployments, getNamedAccounts, helpers } = hre
+  const { ethers, deployments, getNamedAccounts, helpers } = hre
   const { deploy, log } = deployments
   const { deployer } = await getNamedAccounts()
 
@@ -37,17 +37,27 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   }
 
   log("Deploying VeBTC contract...")
-  const veBTCDeployment = await deploy("VeBTC", {
-    from: deployer,
-    args: [mezoForwarderAddress, btcAddress, factoryRegistryAddress],
-    log: true,
-    waitConfirmations: 1,
-    libraries: {
-      Balance: balanceDeployment.address,
-      Delegation: delegationDeployment.address,
-      Escrow: escrowDeployment.address,
-      ManagedNFT: managedNFTDeployment.address,
-      NFT: nftDeployment.address,
+
+  const [_, veBTCDeployment] = await helpers.upgrades.deployProxy("VeBTC", {
+    contractName: "VeBTC",
+    initializerArgs: [mezoForwarderAddress, btcAddress, factoryRegistryAddress],
+    factoryOpts: {
+      signer: await ethers.getSigner(deployer),
+      libraries: {
+        Balance: balanceDeployment.address,
+        Delegation: delegationDeployment.address,
+        Escrow: escrowDeployment.address,
+        ManagedNFT: managedNFTDeployment.address,
+        NFT: nftDeployment.address,
+      },
+    },
+    proxyOpts: {
+      kind: "transparent",
+      // Allow external libraries linking. We need to ensure manually that the
+      // external  libraries we link are upgrade safe, as the OpenZeppelin plugin
+      // doesn't perform such a validation yet.
+      // See: https://docs.openzeppelin.com/upgrades-plugins/1.x/faq#why-cant-i-use-external-libraries
+      unsafeAllow: ["external-library-linking"],
     },
   })
 

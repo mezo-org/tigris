@@ -112,6 +112,14 @@ library VotingEscrowState {
 
         /// @dev Information on whether a tokenId has already voted
         mapping(uint256 => bool) voted;
+        // Reserved storage space in case we need to add more variables.
+        // The convention from OpenZeppelin suggests the storage space should
+        // add up to 50 slots. Here we want to have more slots as there are
+        // planned upgrades of the VotingEscrow contract. If more entires are
+        // added to the struct in the upcoming versions we need to reduce
+        // the array size.
+        // See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+        uint256[50] __gap;
     }
 
     function setTeam(
