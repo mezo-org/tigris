@@ -110,8 +110,7 @@ abstract contract BaseTest is Base, TestOwner {
         splitter = new TestSplitter(address(escrow));
 
         assertEq(factory.allPoolsLength(), 0);
-        // TODO: Uncomment once Router implementation is complete.
-        // assertEq(router.defaultFactory(), address(factory));
+        assertEq(router.defaultFactory(), address(factory));
 
         deployPoolWithOwner(address(owner));
 
@@ -152,8 +151,7 @@ abstract contract BaseTest is Base, TestOwner {
         vm.label(address(LR), "Bribe Voting Reward");
         vm.label(address(factory), "Pool Factory");
         vm.label(address(factoryRegistry), "Factory Registry");
-        // TODO: Uncomment once Router implementation is complete.
-        // vm.label(address(router), "Router");
+        vm.label(address(router), "Router");
         vm.label(address(pool), "Pool");
         vm.label(address(pool2), "Pool 2");
         vm.label(address(pool3), "Pool 3");
