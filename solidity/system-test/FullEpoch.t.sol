@@ -6,17 +6,20 @@ import {Splitter} from "contracts/Splitter.sol";
 import {GovernorCountingMajority} from "contracts/governance/GovernorCountingMajority.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {TestERC20} from "contracts/test/TestERC20.sol";
+import {IRouter} from "contracts/interfaces/IRouter.sol";
+import {IGauge} from "contracts/interfaces/IGauge.sol";
 
 contract FullEpoch is BaseSystemTest {
     // veBTC holders
     address public user1;
     address public user2;
     address public user3;
-
     // liquidity providers
     address public user4;
     address public user5;
     address public user6;
+    // trader
+    address public user7;
 
     /// @dev This test executes a full protocol epoch with actions like
     ///      - locking BTC into veBTC
@@ -54,6 +57,7 @@ contract FullEpoch is BaseSystemTest {
         user4 = accounts[4];
         user5 = accounts[5];
         user6 = accounts[6];
+        user7 = accounts[7];
 
         // Mint BTC to the users.
         vm.startPrank(governance);
@@ -119,6 +123,48 @@ contract FullEpoch is BaseSystemTest {
         addLiquidityToPool(user4, address(BTC), address(mUSD), withTokenPrecision18(10), withTokenPrecision18(10));
         addLiquidityToPool(user5, address(mUSD), address(LIMPETH), withTokenPrecision18(10), withTokenPrecision18(10));
         addLiquidityToPool(user6, address(mUSD), address(wtBTC), withTokenPrecision18(10), withTokenPrecision18(10));
+
+        // Assert LP token balances for each liquidity provider.
+        // We expect each liquidity provider to have all liquidity in the pool minus the minimum liquidity.
+        // The pool locks the minimum liquidity upon first liquidity addition in order to prevent the pool 
+        // from being drained completely and to avoid division by zero scenarios in the calculations.
+        uint256 minimumLiquidity = 10 ** 3;
+        assertEq(IERC20(pool_BTC_mUSD).balanceOf(user4), IERC20(pool_BTC_mUSD).totalSupply() - minimumLiquidity, "user4 should own proper amount of pool LP tokens");
+        assertEq(IERC20(pool_mUSD_LIMPETH).balanceOf(user5), IERC20(pool_mUSD_LIMPETH).totalSupply() - minimumLiquidity, "user5 should own proper amount of pool LP tokens");
+        assertEq(IERC20(pool_mUSD_wtBTC).balanceOf(user6), IERC20(pool_mUSD_wtBTC).totalSupply() - minimumLiquidity, "user6 should own proper amount of pool LP tokens");
+
+        // Stake LP tokens for user4 and user5.
+        stakeGauge(user4, pool_BTC_mUSD); 
+        stakeGauge(user5, pool_mUSD_LIMPETH);
+
+        // Execute trades on each pool with user7.
+        executeSwap(
+            user7,
+            address(BTC),
+            address(mUSD),
+            withTokenPrecision18(5),
+            0, // No min amount for test
+            false, // Not stable
+            address(poolFactory)
+        );
+        executeSwap(
+            user7,
+            address(mUSD),
+            address(LIMPETH),
+            withTokenPrecision18(5),
+            0, // No min amount for test
+            false, // Not stable
+            address(poolFactory)
+        );
+        executeSwap(
+            user7,
+            address(mUSD),
+            address(wtBTC),
+            withTokenPrecision18(5),
+            0, // No min amount for test
+            false, // Not stable
+            address(poolFactory)
+        );
 
         // Load the chain fee splitter with BTC.
         vm.prank(governance);
@@ -320,13 +366,16 @@ contract FullEpoch is BaseSystemTest {
         uint256 amountA,
         uint256 amountB
     ) internal {
+        uint256 initialBalanceA = IERC20(tokenA).balanceOf(user);
+        uint256 initialBalanceB = IERC20(tokenB).balanceOf(user);
+
         vm.startPrank(governance);
         TestERC20(tokenA).mint(user, amountA);
         TestERC20(tokenB).mint(user, amountB);
         vm.stopPrank();
 
-        assertEq(IERC20(tokenA).balanceOf(user), amountA, "user should have the correct amount of tokenA");
-        assertEq(IERC20(tokenB).balanceOf(user), amountB, "user should have the correct amount of tokenB");
+        assertEq(IERC20(tokenA).balanceOf(user), initialBalanceA + amountA, "user should have the correct amount of tokenA");
+        assertEq(IERC20(tokenB).balanceOf(user), initialBalanceB + amountB, "user should have the correct amount of tokenB");
 
         vm.startPrank(user);
         IERC20(tokenA).approve(address(router), amountA);
@@ -340,22 +389,30 @@ contract FullEpoch is BaseSystemTest {
             0, // no slippage protection for test
             0,
             user,
-            block.timestamp + 1 hours
+            vm.getBlockTimestamp() + 1 hours
         );
         vm.stopPrank();
+        
+        assertEq(IERC20(tokenA).balanceOf(user), initialBalanceA, "user should have the correct amount of tokenA");
+        assertEq(IERC20(tokenB).balanceOf(user), initialBalanceB, "user should have the correct amount of tokenB");
+    }
 
-        assertEq(IERC20(tokenA).balanceOf(user), 0, "user should have spent all of tokenA");
-        assertEq(IERC20(tokenB).balanceOf(user), 0, "user should have spent all of tokenB");
+    function stakeGauge(address user, address pool) internal {
+        address gauge = veBTCVoter.gauges(pool);
+        assertNotEq(gauge, address(0), "gauge should exist");
 
-        // See the MINIMUM_LIQUIDITY constant in the Pool contract.
-        uint256 minimumLiquidity = 10 ** 3;
+        uint256 initialUserPoolBalance = IERC20(pool).balanceOf(user);
+        assertNotEq(initialUserPoolBalance, 0, "user should have some LP tokens");
 
-        address pool = router.poolFor(tokenA, tokenB, false, address(poolFactory));
-        // We expect the user to have all liquidity in the pool minus the minimum liquidity.
-        // The pool locks the minimum liquidity upon first liquidity addition in order
-        // to prevent the pool from being drained completely and to avoid division by 
-        // zero scenarios in the calculations.
-        assertEq(IERC20(pool).balanceOf(user), IERC20(pool).totalSupply() - minimumLiquidity, "user should own proper amount of pool LP tokens");
+        uint256 initialGaugePoolBalance = IERC20(pool).balanceOf(gauge);
+
+        vm.startPrank(user);
+        IERC20(pool).approve(gauge, initialUserPoolBalance);
+        IGauge(gauge).deposit(initialUserPoolBalance);
+        vm.stopPrank();
+
+        assertEq(IERC20(pool).balanceOf(user), 0, "user should have spent all of pool LP tokens");
+        assertEq(IERC20(pool).balanceOf(gauge), initialGaugePoolBalance + initialUserPoolBalance, "gauge should have the correct amount of pool LP tokens");
     }
 
     function proposeChainFeeSplitterNudge(
@@ -401,5 +458,46 @@ contract FullEpoch is BaseSystemTest {
             calldatas,
             keccak256(bytes(description))
         );
+    }
+
+    function executeSwap(
+        address user,
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        uint256 amountOutMin,
+        bool stable,
+        address factory
+    ) internal {
+        uint256 initialUserTokenInBalance = IERC20(tokenIn).balanceOf(user);
+        uint256 initialUserTokenOutBalance = IERC20(tokenOut).balanceOf(user);
+
+        vm.startPrank(governance);
+        TestERC20(tokenIn).mint(user, amountIn);
+        vm.stopPrank();
+
+        assertEq(IERC20(tokenIn).balanceOf(user), initialUserTokenInBalance + amountIn, "user should have the correct amount of tokenIn");
+        
+        IRouter.Route[] memory routes = new IRouter.Route[](1);
+        routes[0] = IRouter.Route({
+            from: tokenIn,
+            to: tokenOut,
+            stable: stable,
+            factory: factory
+        });
+
+        vm.startPrank(user);
+        IERC20(tokenIn).approve(address(router), amountIn);
+        router.swapExactTokensForTokens(
+            amountIn,
+            amountOutMin,
+            routes,
+            user,
+            vm.getBlockTimestamp() + 1 hours
+        );
+        vm.stopPrank();
+
+        assertEq(IERC20(tokenIn).balanceOf(user), initialUserTokenInBalance, "user should have spent the correct amount of tokenIn");
+        assertGe(IERC20(tokenOut).balanceOf(user), initialUserTokenOutBalance + amountOutMin, "user should have received the correct amount of tokenOut");
     }
 }
