@@ -4,11 +4,19 @@ import {BaseSystemTest} from "./BaseSystemTest.sol";
 import {IGovernor} from "contracts/governance/IGovernor.sol";
 import {Splitter} from "contracts/Splitter.sol";
 import {GovernorCountingMajority} from "contracts/governance/GovernorCountingMajority.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {TestERC20} from "contracts/test/TestERC20.sol";
 
 contract FullEpoch is BaseSystemTest {
+    // veBTC holders
     address public user1;
     address public user2;
     address public user3;
+
+    // liquidity providers
+    address public user4;
+    address public user5;
+    address public user6;
 
     /// @dev This test executes a full protocol epoch with actions like
     ///      - locking BTC into veBTC
@@ -43,6 +51,9 @@ contract FullEpoch is BaseSystemTest {
         user1 = accounts[1];
         user2 = accounts[2];
         user3 = accounts[3];
+        user4 = accounts[4];
+        user5 = accounts[5];
+        user6 = accounts[6];
 
         // Mint BTC to the users.
         vm.startPrank(governance);
@@ -100,6 +111,14 @@ contract FullEpoch is BaseSystemTest {
         assertEq(BTC.balanceOf(user2), 0, "unexpected user2 BTC balance");
         assertEq(BTC.balanceOf(user3), 0, "unexpected user3 BTC balance");
         assertEq(BTC.balanceOf(address(veBTC)), withTokenPrecision18(30), "unexpected veBTC contract BTC balance");
+
+        // Assert pools state.
+        assertEq(veBTCVoter.length(), 3, "unexpected pools count");
+
+        // Add liquidity to pools.
+        addLiquidityToPool(user4, address(BTC), address(mUSD), withTokenPrecision18(10), withTokenPrecision18(10));
+        addLiquidityToPool(user5, address(mUSD), address(LIMPETH), withTokenPrecision18(10), withTokenPrecision18(10));
+        addLiquidityToPool(user6, address(mUSD), address(wtBTC), withTokenPrecision18(10), withTokenPrecision18(10));
 
         // Load the chain fee splitter with BTC.
         vm.prank(governance);
@@ -159,9 +178,6 @@ contract FullEpoch is BaseSystemTest {
         // Gauge voting can start at T + 1h1s (see TimeLibrary.epochVoteStart).
         // We are already at T + 15m2s, so we need to jump 44m59s ahead.
         skip(45 minutes - 1);
-
-        // Assert pools state.
-        assertEq(veBTCVoter.length(), 3, "unexpected pools count");
 
         // User1 splits its voting power on all pools evenly.
         address[] memory poolVote = new address[](3);
@@ -295,6 +311,51 @@ contract FullEpoch is BaseSystemTest {
         BTC.approve(address(veBTC), amount);
         tokenId = veBTC.createLock(amount, lockDuration);
         vm.stopPrank();
+    }
+
+    function addLiquidityToPool(
+        address user,
+        address tokenA,
+        address tokenB,
+        uint256 amountA,
+        uint256 amountB
+    ) internal {
+        vm.startPrank(governance);
+        TestERC20(tokenA).mint(user, amountA);
+        TestERC20(tokenB).mint(user, amountB);
+        vm.stopPrank();
+
+        assertEq(IERC20(tokenA).balanceOf(user), amountA, "user should have the correct amount of tokenA");
+        assertEq(IERC20(tokenB).balanceOf(user), amountB, "user should have the correct amount of tokenB");
+
+        vm.startPrank(user);
+        IERC20(tokenA).approve(address(router), amountA);
+        IERC20(tokenB).approve(address(router), amountB);
+        router.addLiquidity(
+            tokenA,
+            tokenB,
+            false, // not stable
+            amountA,
+            amountB,
+            0, // no slippage protection for test
+            0,
+            user,
+            block.timestamp + 1 hours
+        );
+        vm.stopPrank();
+
+        assertEq(IERC20(tokenA).balanceOf(user), 0, "user should have spent all of tokenA");
+        assertEq(IERC20(tokenB).balanceOf(user), 0, "user should have spent all of tokenB");
+
+        // See the MINIMUM_LIQUIDITY constant in the Pool contract.
+        uint256 minimumLiquidity = 10 ** 3;
+
+        address pool = router.poolFor(tokenA, tokenB, false, address(poolFactory));
+        // We expect the user to have all liquidity in the pool minus the minimum liquidity.
+        // The pool locks the minimum liquidity upon first liquidity addition in order
+        // to prevent the pool from being drained completely and to avoid division by 
+        // zero scenarios in the calculations.
+        assertEq(IERC20(pool).balanceOf(user), IERC20(pool).totalSupply() - minimumLiquidity, "user should own proper amount of pool LP tokens");
     }
 
     function proposeChainFeeSplitterNudge(

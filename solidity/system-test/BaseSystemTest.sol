@@ -86,6 +86,10 @@ abstract contract BaseSystemTest is Script, Test {
         pool_BTC_mUSD = createPoolWithGauge(address(BTC), address(mUSD), false);
         pool_mUSD_LIMPETH = createPoolWithGauge(address(mUSD), address(LIMPETH), false);
         pool_mUSD_wtBTC = createPoolWithGauge(address(mUSD), address(wtBTC), false);
+
+        mUSD.transferOwnership(governance);
+        LIMPETH.transferOwnership(governance);
+        wtBTC.transferOwnership(governance);
     }
 
     function getDeploymentAddress(string memory deploymentName) internal view returns (address) {
@@ -126,5 +130,7 @@ abstract contract BaseSystemTest is Script, Test {
             pool
         );
         vm.stopPrank();
+
+        assertEq(router.poolFor(token1, token2, stable, address(poolFactory)), pool, "unexpected pool");
     }
 }
