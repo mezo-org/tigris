@@ -8,6 +8,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {TestERC20} from "contracts/test/TestERC20.sol";
 import {IRouter} from "contracts/interfaces/IRouter.sol";
 import {IGauge} from "contracts/interfaces/IGauge.sol";
+import {IPool} from "contracts/interfaces/IPool.sol";
 
 contract FullEpoch is BaseSystemTest {
     // veBTC holders
@@ -151,7 +152,7 @@ contract FullEpoch is BaseSystemTest {
             user7,
             address(mUSD),
             address(LIMPETH),
-            withTokenPrecision18(5),
+            withTokenPrecision18(6),
             0, // No min amount for test
             false, // Not stable
             address(poolFactory)
@@ -160,7 +161,7 @@ contract FullEpoch is BaseSystemTest {
             user7,
             address(mUSD),
             address(wtBTC),
-            withTokenPrecision18(5),
+            withTokenPrecision18(7),
             0, // No min amount for test
             false, // Not stable
             address(poolFactory)
@@ -350,6 +351,117 @@ contract FullEpoch is BaseSystemTest {
         // The mUSD_wtBTC pool vote weight was 10803438535791845670.
         // share = (10803438535791845670 * 3781975226951321774) / 1e18 = 40858336908256020929 (rounded down)
         assertEq(BTC.balanceOf(address(veBTCVoter.gauges(pool_mUSD_wtBTC))), 40858336908256020929, "unexpected mUSD_wtBTC gauge BTC balance");
+
+        // Skip to Epoch 3 which is effectively T + 2w.
+        // This is required to claim trading fees from gauges, 
+        // that were distributed in the previous epoch.
+        skipToNextEpoch(0);
+
+        // Assert balances of FeesVotingReward contracts before veBTC holders claim fees.
+        // In general, claimable_fees for the given LP token holder is calculated as follows:
+        // - claimable_fees = (lp_token_balance * fee_index) / 1e18
+        // - [for each swap] fee_index += (((swap_amount * fee) / 10000) * 1e18) / lp_token_total_supply
+        //
+        // Notes:
+        // - As we check total claimable fees, we assume lp_token_balance = lp_token_total_supply.
+        // - Each pool had one liquidity provision transaction. A 10 * 1e18 of each token from the pair was added to the pool.
+        //   That said, lp_token_total_supply can be computed as sqrt(amountA * amountB) - minimum_liquidity (see Pool.mint).
+        //   In our case, lp_token_total_supply = sqrt((10 * 1e18) * (10 * 1e18)) - 1000 = 9999999999999999000.
+        // - Each pool had a single swap.
+        // - Each pool is unstable. Fee for unstable pool is 4 (0.04%).
+
+        // Check the BTC_mUSD pool. 
+        // - swap_amount = 5 * 1e18 BTC
+        // - fee_index += (((5 * 1e18 * 4) / 10000) * 1e18) / 9999999999999999000 = 200000000000000 (rounded down)
+        // - claimable_fees = (9999999999999999000 * 200000000000000) / 1e18 = 1999999999999999 (rounded down)
+        assertFeesVotingRewardBalance(pool_BTC_mUSD, address(BTC), 1999999999999999);
+        assertFeesVotingRewardBalance(pool_BTC_mUSD, address(mUSD), 0);
+        // Check the mUSD_LIMPETH pool.
+        // - swap_amount = 6 * 1e18 mUSD
+        // - fee_index += (((6 * 1e18 * 4) / 10000) * 1e18) / 9999999999999999000 = 240000000000000 (rounded down)
+        // - claimable_fees = (9999999999999999000 * 240000000000000) / 1e18 = 2399999999999999 (rounded down)
+        assertFeesVotingRewardBalance(pool_mUSD_LIMPETH, address(mUSD), 2399999999999999);
+        assertFeesVotingRewardBalance(pool_mUSD_LIMPETH, address(LIMPETH), 0);
+        // Check the mUSD_wtBTC pool. There was one swap but the single LP provider of this pool (user6) 
+        // did not stake its LP tokens to the gauge. That said, the FeesVotingReward contract for 
+        // this pool did not receive any fees. Fees can be claimed by the LP provider, directly from the pool.
+        // For the sake of the future assertion, the mUSD fees claimable directly from the pool are computed
+        // as follows (remember this is not available in the FeesVotingReward contract hence the two following assertions expect 0):
+        // - swap_amount = 7 * 1e18 mUSD
+        // - fee_index += (((7 * 1e18 * 4) / 10000) * 1e18) / 9999999999999999000 = 280000000000000 (rounded down)
+        // - claimable_fees = (9999999999999999000 * 280000000000000) / 1e18 = 2799999999999999 (rounded down)
+        assertFeesVotingRewardBalance(pool_mUSD_wtBTC, address(mUSD), 0);
+        assertFeesVotingRewardBalance(pool_mUSD_wtBTC, address(wtBTC), 0);
+
+        // Capture initial balances of pool tokens for each veBTC holder before fees were claimed.
+        // First level of array is for each veBTC holder.
+        // Second level of array is for each pool token.
+        // We use an array to avoid stack too deep error.
+        uint256[][] memory preClaimBalances = new uint256[][](3);
+        // Sub-array for user1.
+        preClaimBalances[0] = new uint256[](4);
+        preClaimBalances[0][0] = BTC.balanceOf(user1);
+        preClaimBalances[0][1] = mUSD.balanceOf(user1);
+        preClaimBalances[0][2] = LIMPETH.balanceOf(user1);
+        preClaimBalances[0][3] = wtBTC.balanceOf(user1);
+        // Sub-array for user2. 
+        preClaimBalances[1] = new uint256[](4);
+        preClaimBalances[1][0] = BTC.balanceOf(user2);
+        preClaimBalances[1][1] = mUSD.balanceOf(user2);
+        preClaimBalances[1][2] = LIMPETH.balanceOf(user2);
+        preClaimBalances[1][3] = wtBTC.balanceOf(user2);
+        // Sub-array for user3.
+        preClaimBalances[2] = new uint256[](4);
+        preClaimBalances[2][0] = BTC.balanceOf(user3);
+        preClaimBalances[2][1] = mUSD.balanceOf(user3);
+        preClaimBalances[2][2] = LIMPETH.balanceOf(user3);
+        preClaimBalances[2][3] = wtBTC.balanceOf(user3);
+
+        claimVeBTCVoterFees(user1, user1TokenId);
+        claimVeBTCVoterFees(user2, user2TokenId);
+        claimVeBTCVoterFees(user3, user3TokenId);
+
+        // Assert balances of specific pool tokens for each veBTC holder after claiming fees.
+        // Based on the information above, following fees are available in the pools' FeesVotingReward
+        // contracts for veBTC voters:
+        // - 1999999999999999 BTC fees from BTC_mUSD pool
+        // - 2399999999999999 mUSD fees from mUSD_LIMPETH pool
+        //
+        // Moreover, the LP provider of the mUSD_wtBTC pool can claim 2799999999999999 mUSD of fees directly from the pool.
+        //
+        // Assert for user1. It has:
+        // - 830871976998160805 out of 3323879928215561025 total weight for the BTC_mUSD pool.
+        //   BTC share is 1999999999999999 * 830871976998160805 / 3323879928215561025 = 499941029725593 (rounded down).
+        // - 830871976998160805 out of 3323879928215561025 total weight for the mUSD_LIMPETH pool.
+        //   mUSD share is 2399999999999999 * 830871976998160805 / 3323879928215561025 = 599929235670712 (rounded down).
+        assertTokenBalanceChange(user1, address(BTC), preClaimBalances[0][0], 499941029725593);
+        assertTokenBalanceChange(user1, address(mUSD), preClaimBalances[0][1], 599929235670712);
+        assertTokenBalanceChange(user1, address(LIMPETH), preClaimBalances[0][2], 0);
+        assertTokenBalanceChange(user1, address(wtBTC), preClaimBalances[0][3], 0);
+        // Assert for user2. It has:
+        // - 2493007951217400220 out of 3323879928215561025 total weight for the BTC_mUSD pool.
+        //   BTC share is 1999999999999999 * 2493007951217400220 / 3323879928215561025 = 1500058970274405 (rounded down).
+        // - 2493007951217400220 out of 3323879928215561025 total weight for the mUSD_LIMPETH pool.
+        //   mUSD share is 2399999999999999 * 2493007951217400220 / 3323879928215561025 = 1800070764329286 (rounded down).
+        assertTokenBalanceChange(user2, address(BTC), preClaimBalances[1][0], 1500058970274405);
+        assertTokenBalanceChange(user2, address(mUSD), preClaimBalances[1][1], 1800070764329286);
+        assertTokenBalanceChange(user2, address(LIMPETH), preClaimBalances[1][2], 0);
+        assertTokenBalanceChange(user2, address(wtBTC), preClaimBalances[1][3], 0);
+        // Assert for user3. It voted on the mUSD_wtBTC pool whose LP provider did not stake its LP tokens to the gauge.
+        // That said, user3 should not receive any fees.
+        assertTokenBalanceChange(user3, address(BTC), preClaimBalances[2][0], 0);
+        assertTokenBalanceChange(user3, address(mUSD), preClaimBalances[2][1], 0);
+        assertTokenBalanceChange(user3, address(LIMPETH), preClaimBalances[2][2], 0);
+        assertTokenBalanceChange(user3, address(wtBTC), preClaimBalances[2][3], 0);
+
+        // User6 is the LP provider of the mUSD_wtBTC pool. User6 can claim fees from the pool directly
+        // because they did not stake their LP tokens to the gauge.
+        vm.prank(user6);
+        IPool(pool_mUSD_wtBTC).claimFees();
+        assertTokenBalanceChange(user6, address(BTC), preClaimBalances[2][0], 0);
+        assertTokenBalanceChange(user6, address(mUSD), preClaimBalances[2][1], 2799999999999999);
+        assertTokenBalanceChange(user6, address(LIMPETH), preClaimBalances[2][2], 0);
+        assertTokenBalanceChange(user6, address(wtBTC), preClaimBalances[2][3], 0);
     }
 
     function mintVeBTC(address user, uint256 amount, uint256 lockDuration) internal returns (uint256 tokenId) {
@@ -499,5 +611,50 @@ contract FullEpoch is BaseSystemTest {
 
         assertEq(IERC20(tokenIn).balanceOf(user), initialUserTokenInBalance, "user should have spent the correct amount of tokenIn");
         assertGe(IERC20(tokenOut).balanceOf(user), initialUserTokenOutBalance + amountOutMin, "user should have received the correct amount of tokenOut");
+    }
+
+    function claimVeBTCVoterFees(address user, uint256 tokenId) internal {
+        // Determine addresses of FeesVotingReward contract for each pool.
+        address[] memory poolFees = new address[](3);
+        poolFees[0] = veBTCVoter.gaugeToFees(veBTCVoter.gauges(pool_BTC_mUSD));
+        poolFees[1] = veBTCVoter.gaugeToFees(veBTCVoter.gauges(pool_mUSD_LIMPETH));
+        poolFees[2] = veBTCVoter.gaugeToFees(veBTCVoter.gauges(pool_mUSD_wtBTC));
+
+        // Each pool has two tokens that can be claimed as fees.
+        address[][] memory poolTokens = new address[][](3);
+        // Tokens for the BTC_mUSD pool.
+        poolTokens[0] = new address[](2);
+        poolTokens[0][0] = address(BTC);
+        poolTokens[0][1] = address(mUSD);
+        // Tokens for the mUSD_LIMPETH pool.
+        poolTokens[1] = new address[](2);
+        poolTokens[1][0] = address(mUSD);
+        poolTokens[1][1] = address(LIMPETH);
+        // Tokens for the mUSD_wtBTC pool.
+        poolTokens[2] = new address[](2);
+        poolTokens[2][0] = address(mUSD);
+        poolTokens[2][1] = address(wtBTC);
+
+        // Claim fees for each user being a veBTC holder.
+        vm.prank(user);
+        veBTCVoter.claimFees(poolFees, poolTokens, tokenId);
+    }
+
+    function assertFeesVotingRewardBalance(address pool, address token, uint256 expectedClaimable) internal {
+        address feesVotingReward = veBTCVoter.gaugeToFees(veBTCVoter.gauges(pool));
+        assertEq(IERC20(token).balanceOf(feesVotingReward), expectedClaimable, "fees voting reward should have the correct amount of token");
+    }
+
+    function assertTokenBalanceChange(
+        address user,
+        address token,
+        uint256 initialBalance,
+        int256 expectedChange
+    ) internal {
+        assertEq(
+            IERC20(token).balanceOf(user),
+            uint256(int256(initialBalance) + expectedChange),
+            "token balance did not change as expected"
+        );
     }
 }
