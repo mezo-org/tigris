@@ -24,19 +24,19 @@ contract FullEpoch is BaseSystemTest {
 
     /// @dev This test executes a full protocol epoch with actions like
     ///      - locking BTC into veBTC
+    ///      - adding liquidity into the pools (liquidity providers)
+    ///      - staking LP tokens into gauges (liquidity providers)
+    ///      - swapping tokens in the pools (traders)
     ///      - voting on the chain fee splitter needle movement
     ///      - voting on pool gauges
     ///      - distributing the BTC chain fees between gauges and reward distributor
+    ///      - claiming trading fees from gauges (veBTC voters)
+    ///      - claiming trading fees from pools (non-staking liquidity providers)
+    ///      - claiming BTC rewards from gauges (staking liquidity providers)
     ///
-    /// The above are basic actions that occur on every protocol epoch.
     /// This scenario DOES NOT stress extended actions like:
     ///      - claiming BTC rewards from the reward distributor (veBTC holders)
-    ///      - adding liquidity into the pools (liquidity providers)
-    ///      - claiming trading fees from pools (non-staking liquidity providers)
-    ///      - staking LP tokens into gauges (liquidity providers)
-    ///      - claiming trading fees from gauges (veBTC voters)
     ///      - claiming bribes from gauges (veBTC voters)
-    ///      - claiming BTC rewards from gauges (staking liquidity providers)
     function testFullEpoch() public {
         // Start Epoch 1 and move to its first second.
         // Assume this is timestamp T + 1s, where T is Epoch 1 start.
@@ -51,15 +51,21 @@ contract FullEpoch is BaseSystemTest {
             "unexpected chain fee splitter active period"
         );
 
-        // Define actors.
+        // Define veBTC holders.
         user1 = accounts[1];
         user2 = accounts[2];
         user3 = accounts[3];
-        user4 = accounts[4];
-        user5 = accounts[5];
-        user6 = accounts[6];
+        // Define liquidity providers.
+        user4 = accounts[4]; // stakes LP tokens  
+        user5 = accounts[5]; // stakes LP tokens
+        user6 = accounts[6]; // DOES NOT stake LP tokens
+        // Define traders.
         user7 = accounts[7];
 
+        // *********************************************************************************
+        // Locking BTC into veBTC
+        // *********************************************************************************
+        
         // Mint BTC to the users.
         vm.startPrank(governance);
         BTC.mint(user1, withTokenPrecision18(10));
@@ -117,6 +123,10 @@ contract FullEpoch is BaseSystemTest {
         assertEq(BTC.balanceOf(user3), 0, "unexpected user3 BTC balance");
         assertEq(BTC.balanceOf(address(veBTC)), withTokenPrecision18(30), "unexpected veBTC contract BTC balance");
 
+        // *********************************************************************************
+        // Adding liquidity into the pools
+        // *********************************************************************************    
+
         // Assert pools state.
         assertEq(veBTCVoter.length(), 3, "unexpected pools count");
 
@@ -134,9 +144,17 @@ contract FullEpoch is BaseSystemTest {
         assertEq(IERC20(pool_mUSD_LIMPETH).balanceOf(user5), IERC20(pool_mUSD_LIMPETH).totalSupply() - minimumLiquidity, "user5 should own proper amount of pool LP tokens");
         assertEq(IERC20(pool_mUSD_wtBTC).balanceOf(user6), IERC20(pool_mUSD_wtBTC).totalSupply() - minimumLiquidity, "user6 should own proper amount of pool LP tokens");
 
-        // Stake LP tokens for user4 and user5.
+        // *********************************************************************************
+        // Staking LP tokens into gauges
+        // *********************************************************************************
+
+        // Stake LP tokens for user4 and user5 but not for user6.
         stakeGauge(user4, pool_BTC_mUSD); 
         stakeGauge(user5, pool_mUSD_LIMPETH);
+
+        // *********************************************************************************
+        // Swapping tokens in the pools
+        // *********************************************************************************    
 
         // Execute trades on each pool with user7.
         executeSwap(
@@ -166,6 +184,10 @@ contract FullEpoch is BaseSystemTest {
             false, // Not stable
             address(poolFactory)
         );
+
+        // *********************************************************************************
+        // Voting on the chain fee splitter needle movement
+        // *********************************************************************************
 
         // Load the chain fee splitter with BTC.
         vm.prank(governance);
@@ -221,6 +243,10 @@ contract FullEpoch is BaseSystemTest {
         // 9972602660399785641 - 71347031963100 = 9972531313367822541
         assertEq(forVotes, 9972531313367822541, "unexpected for votes");
         assertEq(abstainVotes, 0, "unexpected abstain votes");
+
+        // *********************************************************************************
+        // Voting on pool gauges
+        // *********************************************************************************
 
         // Gauge voting can start at T + 1h1s (see TimeLibrary.epochVoteStart).
         // We are already at T + 15m2s, so we need to jump 44m59s ahead.
@@ -284,6 +310,10 @@ contract FullEpoch is BaseSystemTest {
         // Sum of all pool weights:
         // 3323879928215561025 + 3323879928215561025 + 10803438535791845670 = 17451198392222967720.
         assertEq(veBTCVoter.totalWeight(), 17451198392222967720, "unexpected voter total weight");
+
+        // *********************************************************************************
+        // Distributing the BTC chain fees between gauges and reward distributor
+        // *********************************************************************************
 
         // We are at T + 1h1s and we want to jump to the place where the
         // ChainFeeSplitter nudge proposal can be executed:
@@ -352,11 +382,17 @@ contract FullEpoch is BaseSystemTest {
         // share = (10803438535791845670 * 3781975226951321774) / 1e18 = 40858336908256020929 (rounded down)
         assertEq(BTC.balanceOf(address(veBTCVoter.gauges(pool_mUSD_wtBTC))), 40858336908256020929, "unexpected mUSD_wtBTC gauge BTC balance");
 
+        // *********************************************************************************
+        // Claiming trading fees from gauges
+        // *********************************************************************************
+
         // Skip to Epoch 3 which is effectively T + 2w.
         // This is required to claim trading fees from gauges, 
         // that were distributed in the previous epoch.
         skipToNextEpoch(0);
 
+        // Each gauge has a FeesVotingReward contract where trading fees are pushed for distribution 
+        // to veBTC holders (this happens during the veBTCVoter.distribute call done earlier).
         // Assert balances of FeesVotingReward contracts before veBTC holders claim fees.
         // In general, claimable_fees for the given LP token holder is calculated as follows:
         // - claimable_fees = (lp_token_balance * fee_index) / 1e18
@@ -454,6 +490,10 @@ contract FullEpoch is BaseSystemTest {
         assertTokenBalanceChange(user3, address(LIMPETH), preClaimBalances[2][2], 0);
         assertTokenBalanceChange(user3, address(wtBTC), preClaimBalances[2][3], 0);
 
+        // *********************************************************************************
+        // Claiming trading fees from pools
+        // *********************************************************************************    
+
         // User6 is the LP provider of the mUSD_wtBTC pool. User6 can claim fees from the pool directly
         // because they did not stake their LP tokens to the gauge.
         vm.prank(user6);
@@ -462,6 +502,12 @@ contract FullEpoch is BaseSystemTest {
         assertTokenBalanceChange(user6, address(mUSD), preClaimBalances[2][1], 2799999999999999);
         assertTokenBalanceChange(user6, address(LIMPETH), preClaimBalances[2][2], 0);
         assertTokenBalanceChange(user6, address(wtBTC), preClaimBalances[2][3], 0);
+
+        // *********************************************************************************
+        // Claiming BTC rewards from gauges
+        // *********************************************************************************
+        
+        // TODO: Implement this.
     }
 
     function mintVeBTC(address user, uint256 amount, uint256 lockDuration) internal returns (uint256 tokenId) {
