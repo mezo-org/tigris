@@ -122,7 +122,7 @@ contract Router is IRouter, ERC2771Context {
         for (uint256 i = 0; i < _length; i++) {
             address factory = routes[i].factory == address(0)
                 ? defaultFactory
-                : routes[i].factory; // default to v2
+                : routes[i].factory;
             address pool = poolFor(
                 routes[i].from,
                 routes[i].to,
