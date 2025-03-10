@@ -4,27 +4,37 @@ pragma solidity 0.8.24;
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {IRewardsDistributor} from "./interfaces/IRewardsDistributor.sol";
 import {IVotingEscrow} from "./interfaces/IVotingEscrow.sol";
+import {ISplitter} from "./interfaces/ISplitter.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /*
  * @title Curve Fee Distribution modified for ve(3,3) emissions
  * @author Curve Finance, andrecronje
+ * @author velodrome.finance, @figs999, @pegahcarter
  * @license MIT
  */
 contract RewardsDistributor is IRewardsDistributor {
     using SafeERC20 for IERC20;
-    uint256 constant WEEK = 7 * 86400;
+    /// @inheritdoc IRewardsDistributor
+    uint256 public constant WEEK = 7 * 86400;
 
+    /// @inheritdoc IRewardsDistributor
     uint256 public startTime;
+    /// @inheritdoc IRewardsDistributor
     mapping(uint256 => uint256) public timeCursorOf;
 
+    /// @inheritdoc IRewardsDistributor
     uint256 public lastTokenTime;
     uint256[1000000000000000] public tokensPerWeek;
 
+    /// @inheritdoc IRewardsDistributor
     IVotingEscrow public immutable ve;
+    /// @inheritdoc IRewardsDistributor
     address public token;
+    /// @inheritdoc IRewardsDistributor
     address public depositor;
+    /// @inheritdoc IRewardsDistributor
     uint256 public tokenLastBalance;
 
     constructor(address _ve) {
@@ -126,18 +136,21 @@ contract RewardsDistributor is IRewardsDistributor {
                 _tokenId,
                 1
             );
-            weekCursor = ((userPoint.ts + WEEK - 1) / WEEK) * WEEK;
+            weekCursor = (userPoint.ts / WEEK) * WEEK;
             weekCursorStart = weekCursor;
         }
-        if (weekCursor >= lastTokenTime)
+        if (weekCursor >= _lastTokenTime)
             return (0, weekCursorStart, weekCursor);
         if (weekCursor < _startTime) weekCursor = _startTime;
 
         for (uint256 i = 0; i < 50; i++) {
             if (weekCursor >= _lastTokenTime) break;
 
-            uint256 balance = ve.balanceOfNFTAt(_tokenId, weekCursor - 1);
-            uint256 supply = ve.totalSupplyAt(weekCursor - 1);
+            uint256 balance = ve.balanceOfNFTAt(
+                _tokenId,
+                weekCursor + WEEK - 1
+            );
+            uint256 supply = ve.totalSupplyAt(weekCursor + WEEK - 1);
             supply = supply == 0 ? 1 : supply;
             toDistribute += (balance * tokensPerWeek[weekCursor]) / supply;
             weekCursor += WEEK;
@@ -154,6 +167,12 @@ contract RewardsDistributor is IRewardsDistributor {
 
     /// @inheritdoc IRewardsDistributor
     function claim(uint256 _tokenId) external returns (uint256) {
+        if (
+            ISplitter(depositor).activePeriod() <
+            ((block.timestamp / WEEK) * WEEK)
+        ) revert UpdatePeriod();
+        if (ve.escrowType(_tokenId) == IVotingEscrow.EscrowType.LOCKED)
+            revert NotManagedOrNormalNFT();
         uint256 _timestamp = block.timestamp;
         uint256 _lastTokenTime = lastTokenTime;
         _lastTokenTime = (_lastTokenTime / WEEK) * WEEK;
@@ -161,7 +180,7 @@ contract RewardsDistributor is IRewardsDistributor {
         if (amount != 0) {
             IVotingEscrow.LockedBalance memory _locked = IVotingEscrow(ve)
                 .locked(_tokenId);
-            if (_timestamp > _locked.end && !_locked.isPermanent) {
+            if (_timestamp >= _locked.end && !_locked.isPermanent) {
                 address _owner = IVotingEscrow(ve).ownerOf(_tokenId);
                 IERC20(token).safeTransfer(_owner, amount);
             } else {
@@ -174,6 +193,10 @@ contract RewardsDistributor is IRewardsDistributor {
 
     /// @inheritdoc IRewardsDistributor
     function claimMany(uint256[] calldata _tokenIds) external returns (bool) {
+        if (
+            ISplitter(depositor).activePeriod() <
+            ((block.timestamp / WEEK) * WEEK)
+        ) revert UpdatePeriod();
         uint256 _timestamp = block.timestamp;
         uint256 _lastTokenTime = lastTokenTime;
         _lastTokenTime = (_lastTokenTime / WEEK) * WEEK;
@@ -182,12 +205,14 @@ contract RewardsDistributor is IRewardsDistributor {
 
         for (uint256 i = 0; i < _length; i++) {
             uint256 _tokenId = _tokenIds[i];
+            if (ve.escrowType(_tokenId) == IVotingEscrow.EscrowType.LOCKED)
+                revert NotManagedOrNormalNFT();
             if (_tokenId == 0) break;
             uint256 amount = _claim(_tokenId, _lastTokenTime);
             if (amount != 0) {
                 IVotingEscrow.LockedBalance memory _locked = IVotingEscrow(ve)
                     .locked(_tokenId);
-                if (_timestamp > _locked.end && !_locked.isPermanent) {
+                if (_timestamp >= _locked.end && !_locked.isPermanent) {
                     address _owner = IVotingEscrow(ve).ownerOf(_tokenId);
                     IERC20(token).safeTransfer(_owner, amount);
                 } else {
@@ -207,9 +232,5 @@ contract RewardsDistributor is IRewardsDistributor {
     function setDepositor(address _depositor) external {
         if (msg.sender != depositor) revert NotDepositor();
         depositor = _depositor;
-    }
-
-    function max(int128 a, int128 b) internal pure returns (int128) {
-        return a > b ? a : b;
     }
 }

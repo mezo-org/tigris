@@ -20,4 +20,7 @@ interface ISplitter {
     /// @notice Processes emissions and rebases. Callable once per epoch.
     /// @return _period Start of current epoch.
     function updatePeriod() external returns (uint256 _period);
+
+    /// @notice Timestamp of start of epoch that updatePeriod was last called in
+    function activePeriod() external view returns (uint256);
 }
