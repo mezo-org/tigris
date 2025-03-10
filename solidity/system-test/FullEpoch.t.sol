@@ -507,7 +507,48 @@ contract FullEpoch is BaseSystemTest {
         // Claiming BTC rewards from gauges
         // *********************************************************************************
         
-        // TODO: Implement this.
+        // Capture pre-claim BTC balances of liquidity providers who staked their LP tokens.
+        uint256 preClaimBTCUser4 = BTC.balanceOf(user4);
+        uint256 preClaimBTCUser5 = BTC.balanceOf(user5);
+
+        // List of all gauges.
+        address[] memory gauges = new address[](3);
+        gauges[0] = veBTCVoter.gauges(pool_BTC_mUSD);
+        gauges[1] = veBTCVoter.gauges(pool_mUSD_LIMPETH);
+        gauges[2] = veBTCVoter.gauges(pool_mUSD_wtBTC);
+
+        // The BTC rewards for gauges were distributed earlier when we called 
+        // veBTCVoter.distribute(0, veBTCVoter.length()):
+        // - the BTC_mUSD gauge received 12570831545871989534 BTC
+        // - the mUSD_LIMPETH gauge received 12570831545871989534 BTC
+        // - the mUSD_wtBTC gauge received 40858336908256020929 BTC
+        //
+        // For each gauge, the rewards are distributed proportionally to the LP 
+        // token balance of each staker.
+        //
+        // User4 staked all its LP tokens to the BTC_mUSD gauge.
+        // The claim action will take only this gauge into account. 
+        vm.prank(user4);
+        veBTCVoter.claimRewards(gauges);
+        // User5 staked all its LP tokens to the mUSD_LIMPETH gauge.
+        // The claim action will take only this gauge into account. 
+        vm.prank(user5);
+        veBTCVoter.claimRewards(gauges);
+
+        // Users do not receive 100% of the gauges balances, even though they hold 100% of LP tokens.
+        // This is because the reward is computed as follows:
+        // - reward_rate = amount / time_until_next_epoch
+        // - reward_per_token = (distribution_duration * reward_rate * 1e18) / lp_token_total_supply
+        // - reward = (staked_lp_token_balance * reward_per_token) / 1e18
+        //
+        // For user4:
+        // - time_until_next_epoch = now - veBTCVoter.distribute last invocation = (T + 2w) - (T + 1w15m2s) = 603898 seconds
+        // - reward_rate = 12570831545871989534 / 603898 = 20816150319875 (rounded down)
+        // - reward_per_token = (603898 * 20816150319875 * 1e18) / 9999999999999999000 = 1257083154587187400 (rounded down)
+        // - reward = (9999999999999999000 * 1257083154587187400) / 1e18 = 12570831545871872742
+        assertTokenBalanceChange(user4, address(BTC), preClaimBTCUser4, 12570831545871872742);
+        // Same applies to user5.
+        assertTokenBalanceChange(user5, address(BTC), preClaimBTCUser5, 12570831545871872742);
     }
 
     function mintVeBTC(address user, uint256 amount, uint256 lockDuration) internal returns (uint256 tokenId) {
