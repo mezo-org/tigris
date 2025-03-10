@@ -13,7 +13,9 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-// The token pool, either stable or volatile
+/// @title Pool
+/// @author velodrome.finance, @figs999, @pegahcarter
+/// @notice Protocol token pool, either stable or volatile
 contract Pool is IPool, ERC20Permit, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
@@ -21,54 +23,58 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
     string private _symbol;
     address private _voter;
 
-    // Used to denote stable or volatile pool
+    /// @inheritdoc IPool
     bool public stable;
 
     uint256 internal constant MINIMUM_LIQUIDITY = 10 ** 3;
     uint256 internal constant MINIMUM_K = 10 ** 10;
 
+    /// @inheritdoc IPool
     address public token0;
+    /// @inheritdoc IPool
     address public token1;
+    /// @inheritdoc IPool
     address public poolFees;
+    /// @inheritdoc IPool
     address public factory;
 
-    // Structure to capture time period obervations every 30 minutes, used for local oracles
-    struct Observation {
-        uint256 timestamp;
-        uint256 reserve0Cumulative;
-        uint256 reserve1Cumulative;
-    }
-
-    // Capture oracle reading every 30 minutes
-    uint256 constant periodSize = 1800;
+    uint256 public constant PERIOD_SIZE = 1800;
 
     Observation[] public observations;
 
     uint256 internal decimals0;
     uint256 internal decimals1;
 
+    /// @inheritdoc IPool
     uint256 public reserve0;
+    /// @inheritdoc IPool
     uint256 public reserve1;
+    /// @inheritdoc IPool
     uint256 public blockTimestampLast;
 
+    /// @inheritdoc IPool
     uint256 public reserve0CumulativeLast;
+    /// @inheritdoc IPool
     uint256 public reserve1CumulativeLast;
 
-    // index0 and index1 are used to accumulate fees, this is split out from normal trades to keep the swap "clean"
-    // this further allows LP holders to easily claim fees for tokens they have/staked
+    /// @inheritdoc IPool
     uint256 public index0 = 0;
+    /// @inheritdoc IPool
     uint256 public index1 = 0;
 
-    // position assigned to each LP to track their current index0 & index1 vs the global position
+    /// @inheritdoc IPool
     mapping(address => uint256) public supplyIndex0;
+    /// @inheritdoc IPool
     mapping(address => uint256) public supplyIndex1;
 
-    // tracks the amount of unclaimed, but claimable tokens off of fees for token0 and token1
+    /// @inheritdoc IPool
     mapping(address => uint256) public claimable0;
+    /// @inheritdoc IPool
     mapping(address => uint256) public claimable1;
 
     constructor() ERC20("", "") ERC20Permit("") {}
 
+    /// @inheritdoc IPool
     function initialize(
         address _token0,
         address _token1,
@@ -83,18 +89,14 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         string memory symbol1 = ERC20(_token1).symbol();
         if (_stable) {
             _name = string(
-                abi.encodePacked("StableV2 AMM - ", symbol0, "/", symbol1)
+                abi.encodePacked("Stable AMM - ", symbol0, "/", symbol1)
             );
-            _symbol = string(
-                abi.encodePacked("sAMMV2-", symbol0, "/", symbol1)
-            );
+            _symbol = string(abi.encodePacked("sAMM-", symbol0, "/", symbol1));
         } else {
             _name = string(
-                abi.encodePacked("VolatileV2 AMM - ", symbol0, "/", symbol1)
+                abi.encodePacked("Volatile AMM - ", symbol0, "/", symbol1)
             );
-            _symbol = string(
-                abi.encodePacked("vAMMV2-", symbol0, "/", symbol1)
-            );
+            _symbol = string(abi.encodePacked("vAMM-", symbol0, "/", symbol1));
         }
 
         decimals0 = 10 ** ERC20(_token0).decimals();
@@ -103,26 +105,31 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         observations.push(Observation(block.timestamp, 0, 0));
     }
 
+    /// @inheritdoc IPool
     function setName(string calldata __name) external {
         if (msg.sender != IVoter(_voter).emergencyCouncil())
             revert NotEmergencyCouncil();
         _name = __name;
     }
 
+    /// @inheritdoc IPool
     function setSymbol(string calldata __symbol) external {
         if (msg.sender != IVoter(_voter).emergencyCouncil())
             revert NotEmergencyCouncil();
         _symbol = __symbol;
     }
 
+    /// @inheritdoc IPool
     function observationLength() external view returns (uint256) {
         return observations.length;
     }
 
+    /// @inheritdoc IPool
     function lastObservation() public view returns (Observation memory) {
         return observations[observations.length - 1];
     }
 
+    /// @inheritdoc IPool
     function metadata()
         external
         view
@@ -147,11 +154,17 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         );
     }
 
+    /// @inheritdoc IPool
     function tokens() external view returns (address, address) {
         return (token0, token1);
     }
 
-    // claim accumulated but unclaimed fees (viewable via claimable0 and claimable1)
+    /// @inheritdoc IPool
+    function getK() external nonReentrant returns (uint256) {
+        return _k(reserve0, reserve1);
+    }
+
+    /// @inheritdoc IPool
     function claimFees() external returns (uint256 claimed0, uint256 claimed1) {
         address sender = _msgSender();
         _updateFor(sender);
@@ -169,7 +182,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         }
     }
 
-    // Accrue fees on token0
+    /// @dev Accrue fees on token0
     function _update0(uint256 amount) internal {
         // Only update on this pool if there is a fee
         if (amount == 0) return;
@@ -181,7 +194,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         emit Fees(_msgSender(), amount, 0);
     }
 
-    // Accrue fees on token1
+    /// @dev Accrue fees on token1
     function _update1(uint256 amount) internal {
         // Only update on this pool if there is a fee
         if (amount == 0) return;
@@ -193,8 +206,8 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         emit Fees(_msgSender(), 0, amount);
     }
 
-    // this function MUST be called on any balance changes, otherwise can be used to infinitely claim fees
-    // Fees are segregated from core funds, so fees can never put liquidity at risk
+    /// @dev This function MUST be called on any balance changes, otherwise can be used to infinitely claim fees
+    ///      Fees are segregated from core funds, so fees can never put liquidity at risk.
     function _updateFor(address recipient) internal {
         uint256 _supplied = balanceOf(recipient); // get LP balance of `recipient`
         if (_supplied > 0) {
@@ -220,6 +233,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         }
     }
 
+    /// @inheritdoc IPool
     function getReserves()
         public
         view
@@ -234,7 +248,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         _blockTimestampLast = blockTimestampLast;
     }
 
-    // update reserves and, on the first call per block, price accumulators
+    /// @dev update reserves and, on the first call per block, price accumulators
     function _update(
         uint256 balance0,
         uint256 balance1,
@@ -250,7 +264,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
 
         Observation memory _point = lastObservation();
         timeElapsed = blockTimestamp - _point.timestamp; // compare the last observation with current timestamp, if greater than 30 minutes, record a new event
-        if (timeElapsed > periodSize) {
+        if (timeElapsed > PERIOD_SIZE) {
             observations.push(
                 Observation(
                     blockTimestamp,
@@ -265,7 +279,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         emit Sync(reserve0, reserve1);
     }
 
-    // produces the cumulative price using counterfactuals to save gas and avoid a call to sync.
+    /// @inheritdoc IPool
     function currentCumulativePrices()
         public
         view
@@ -293,7 +307,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         }
     }
 
-    // provides twap price with user configured granularity, up to the full window size
+    /// @inheritdoc IPool
     function quote(
         address tokenIn,
         uint256 amountIn,
@@ -308,7 +322,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         return priceAverageCumulative / granularity;
     }
 
-    // returns a memory set of twap prices
+    /// @inheritdoc IPool
     function prices(
         address tokenIn,
         uint256 amountIn,
@@ -317,6 +331,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         return sample(tokenIn, amountIn, points, 1);
     }
 
+    /// @inheritdoc IPool
     function sample(
         address tokenIn,
         uint256 amountIn,
@@ -352,8 +367,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         return _prices;
     }
 
-    // this low-level function should be called by addLiquidity functions in Router.sol, which performs important safety checks
-    // standard uniswap v2 implementation
+    /// @inheritdoc IPool
     function mint(
         address to
     ) external nonReentrant returns (uint256 liquidity) {
@@ -387,8 +401,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         emit Mint(_msgSender(), _amount0, _amount1);
     }
 
-    // this low-level function should be called from a contract which performs important safety checks
-    // standard uniswap v2 implementation
+    /// @inheritdoc IPool
     function burn(
         address to
     ) external nonReentrant returns (uint256 amount0, uint256 amount1) {
@@ -412,7 +425,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         emit Burn(_msgSender(), to, amount0, amount1);
     }
 
-    // this low-level function should be called from a contract which performs important safety checks
+    /// @inheritdoc IPool
     function swap(
         uint256 amount0Out,
         uint256 amount1Out,
@@ -483,7 +496,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         );
     }
 
-    // force balances to match reserves
+    /// @inheritdoc IPool
     function skim(address to) external nonReentrant {
         (address _token0, address _token1) = (token0, token1);
         IERC20(_token0).safeTransfer(
@@ -496,7 +509,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         );
     }
 
-    // force reserves to match balances
+    /// @inheritdoc IPool
     function sync() external nonReentrant {
         _update(
             IERC20(token0).balanceOf(address(this)),
@@ -565,6 +578,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         revert("!y");
     }
 
+    /// @inheritdoc IPool
     function getAmountOut(
         uint256 amountIn,
         address tokenIn
@@ -625,6 +639,10 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
 
     function symbol() public view override returns (string memory) {
         return _symbol;
+    }
+
+    function periodSize() external view returns (uint256) {
+        return PERIOD_SIZE;
     }
 
     function _beforeTokenTransfer(
