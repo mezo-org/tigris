@@ -1,120 +1,144 @@
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.24;
 
-import {IFactoryRegistry} from "./interfaces/factories/IFactoryRegistry.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {IPool} from "./interfaces/IPool.sol";
 import {IPoolFactory} from "./interfaces/factories/IPoolFactory.sol";
 import {IRouter} from "./interfaces/IRouter.sol";
-import {IPool} from "./interfaces/IPool.sol";
-import {IWETH} from "./interfaces/IWETH.sol";
-import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {IVoter} from "./interfaces/IVoter.sol";
+import {IGauge} from "./interfaces/IGauge.sol";
+import {IFactoryRegistry} from "./interfaces/factories/IFactoryRegistry.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
+import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
-abstract contract Router is IRouter {
-    address public factoryRegistry;
-    address public immutable weth;
+/// @title Protocol Router
+/// @author velodrome.finance, @pegahcarter
+/// @notice Router allows routes through any pools created by any factory adhering to univ2 interface.
+contract Router is IRouter, ERC2771Context {
+    using SafeERC20 for IERC20;
 
-    // XXX: underspecified
-    address internal _defaultFactory;
-    address internal _votingRewardsFactory;
-    address internal _gaugeFactory;
+    /// @inheritdoc IRouter
+    address public immutable factoryRegistry;
+    /// @inheritdoc IRouter
+    address public immutable defaultFactory;
+    /// @inheritdoc IRouter
+    address public immutable voter;
 
-    error FactoryNotApproved();
+    uint256 internal constant MINIMUM_LIQUIDITY = 10 ** 3;
 
-    constructor(address _factoryRegistry, address _weth) {
-        factoryRegistry = _factoryRegistry;
-        weth = _weth;
+    modifier ensure(uint256 deadline) {
+        _ensureDeadline(deadline);
+        _;
     }
 
-    /// @notice Calculate the address of a pool by its' factory.
-    ///         Used by all Router functions containing a `Route[]` or `_factory` argument.
-    ///         Reverts if _factory is not approved by the FactoryRegistry
-    /// @dev Returns a randomly generated address for a nonexistent pool
-    /// @param tokenA Address of token to query
-    /// @param tokenB Address of token to query
-    /// @param stable Boolean to indicate if the pool is stable or volatile
-    /// @param _factory Address of factory which created the pool
+    function _ensureDeadline(uint256 deadline) internal view {
+        if (deadline < block.timestamp) revert Expired();
+    }
+
+    constructor(
+        address _forwarder,
+        address _factoryRegistry,
+        address _factory,
+        address _voter
+    ) ERC2771Context(_forwarder) {
+        factoryRegistry = _factoryRegistry;
+        defaultFactory = _factory;
+        voter = _voter;
+    }
+
+    /// @inheritdoc IRouter
+    function sortTokens(
+        address tokenA,
+        address tokenB
+    ) public pure returns (address token0, address token1) {
+        if (tokenA == tokenB) revert SameAddresses();
+        (token0, token1) = tokenA < tokenB
+            ? (tokenA, tokenB)
+            : (tokenB, tokenA);
+        if (token0 == address(0)) revert ZeroAddress();
+    }
+
+    /// @inheritdoc IRouter
     function poolFor(
         address tokenA,
         address tokenB,
         bool stable,
         address _factory
     ) public view returns (address pool) {
-        // XXX: underspecified _votingRewardsFactory, _gaugeFactory
-        if (
-            !IFactoryRegistry(factoryRegistry).isApproved(
-                _factory,
-                _votingRewardsFactory,
-                _gaugeFactory
-            )
-        ) revert FactoryNotApproved();
-        (address token0, address token1, bool swapped) = orderedAddresses(
-            tokenA,
-            tokenB
-        );
+        address _defaultFactory = defaultFactory;
+        address factory = _factory == address(0) ? _defaultFactory : _factory;
+        if (!IFactoryRegistry(factoryRegistry).poolFactoryExists(factory))
+            revert PoolFactoryDoesNotExist();
+
+        (address token0, address token1) = sortTokens(tokenA, tokenB);
         bytes32 salt = keccak256(abi.encodePacked(token0, token1, stable));
-        address implementation = IPoolFactory(_factory).getImplementation();
-        return Clones.predictDeterministicAddress(implementation, salt);
+        pool = Clones.predictDeterministicAddress(
+            IPoolFactory(factory).getImplementation(),
+            salt,
+            factory
+        );
     }
 
-    /// @notice Wraps around poolFor(tokenA,tokenB,stable,_factory) for backwards compatibility to Mezodrome v1
-    function pairFor(
-        address tokenA,
-        address tokenB,
-        bool stable,
-        address _factory
-    ) external view returns (address pool) {
-        return poolFor(tokenA, tokenB, stable, _factory);
+    /// @dev given some amount of an asset and pool reserves, returns an equivalent amount of the other asset
+    /// @dev this only accounts for volatile pools and may return insufficient liquidity for stable pools
+    function quoteLiquidity(
+        uint256 amountA,
+        uint256 reserveA,
+        uint256 reserveB
+    ) internal pure returns (uint256 amountB) {
+        if (amountA == 0) revert InsufficientAmount();
+        if (reserveA == 0 || reserveB == 0) revert InsufficientLiquidity();
+        amountB = (amountA * reserveB) / reserveA;
     }
 
-    function poolFor(Route memory route) public view returns (address pool) {
-        return poolFor(route.from, route.to, route.stable, route.factory);
-    }
-
+    /// @inheritdoc IRouter
     function getReserves(
         address tokenA,
         address tokenB,
         bool stable,
-        address factory
+        address _factory
     ) public view returns (uint256 reserveA, uint256 reserveB) {
-        address pool = poolFor(tokenA, tokenB, stable, factory);
-        bool swapped = addressesNotOrdered(tokenA, tokenB);
-        (
-            uint256 reserve0,
-            uint256 reserve1,
-            uint256 _blockTimestampLast
-        ) = IPool(pool).getReserves();
-        (reserveA, reserveB) = swapped
-            ? (reserve1, reserve0)
-            : (reserve0, reserve1);
-        return (reserveA, reserveB);
+        (address token0, ) = sortTokens(tokenA, tokenB);
+        (uint256 reserve0, uint256 reserve1, ) = IPool(
+            poolFor(tokenA, tokenB, stable, _factory)
+        ).getReserves();
+        (reserveA, reserveB) = tokenA == token0
+            ? (reserve0, reserve1)
+            : (reserve1, reserve0);
     }
 
+    /// @inheritdoc IRouter
     function getAmountsOut(
         uint256 amountIn,
-        Route[] calldata routes
-    ) public view validPath(routes) returns (uint256[] memory amounts) {
-        uint256 steps = routes.length;
-        amounts = new uint256[](steps);
-        uint256 previousAmount = amountIn;
-        for (uint256 i = 0; i < steps; i++) {
-            Route memory currentRoute = routes[i];
-            address tokenIn = currentRoute.from;
-            address tokenOut = currentRoute.to;
-            address pool = poolFor(currentRoute);
-            uint256 amountOut = IPool(pool).getAmountOut(
-                previousAmount,
-                tokenIn
+        Route[] memory routes
+    ) public view returns (uint256[] memory amounts) {
+        if (routes.length < 1) revert InvalidPath();
+        amounts = new uint256[](routes.length + 1);
+        amounts[0] = amountIn;
+        uint256 _length = routes.length;
+        for (uint256 i = 0; i < _length; i++) {
+            address factory = routes[i].factory == address(0)
+                ? defaultFactory
+                : routes[i].factory;
+            address pool = poolFor(
+                routes[i].from,
+                routes[i].to,
+                routes[i].stable,
+                factory
             );
-            amounts[i] = amountOut;
-            previousAmount = amountOut;
+            if (IPoolFactory(factory).isPool(pool)) {
+                amounts[i + 1] = IPool(pool).getAmountOut(
+                    amounts[i],
+                    routes[i].from
+                );
+            }
         }
-        return amounts;
     }
 
-    // **** ADD LIQUIDITY ****
-
+    /// @inheritdoc IRouter
     function quoteAddLiquidity(
         address tokenA,
         address tokenB,
@@ -127,38 +151,49 @@ abstract contract Router is IRouter {
         view
         returns (uint256 amountA, uint256 amountB, uint256 liquidity)
     {
-        (uint256 reserveA, uint256 reserveB) = getReserves(
-            tokenA,
-            tokenB,
-            stable,
-            _factory
-        );
-        address pool = poolFor(tokenA, tokenB, stable, _factory);
-        uint256 totalSupply = IERC20(pool).totalSupply();
-        // Logic in the contract itself:
-        //
-        // liquidity = Math.min((_amount0 * _totalSupply) / _reserve0, (_amount1 * _totalSupply) / _reserve1);
-        //
-        // We calculate the amount using the same logic. As is, a small rounding error can happen.
-        // This could be eliminated with more complex code that adjusts the derived quantity
-        // until the output matches the contract logic precisely.
-        //
-        // XXX: cover the edge case of zero total supply?
-        uint256 liquidityA = (amountADesired * totalSupply) / reserveA;
-        uint256 liquidityB = (amountBDesired * totalSupply) / reserveB;
-        bool minIsA = liquidityA < liquidityB;
-        if (minIsA) {
-            amountA = amountADesired;
-            liquidity = liquidityA;
-            amountB = (liquidity * reserveB) / totalSupply;
-        } else {
-            amountB = amountBDesired;
-            liquidity = liquidityB;
-            amountA = (liquidity * reserveA) / totalSupply;
+        address _pool = IPoolFactory(_factory).getPool(tokenA, tokenB, stable);
+        (uint256 reserveA, uint256 reserveB) = (0, 0);
+        uint256 _totalSupply = 0;
+        if (_pool != address(0)) {
+            _totalSupply = IERC20(_pool).totalSupply();
+            (reserveA, reserveB) = getReserves(
+                tokenA,
+                tokenB,
+                stable,
+                _factory
+            );
         }
-        return (amountA, amountB, liquidity);
+        if (reserveA == 0 && reserveB == 0) {
+            (amountA, amountB) = (amountADesired, amountBDesired);
+            liquidity = Math.sqrt(amountA * amountB) - MINIMUM_LIQUIDITY;
+        } else {
+            uint256 amountBOptimal = quoteLiquidity(
+                amountADesired,
+                reserveA,
+                reserveB
+            );
+            if (amountBOptimal <= amountBDesired) {
+                (amountA, amountB) = (amountADesired, amountBOptimal);
+                liquidity = Math.min(
+                    (amountA * _totalSupply) / reserveA,
+                    (amountB * _totalSupply) / reserveB
+                );
+            } else {
+                uint256 amountAOptimal = quoteLiquidity(
+                    amountBDesired,
+                    reserveB,
+                    reserveA
+                );
+                (amountA, amountB) = (amountAOptimal, amountBDesired);
+                liquidity = Math.min(
+                    (amountA * _totalSupply) / reserveA,
+                    (amountB * _totalSupply) / reserveB
+                );
+            }
+        }
     }
 
+    /// @inheritdoc IRouter
     function quoteRemoveLiquidity(
         address tokenA,
         address tokenB,
@@ -166,22 +201,79 @@ abstract contract Router is IRouter {
         address _factory,
         uint256 liquidity
     ) public view returns (uint256 amountA, uint256 amountB) {
+        address _pool = IPoolFactory(_factory).getPool(tokenA, tokenB, stable);
+
+        if (_pool == address(0)) {
+            return (0, 0);
+        }
+
         (uint256 reserveA, uint256 reserveB) = getReserves(
             tokenA,
             tokenB,
             stable,
             _factory
         );
-        address pool = poolFor(tokenA, tokenB, stable, _factory);
-        // Use same logic as in the contract itself
-        uint256 totalSupply = IERC20(pool).totalSupply();
-        uint256 balanceA = IERC20(tokenA).balanceOf(pool);
-        uint256 balanceB = IERC20(tokenB).balanceOf(pool);
-        amountA = (liquidity * reserveA) / totalSupply;
-        amountB = (liquidity * reserveB) / totalSupply;
-        return (amountA, amountB);
+        uint256 _totalSupply = IERC20(_pool).totalSupply();
+
+        amountA = (liquidity * reserveA) / _totalSupply; // using balances ensures pro-rata distribution
+        amountB = (liquidity * reserveB) / _totalSupply; // using balances ensures pro-rata distribution
     }
 
+    function _addLiquidity(
+        address tokenA,
+        address tokenB,
+        bool stable,
+        uint256 amountADesired,
+        uint256 amountBDesired,
+        uint256 amountAMin,
+        uint256 amountBMin
+    ) internal returns (uint256 amountA, uint256 amountB) {
+        if (amountADesired < amountAMin) revert InsufficientAmountADesired();
+        if (amountBDesired < amountBMin) revert InsufficientAmountBDesired();
+        // create the pool if it doesn't exist yet
+        address _pool = IPoolFactory(defaultFactory).getPool(
+            tokenA,
+            tokenB,
+            stable
+        );
+        if (_pool == address(0)) {
+            _pool = IPoolFactory(defaultFactory).createPool(
+                tokenA,
+                tokenB,
+                stable
+            );
+        }
+        (uint256 reserveA, uint256 reserveB) = getReserves(
+            tokenA,
+            tokenB,
+            stable,
+            defaultFactory
+        );
+        if (reserveA == 0 && reserveB == 0) {
+            (amountA, amountB) = (amountADesired, amountBDesired);
+        } else {
+            uint256 amountBOptimal = quoteLiquidity(
+                amountADesired,
+                reserveA,
+                reserveB
+            );
+            if (amountBOptimal <= amountBDesired) {
+                if (amountBOptimal < amountBMin) revert InsufficientAmountB();
+                (amountA, amountB) = (amountADesired, amountBOptimal);
+            } else {
+                uint256 amountAOptimal = quoteLiquidity(
+                    amountBDesired,
+                    reserveB,
+                    reserveA
+                );
+                assert(amountAOptimal <= amountADesired);
+                if (amountAOptimal < amountAMin) revert InsufficientAmountA();
+                (amountA, amountB) = (amountAOptimal, amountBDesired);
+            }
+        }
+    }
+
+    /// @inheritdoc IRouter
     function addLiquidity(
         address tokenA,
         address tokenB,
@@ -193,76 +285,28 @@ abstract contract Router is IRouter {
         address to,
         uint256 deadline
     )
-        external
-        expires(deadline)
+        public
+        ensure(deadline)
         returns (uint256 amountA, uint256 amountB, uint256 liquidity)
     {
-        // XXX: Underspecified factory
-        address pool = poolFor(tokenA, tokenB, stable, _defaultFactory);
-        // XXX: more expensive this way. Optimisations possible.
-        uint256 quotedLiquidity;
-        (amountA, amountB, quotedLiquidity) = quoteAddLiquidity(
+        (amountA, amountB) = _addLiquidity(
             tokenA,
             tokenB,
             stable,
-            _defaultFactory,
             amountADesired,
-            amountBDesired
+            amountBDesired,
+            amountAMin,
+            amountBMin
         );
-        // The amount A minimum exceeds the amount A this liquidity addition would take.
-        // XXX: This technically means that amount B is too low comparatively.
-        if (amountA < amountAMin) revert InsufficientAmountBDesired();
-        if (amountB < amountBMin) revert InsufficientAmountADesired();
-        // Transfer tokens from sender to the contract.
-        // XXX: take tokens from `to` or `msg.sender`?
-        IERC20(tokenA).transferFrom(msg.sender, pool, amountA);
-        IERC20(tokenB).transferFrom(msg.sender, pool, amountB);
+        address pool = poolFor(tokenA, tokenB, stable, defaultFactory);
+        _safeTransferFrom(tokenA, _msgSender(), pool, amountA);
+        _safeTransferFrom(tokenB, _msgSender(), pool, amountB);
         liquidity = IPool(pool).mint(to);
-        return (amountA, amountB, liquidity);
-    }
-
-    function addLiquidityETH(
-        address token,
-        bool stable,
-        uint256 amountTokenDesired,
-        uint256 amountTokenMin,
-        uint256 amountETHMin,
-        address to,
-        uint256 deadline
-    )
-        external
-        payable
-        expires(deadline)
-        returns (uint256 amountToken, uint256 amountETH, uint256 liquidity)
-    {
-        // XXX: Underspecified factory
-        address pool = poolFor(token, weth, stable, _defaultFactory);
-        uint256 amountETHDesired = msg.value;
-        // XXX: more expensive this way
-        uint256 quotedLiquidity;
-        (amountToken, amountETH, quotedLiquidity) = quoteAddLiquidity(
-            token,
-            weth,
-            stable,
-            _defaultFactory,
-            amountTokenDesired,
-            amountETHDesired
-        );
-        // The amount A minimum exceeds the amount A this liquidity addition would take.
-        // XXX: This technically means that amount B is too low comparatively.
-        if (amountToken < amountTokenMin) revert InsufficientAmountBDesired();
-        if (amountETH < amountETHMin) revert InsufficientAmountADesired();
-        // Transfer tokens from sender to the contract.
-        // XXX: take tokens from `to` or `msg.sender`?
-        IWETH(weth).deposit{value: amountETH}();
-        IWETH(weth).transfer(pool, amountETH);
-        IERC20(token).transferFrom(msg.sender, pool, amountToken);
-        liquidity = IPool(pool).mint(to);
-        return (amountToken, amountETH, liquidity);
     }
 
     // **** REMOVE LIQUIDITY ****
 
+    /// @inheritdoc IRouter
     function removeLiquidity(
         address tokenA,
         address tokenB,
@@ -272,77 +316,50 @@ abstract contract Router is IRouter {
         uint256 amountBMin,
         address to,
         uint256 deadline
-    ) external expires(deadline) returns (uint256 amountA, uint256 amountB) {
-        address pool = poolFor(tokenA, tokenB, stable, _defaultFactory);
-        (uint256 quotedAmountA, uint256 quotedAmountB) = quoteRemoveLiquidity(
-            tokenA,
-            tokenB,
-            stable,
-            _defaultFactory,
-            liquidity
-        );
-        {
-            if (quotedAmountA < amountAMin) revert InsufficientAmountA();
-            if (quotedAmountB < amountBMin) revert InsufficientAmountB();
-            bool liquidityTransferSuccessful = IERC20(pool).transferFrom(
-                msg.sender,
-                pool,
-                liquidity
-            );
-            if (!liquidityTransferSuccessful) revert InsufficientLiquidity();
-        }
-        if (addressesNotOrdered(tokenA, tokenB)) {
-            (amountB, amountA) = IPool(pool).burn(to);
-            // return (amount1, amount0);
-        } else {
-            (amountA, amountB) = IPool(pool).burn(to);
-            // return (amount0, amount1);
-        }
-    }
-
-    function removeLiquidityETH(
-        address token,
-        bool stable,
-        uint256 liquidity,
-        uint256 amountTokenMin,
-        uint256 amountETHMin,
-        address to,
-        uint256 deadline
-    )
-        external
-        expires(deadline)
-        returns (uint256 amountToken, uint256 amountETH)
-    {
-        address pool = poolFor(token, weth, stable, _defaultFactory);
-        (
-            uint256 quotedAmountToken,
-            uint256 quotedAmountETH
-        ) = quoteRemoveLiquidity(
-                token,
-                weth,
-                stable,
-                _defaultFactory,
-                liquidity
-            );
-        if (quotedAmountToken < amountTokenMin) revert InsufficientAmountA();
-        if (quotedAmountETH < amountETHMin) revert InsufficientAmountB();
-        bool liquidityTransferSuccessful = IERC20(pool).transferFrom(
-            msg.sender,
-            pool,
-            liquidity
-        );
-        if (!liquidityTransferSuccessful) revert InsufficientLiquidity();
-        (uint256 amount0, uint256 amount1) = IPool(pool).burn(address(this));
-        (amountToken, amountETH) = addressesNotOrdered(token, weth)
-            ? (amount1, amount0)
-            : (amount0, amount1);
-        IWETH(weth).withdraw(amountETH);
-        IERC20(token).transfer(to, amountToken);
-        payable(to).send(amountETH);
-        return (amountToken, amountETH);
+    ) public ensure(deadline) returns (uint256 amountA, uint256 amountB) {
+        address pool = poolFor(tokenA, tokenB, stable, defaultFactory);
+        IERC20(pool).safeTransferFrom(_msgSender(), pool, liquidity);
+        (uint256 amount0, uint256 amount1) = IPool(pool).burn(to);
+        (address token0, ) = sortTokens(tokenA, tokenB);
+        (amountA, amountB) = tokenA == token0
+            ? (amount0, amount1)
+            : (amount1, amount0);
+        if (amountA < amountAMin) revert InsufficientAmountA();
+        if (amountB < amountBMin) revert InsufficientAmountB();
     }
 
     // **** SWAP ****
+    /// @dev requires the initial amount to have already been sent to the first pool
+    function _swap(
+        uint256[] memory amounts,
+        Route[] memory routes,
+        address _to
+    ) internal virtual {
+        uint256 _length = routes.length;
+        for (uint256 i = 0; i < _length; i++) {
+            (address token0, ) = sortTokens(routes[i].from, routes[i].to);
+            uint256 amountOut = amounts[i + 1];
+            (uint256 amount0Out, uint256 amount1Out) = routes[i].from == token0
+                ? (uint256(0), amountOut)
+                : (amountOut, uint256(0));
+            address to = i < routes.length - 1
+                ? poolFor(
+                    routes[i + 1].from,
+                    routes[i + 1].to,
+                    routes[i + 1].stable,
+                    routes[i + 1].factory
+                )
+                : _to;
+            IPool(
+                poolFor(
+                    routes[i].from,
+                    routes[i].to,
+                    routes[i].stable,
+                    routes[i].factory
+                )
+            ).swap(amount0Out, amount1Out, to, new bytes(0));
+        }
+    }
 
     function swapExactTokensForTokens(
         uint256 amountIn,
@@ -350,129 +367,472 @@ abstract contract Router is IRouter {
         Route[] calldata routes,
         address to,
         uint256 deadline
-    )
-        external
-        validPath(routes)
-        expires(deadline)
-        returns (uint256[] memory amounts)
-    {
+    ) external ensure(deadline) returns (uint256[] memory amounts) {
         amounts = getAmountsOut(amountIn, routes);
-        uint256 steps = routes.length;
-        if (amounts[steps - 1] < amountOutMin)
+        if (amounts[amounts.length - 1] < amountOutMin)
             revert InsufficientOutputAmount();
+        _safeTransferFrom(
+            routes[0].from,
+            _msgSender(),
+            poolFor(
+                routes[0].from,
+                routes[0].to,
+                routes[0].stable,
+                routes[0].factory
+            ),
+            amounts[0]
+        );
+        _swap(amounts, routes, to);
+    }
 
-        uint256 previousAmount = amountIn;
-        for (uint256 i = 0; i < steps; i++) {
-            Route memory currentRoute = routes[i];
-            // address tokenIn = currentRoute.from;
-            // address tokenOut = currentRoute.to;
-            address pool = poolFor(currentRoute);
-            bool swapped = addressesNotOrdered(
-                currentRoute.from,
-                currentRoute.to
-            );
-            (uint256 amount0Out, uint256 amount1Out) = swapped
-                ? (amounts[i], uint256(0))
-                : (uint256(0), amounts[i]);
-            address tokenSender = i == 0 ? msg.sender : address(this);
-            IERC20(currentRoute.from).transferFrom(
-                tokenSender,
-                pool,
-                previousAmount
-            );
-            IPool(pool).swap(amount0Out, amount1Out, address(this), bytes(""));
-            previousAmount = amounts[i];
-            if (i == steps - 1) {
-                IERC20(currentRoute.to).transfer(to, previousAmount);
-            }
-        }
+    function UNSAFE_swapExactTokensForTokens(
+        uint256[] memory amounts,
+        Route[] calldata routes,
+        address to,
+        uint256 deadline
+    ) external ensure(deadline) returns (uint256[] memory) {
+        _safeTransferFrom(
+            routes[0].from,
+            _msgSender(),
+            poolFor(
+                routes[0].from,
+                routes[0].to,
+                routes[0].stable,
+                routes[0].factory
+            ),
+            amounts[0]
+        );
+        _swap(amounts, routes, to);
         return amounts;
     }
 
-    /// @notice Used by zapper to determine appropriate ratio of A to B to deposit liquidity. Assumes stable pool.
-    /// @dev Returns stable liquidity ratio of B to (A + B).
-    ///      E.g. if ratio is 0.4, it means there is more of A than there is of B.
-    ///      Therefore you should deposit more of token A than B.
-    /// @param tokenA tokenA of stable pool you are zapping into.
-    /// @param tokenB tokenB of stable pool you are zapping into.
-    /// @param factory Factory that created stable pool.
-    /// @return ratio Ratio of token0 to token1 required to deposit into zap.
-    function quoteStableLiquidityRatio(
-        address tokenA,
-        address tokenB,
-        address factory
-    ) public view returns (uint256 ratio) {
-        return quoteLiquidityRatio(tokenA, tokenB, true, factory);
+    // **** SWAP (supporting fee-on-transfer tokens) ****
+    /// @dev requires the initial amount to have already been sent to the first pool
+    function _swapSupportingFeeOnTransferTokens(
+        Route[] memory routes,
+        address _to
+    ) internal virtual {
+        uint256 _length = routes.length;
+        for (uint256 i; i < _length; i++) {
+            (address token0, ) = sortTokens(routes[i].from, routes[i].to);
+            address pool = poolFor(
+                routes[i].from,
+                routes[i].to,
+                routes[i].stable,
+                routes[i].factory
+            );
+            uint256 amountInput;
+            uint256 amountOutput;
+            {
+                // stack too deep
+                (uint256 reserveA, ) = getReserves(
+                    routes[i].from,
+                    routes[i].to,
+                    routes[i].stable,
+                    routes[i].factory
+                ); // getReserves sorts it for us i.e. reserveA is always for from
+                amountInput = IERC20(routes[i].from).balanceOf(pool) - reserveA;
+            }
+            amountOutput = IPool(pool).getAmountOut(
+                amountInput,
+                routes[i].from
+            );
+            (uint256 amount0Out, uint256 amount1Out) = routes[i].from == token0
+                ? (uint256(0), amountOutput)
+                : (amountOutput, uint256(0));
+            address to = i < routes.length - 1
+                ? poolFor(
+                    routes[i + 1].from,
+                    routes[i + 1].to,
+                    routes[i + 1].stable,
+                    routes[i + 1].factory
+                )
+                : _to;
+            IPool(pool).swap(amount0Out, amount1Out, to, new bytes(0));
+        }
     }
 
-    // Return the ratio for depositing liquidity
-    // 1e18 = 1.0
-    function quoteLiquidityRatio(
+    /// @inheritdoc IRouter
+    function swapExactTokensForTokensSupportingFeeOnTransferTokens(
+        uint256 amountIn,
+        uint256 amountOutMin,
+        Route[] calldata routes,
+        address to,
+        uint256 deadline
+    ) external ensure(deadline) {
+        _safeTransferFrom(
+            routes[0].from,
+            _msgSender(),
+            poolFor(
+                routes[0].from,
+                routes[0].to,
+                routes[0].stable,
+                routes[0].factory
+            ),
+            amountIn
+        );
+        uint256 _length = routes.length - 1;
+        uint256 balanceBefore = IERC20(routes[_length].to).balanceOf(to);
+        _swapSupportingFeeOnTransferTokens(routes, to);
+        if (
+            IERC20(routes[_length].to).balanceOf(to) - balanceBefore <
+            amountOutMin
+        ) revert InsufficientOutputAmount();
+    }
+
+    /// @inheritdoc IRouter
+    function zapIn(
+        address tokenIn,
+        uint256 amountInA,
+        uint256 amountInB,
+        Zap calldata zapInPool,
+        Route[] calldata routesA,
+        Route[] calldata routesB,
+        address to,
+        bool stake
+    ) external returns (uint256 liquidity) {
+        uint256 amountIn = amountInA + amountInB;
+
+        _safeTransferFrom(tokenIn, _msgSender(), address(this), amountIn);
+        _zapSwap(tokenIn, amountInA, amountInB, zapInPool, routesA, routesB);
+        _zapInLiquidity(zapInPool);
+        address pool = poolFor(
+            zapInPool.tokenA,
+            zapInPool.tokenB,
+            zapInPool.stable,
+            zapInPool.factory
+        );
+
+        if (stake) {
+            liquidity = IPool(pool).mint(address(this));
+            address gauge = IVoter(voter).gauges(pool);
+            IERC20(pool).safeApprove(address(gauge), liquidity);
+            IGauge(gauge).deposit(liquidity, to);
+            IERC20(pool).safeApprove(address(gauge), 0);
+        } else {
+            liquidity = IPool(pool).mint(to);
+        }
+
+        _returnAssets(tokenIn);
+        _returnAssets(zapInPool.tokenA);
+        _returnAssets(zapInPool.tokenB);
+    }
+
+    /// @dev Handles swap leg of zap in (i.e. convert tokenIn into tokenA and tokenB).
+    function _zapSwap(
+        address tokenIn,
+        uint256 amountInA,
+        uint256 amountInB,
+        Zap calldata zapInPool,
+        Route[] calldata routesA,
+        Route[] calldata routesB
+    ) internal {
+        address tokenA = zapInPool.tokenA;
+        address tokenB = zapInPool.tokenB;
+        bool stable = zapInPool.stable;
+        address factory = zapInPool.factory;
+        address pool = poolFor(tokenA, tokenB, stable, factory);
+
+        {
+            (uint256 reserve0, uint256 reserve1, ) = IPool(pool).getReserves();
+            if (reserve0 <= MINIMUM_LIQUIDITY || reserve1 <= MINIMUM_LIQUIDITY)
+                revert PoolDoesNotExist();
+        }
+
+        if (tokenIn != tokenA) {
+            if (routesA[routesA.length - 1].to != tokenA)
+                revert InvalidRouteA();
+            _internalSwap(tokenIn, amountInA, zapInPool.amountOutMinA, routesA);
+        }
+        if (tokenIn != tokenB) {
+            if (routesB[routesB.length - 1].to != tokenB)
+                revert InvalidRouteB();
+            _internalSwap(tokenIn, amountInB, zapInPool.amountOutMinB, routesB);
+        }
+    }
+
+    /// @dev Handles liquidity adding component of zap in.
+    function _zapInLiquidity(Zap calldata zapInPool) internal {
+        address tokenA = zapInPool.tokenA;
+        address tokenB = zapInPool.tokenB;
+        bool stable = zapInPool.stable;
+        address factory = zapInPool.factory;
+        address pool = poolFor(tokenA, tokenB, stable, factory);
+        (uint256 amountA, uint256 amountB) = _quoteZapLiquidity(
+            tokenA,
+            tokenB,
+            stable,
+            factory,
+            IERC20(tokenA).balanceOf(address(this)),
+            IERC20(tokenB).balanceOf(address(this)),
+            zapInPool.amountAMin,
+            zapInPool.amountBMin
+        );
+        _safeTransfer(tokenA, pool, amountA);
+        _safeTransfer(tokenB, pool, amountB);
+    }
+
+    /// @dev Similar to _addLiquidity. Assumes a pool exists, and accepts a factory argument.
+    function _quoteZapLiquidity(
         address tokenA,
         address tokenB,
         bool stable,
-        address factory
-    ) internal view returns (uint256 ratio) {
+        address _factory,
+        uint256 amountADesired,
+        uint256 amountBDesired,
+        uint256 amountAMin,
+        uint256 amountBMin
+    ) internal view returns (uint256 amountA, uint256 amountB) {
+        if (amountADesired < amountAMin) revert InsufficientAmountADesired();
+        if (amountBDesired < amountBMin) revert InsufficientAmountBDesired();
         (uint256 reserveA, uint256 reserveB) = getReserves(
             tokenA,
             tokenB,
             stable,
-            factory
+            _factory
         );
-        return (reserveA * 1e18) / reserveB;
-    }
-
-    /// @notice Returns the addresses in ascending order, plus a flag denoting whether they were swapped.
-    function orderedAddresses(
-        address tokenA,
-        address tokenB
-    ) internal pure returns (address token0, address token1, bool swap) {
-        return
-            tokenA < tokenB ? (tokenA, tokenB, false) : (tokenB, tokenA, true);
-    }
-
-    function addressesNotOrdered(
-        address tokenA,
-        address tokenB
-    ) internal pure returns (bool) {
-        return tokenB <= tokenA;
-    }
-
-    function validatePair(address tokenA, address tokenB) internal pure {
-        if (tokenA == tokenB) revert SameAddresses();
-        if (tokenA == address(0) || tokenB == address(0)) revert ZeroAddress();
-    }
-
-    function validateRoute(
-        Route[] calldata routes
-    ) internal view returns (bool) {
-        uint256 steps = routes.length;
-        if (steps == 0) return false;
-        address previousToken = routes[0].from;
-        for (uint256 i = 0; i < steps; i++) {
-            if (routes[i].from != previousToken) return false;
-            previousToken = routes[i].to;
+        if (reserveA == 0 && reserveB == 0) {
+            (amountA, amountB) = (amountADesired, amountBDesired);
+        } else {
+            uint256 amountBOptimal = quoteLiquidity(
+                amountADesired,
+                reserveA,
+                reserveB
+            );
+            if (amountBOptimal <= amountBDesired) {
+                if (amountBOptimal < amountBMin) revert InsufficientAmountB();
+                (amountA, amountB) = (amountADesired, amountBOptimal);
+            } else {
+                uint256 amountAOptimal = quoteLiquidity(
+                    amountBDesired,
+                    reserveB,
+                    reserveA
+                );
+                assert(amountAOptimal <= amountADesired);
+                if (amountAOptimal < amountAMin) revert InsufficientAmountA();
+                (amountA, amountB) = (amountAOptimal, amountBDesired);
+            }
         }
     }
 
-    // XXX: Assume timestamp here. Trivial change for block number.
-    modifier expires(uint256 deadline) {
-        if (block.timestamp > deadline) revert Expired();
-        _;
+    /// @dev Handles swaps internally for zaps.
+    function _internalSwap(
+        address tokenIn,
+        uint256 amountIn,
+        uint256 amountOutMin,
+        Route[] memory routes
+    ) internal {
+        uint256[] memory amounts = getAmountsOut(amountIn, routes);
+        if (amounts[amounts.length - 1] < amountOutMin)
+            revert InsufficientOutputAmount();
+        address pool = poolFor(
+            routes[0].from,
+            routes[0].to,
+            routes[0].stable,
+            routes[0].factory
+        );
+        _safeTransfer(tokenIn, pool, amountIn);
+        _swap(amounts, routes, address(this));
     }
 
-    modifier validRouteA(Route[] calldata routeA) {
-        if (!validateRoute(routeA)) revert InvalidRouteA();
-        _;
+    /// @inheritdoc IRouter
+    function zapOut(
+        address tokenOut,
+        uint256 liquidity,
+        Zap calldata zapOutPool,
+        Route[] calldata routesA,
+        Route[] calldata routesB
+    ) external {
+        address tokenA = zapOutPool.tokenA;
+        address tokenB = zapOutPool.tokenB;
+        address _tokenOut = tokenOut;
+        _zapOutLiquidity(liquidity, zapOutPool);
+
+        uint256 balance;
+        if (tokenA != _tokenOut) {
+            balance = IERC20(tokenA).balanceOf(address(this));
+            if (routesA[routesA.length - 1].to != _tokenOut)
+                revert InvalidRouteA();
+            _internalSwap(tokenA, balance, zapOutPool.amountOutMinA, routesA);
+        }
+        if (tokenB != _tokenOut) {
+            balance = IERC20(tokenB).balanceOf(address(this));
+            if (routesB[routesB.length - 1].to != _tokenOut)
+                revert InvalidRouteB();
+            _internalSwap(tokenB, balance, zapOutPool.amountOutMinB, routesB);
+        }
+
+        _returnAssets(tokenOut);
     }
 
-    modifier validRouteB(Route[] calldata routeB) {
-        if (!validateRoute(routeB)) revert InvalidRouteB();
-        _;
+    /// @dev Handles liquidity removing component of zap out.
+    function _zapOutLiquidity(
+        uint256 liquidity,
+        Zap calldata zapOutPool
+    ) internal {
+        address tokenA = zapOutPool.tokenA;
+        address tokenB = zapOutPool.tokenB;
+        address pool = poolFor(
+            tokenA,
+            tokenB,
+            zapOutPool.stable,
+            zapOutPool.factory
+        );
+        IERC20(pool).safeTransferFrom(msg.sender, pool, liquidity);
+        (address token0, ) = sortTokens(tokenA, tokenB);
+        (uint256 amount0, uint256 amount1) = IPool(pool).burn(address(this));
+        (uint256 amountA, uint256 amountB) = tokenA == token0
+            ? (amount0, amount1)
+            : (amount1, amount0);
+        if (amountA < zapOutPool.amountAMin) revert InsufficientAmountA();
+        if (amountB < zapOutPool.amountBMin) revert InsufficientAmountB();
     }
 
-    modifier validPath(Route[] calldata route) {
-        if (!validateRoute(route)) revert InvalidPath();
-        _;
+    /// @inheritdoc IRouter
+    function generateZapInParams(
+        address tokenA,
+        address tokenB,
+        bool stable,
+        address _factory,
+        uint256 amountInA,
+        uint256 amountInB,
+        Route[] calldata routesA,
+        Route[] calldata routesB
+    )
+        external
+        view
+        returns (
+            uint256 amountOutMinA,
+            uint256 amountOutMinB,
+            uint256 amountAMin,
+            uint256 amountBMin
+        )
+    {
+        amountOutMinA = amountInA;
+        amountOutMinB = amountInB;
+        uint256[] memory amounts;
+        if (routesA.length > 0) {
+            amounts = getAmountsOut(amountInA, routesA);
+            amountOutMinA = amounts[amounts.length - 1];
+        }
+        if (routesB.length > 0) {
+            amounts = getAmountsOut(amountInB, routesB);
+            amountOutMinB = amounts[amounts.length - 1];
+        }
+        (amountAMin, amountBMin, ) = quoteAddLiquidity(
+            tokenA,
+            tokenB,
+            stable,
+            _factory,
+            amountOutMinA,
+            amountOutMinB
+        );
+    }
+
+    /// @inheritdoc IRouter
+    function generateZapOutParams(
+        address tokenA,
+        address tokenB,
+        bool stable,
+        address _factory,
+        uint256 liquidity,
+        Route[] calldata routesA,
+        Route[] calldata routesB
+    )
+        external
+        view
+        returns (
+            uint256 amountOutMinA,
+            uint256 amountOutMinB,
+            uint256 amountAMin,
+            uint256 amountBMin
+        )
+    {
+        (amountAMin, amountBMin) = quoteRemoveLiquidity(
+            tokenA,
+            tokenB,
+            stable,
+            _factory,
+            liquidity
+        );
+        amountOutMinA = amountAMin;
+        amountOutMinB = amountBMin;
+        uint256[] memory amounts;
+        if (routesA.length > 0) {
+            amounts = getAmountsOut(amountAMin, routesA);
+            amountOutMinA = amounts[amounts.length - 1];
+        }
+        if (routesB.length > 0) {
+            amounts = getAmountsOut(amountBMin, routesB);
+            amountOutMinB = amounts[amounts.length - 1];
+        }
+    }
+
+    /// @dev Return residual assets from zapping.
+    /// @param token to return.
+    function _returnAssets(address token) internal {
+        address sender = _msgSender();
+        uint256 balance = IERC20(token).balanceOf(address(this));
+        if (balance > 0) {
+            IERC20(token).safeTransfer(sender, balance);
+        }
+    }
+
+    /// @inheritdoc IRouter
+    function quoteStableLiquidityRatio(
+        address tokenA,
+        address tokenB,
+        address _factory
+    ) external view returns (uint256 ratio) {
+        IPool pool = IPool(poolFor(tokenA, tokenB, true, _factory));
+
+        uint256 decimalsA = 10 ** IERC20Metadata(tokenA).decimals();
+        uint256 decimalsB = 10 ** IERC20Metadata(tokenB).decimals();
+
+        uint256 investment = decimalsA;
+        uint256 out = pool.getAmountOut(investment, tokenA);
+        (uint256 amountA, uint256 amountB, ) = quoteAddLiquidity(
+            tokenA,
+            tokenB,
+            true,
+            _factory,
+            investment,
+            out
+        );
+
+        amountA = (amountA * 1e18) / decimalsA;
+        amountB = (amountB * 1e18) / decimalsB;
+        out = (out * 1e18) / decimalsB;
+        investment = (investment * 1e18) / decimalsA;
+
+        ratio = (((out * 1e18) / investment) * amountA) / amountB;
+
+        return (investment * 1e18) / (ratio + 1e18);
+    }
+
+    function _safeTransfer(address token, address to, uint256 value) internal {
+        require(token.code.length > 0);
+        (bool success, bytes memory data) = token.call(
+            abi.encodeWithSelector(IERC20.transfer.selector, to, value)
+        );
+        require(success && (data.length == 0 || abi.decode(data, (bool))));
+    }
+
+    function _safeTransferFrom(
+        address token,
+        address from,
+        address to,
+        uint256 value
+    ) internal {
+        require(token.code.length > 0);
+        (bool success, bytes memory data) = token.call(
+            abi.encodeWithSelector(
+                IERC20.transferFrom.selector,
+                from,
+                to,
+                value
+            )
+        );
+        require(success && (data.length == 0 || abi.decode(data, (bool))));
     }
 }

@@ -82,4 +82,13 @@ contract Deployment is BaseSystemTest {
         assertEq(address(veBTCEpochGovernor.token()), address(veBTC), "VeBTCEpochGovernor token should be properly set");
         assertEq(veBTCEpochGovernor.splitter(), address(chainFeeSplitter), "VeBTCEpochGovernor splitter should be properly set");
     }
+
+    function testRouter() public {
+        assertNotEq(address(router), address(0), "Router address should be non-zero");
+
+        assertTrue(router.isTrustedForwarder(address(forwarder)), "Router should consider the forwarder as trusted");
+        assertEq(router.factoryRegistry(), address(factoryRegistry), "Router factory registry should be properly set");
+        assertEq(router.defaultFactory(), address(poolFactory), "Router default pool factory should be properly set");
+        assertEq(router.voter(), address(veBTCVoter), "Router voter should be properly set");
+    }
 }

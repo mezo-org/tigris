@@ -16,6 +16,7 @@ import {RewardsDistributor} from "contracts/RewardsDistributor.sol";
 import {ChainFeeSplitter} from "contracts/ChainFeeSplitter.sol";
 import {EpochGovernor} from "contracts/EpochGovernor.sol";
 import {TestERC20} from "contracts/test/TestERC20.sol";
+import {Router} from "contracts/Router.sol";
 
 abstract contract BaseSystemTest is Script, Test {
     using stdJson for string;
@@ -52,6 +53,7 @@ abstract contract BaseSystemTest is Script, Test {
     RewardsDistributor public veBTCRewardsDistributor;
     ChainFeeSplitter public chainFeeSplitter;
     EpochGovernor public veBTCEpochGovernor;
+    Router public router;
 
     address public pool_BTC_mUSD;
     address public pool_mUSD_LIMPETH;
@@ -79,6 +81,7 @@ abstract contract BaseSystemTest is Script, Test {
         veBTCRewardsDistributor = RewardsDistributor(getDeploymentAddress("VeBTCRewardsDistributor"));
         chainFeeSplitter = ChainFeeSplitter(getDeploymentAddress("ChainFeeSplitter"));
         veBTCEpochGovernor = EpochGovernor(payable(getDeploymentAddress("VeBTCEpochGovernor")));
+        router = Router(getDeploymentAddress("Router"));
 
         pool_BTC_mUSD = createPoolWithGauge(address(BTC), address(mUSD), false);
         pool_mUSD_LIMPETH = createPoolWithGauge(address(mUSD), address(LIMPETH), false);
