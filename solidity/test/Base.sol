@@ -49,8 +49,7 @@ abstract contract Base is Script, Test {
     /// @dev Core Deployment
     MezoForwarder public forwarder;
     Pool public implementation;
-    // TODO: Uncomment once Router implementation is complete.
-    // Router public router;
+    Router public router;
     VotingEscrow public escrow;
     MockVeArtProxy public artProxy;
     PoolFactory public factory;
@@ -101,15 +100,12 @@ abstract contract Base is Script, Test {
         escrow.setVoterAndDistributor(address(voter), address(distributor));
         escrow.setAllowedManager(allowedManager);
 
-        // Setup router
-        // TODO: Uncomment once Router implementation is complete.
-        // router = new Router(
-        //     address(forwarder),
-        //     address(factoryRegistry),
-        //     address(factory),
-        //     address(voter),
-        //     address(0)
-        // );
+        router = new Router(
+            address(forwarder),
+            address(factoryRegistry),
+            address(factory),
+            address(voter)
+        );
 
         // Setup fee splitter
         chainFeeSplitter = new ChainFeeSplitter(address(voter), address(escrow), address(distributor));
