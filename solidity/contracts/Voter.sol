@@ -393,7 +393,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
         ) revert FactoryPathNotApproved();
 
         address[] memory rewards = new address[](2);
-        bool isPool = IPoolFactory(_poolFactory).isPair(_pool); // backwards compatibility to v1
+        bool isPool = IPoolFactory(_poolFactory).isPool(_pool); // backwards compatibility to v1
         address token0;
         address token1;
 

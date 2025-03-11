@@ -142,7 +142,7 @@ contract CompoundOptimizer is ICompoundOptimizer {
 
             // Go to next route if a trading pool does not exist
             if (
-                IPoolFactory(routes[0].factory).getPair(
+                IPoolFactory(routes[0].factory).getPool(
                     token,
                     routes[0].to,
                     routes[0].stable
