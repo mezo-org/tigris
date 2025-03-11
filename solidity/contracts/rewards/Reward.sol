@@ -8,46 +8,44 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import {TimeLibrary} from "../libraries/TimeLibrary.sol";
+import {ProtocolTimeLibrary} from "../libraries/ProtocolTimeLibrary.sol";
 
-/// @title Base reward contract for distribution of rewards
+/// @title Reward
+/// @author velodrome.finance, @figs999, @pegahcarter
+/// @notice Base reward contract for distribution of rewards
 abstract contract Reward is IReward, ERC2771Context, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
+    /// @inheritdoc IReward
     uint256 public constant DURATION = 7 days;
 
+    /// @inheritdoc IReward
     address public immutable voter;
+    /// @inheritdoc IReward
     address public immutable ve;
-    /// @dev Address which has permission to externally call _deposit() & _withdraw()
+    /// @inheritdoc IReward
     address public authorized;
 
+    /// @inheritdoc IReward
     uint256 public totalSupply;
+    /// @inheritdoc IReward
     mapping(uint256 => uint256) public balanceOf;
+    /// @inheritdoc IReward
     mapping(address => mapping(uint256 => uint256)) public tokenRewardsPerEpoch;
+    /// @inheritdoc IReward
     mapping(address => mapping(uint256 => uint256)) public lastEarn;
 
     address[] public rewards;
+    /// @inheritdoc IReward
     mapping(address => bool) public isReward;
-
-    /// @notice A checkpoint for marking balance
-    struct Checkpoint {
-        uint256 timestamp;
-        uint256 balanceOf;
-    }
-
-    /// @notice A checkpoint for marking supply
-    struct SupplyCheckpoint {
-        uint256 timestamp;
-        uint256 supply;
-    }
 
     /// @notice A record of balance checkpoints for each account, by index
     mapping(uint256 => mapping(uint256 => Checkpoint)) public checkpoints;
-    /// @notice The number of checkpoints for each account
+    /// @inheritdoc IReward
     mapping(uint256 => uint256) public numCheckpoints;
     /// @notice A record of balance checkpoints for each token, by index
     mapping(uint256 => SupplyCheckpoint) public supplyCheckpoints;
-    /// @notice The number of checkpoints
+    /// @inheritdoc IReward
     uint256 public supplyNumCheckpoints;
 
     constructor(address _forwarder, address _voter) ERC2771Context(_forwarder) {
@@ -132,10 +130,10 @@ abstract contract Reward is IReward, ERC2771Context, ReentrancyGuard {
 
         if (
             _nCheckPoints > 0 &&
-            TimeLibrary.epochStart(
+            ProtocolTimeLibrary.epochStart(
                 checkpoints[tokenId][_nCheckPoints - 1].timestamp
             ) ==
-            TimeLibrary.epochStart(_timestamp)
+            ProtocolTimeLibrary.epochStart(_timestamp)
         ) {
             checkpoints[tokenId][_nCheckPoints - 1] = Checkpoint(
                 _timestamp,
@@ -156,10 +154,10 @@ abstract contract Reward is IReward, ERC2771Context, ReentrancyGuard {
 
         if (
             _nCheckPoints > 0 &&
-            TimeLibrary.epochStart(
+            ProtocolTimeLibrary.epochStart(
                 supplyCheckpoints[_nCheckPoints - 1].timestamp
             ) ==
-            TimeLibrary.epochStart(_timestamp)
+            ProtocolTimeLibrary.epochStart(_timestamp)
         ) {
             supplyCheckpoints[_nCheckPoints - 1] = SupplyCheckpoint(
                 _timestamp,
@@ -174,6 +172,7 @@ abstract contract Reward is IReward, ERC2771Context, ReentrancyGuard {
         }
     }
 
+    /// @inheritdoc IReward
     function rewardsListLength() external view returns (uint256) {
         return rewards.length;
     }
@@ -189,15 +188,20 @@ abstract contract Reward is IReward, ERC2771Context, ReentrancyGuard {
 
         uint256 reward = 0;
         uint256 _supply = 1;
-        uint256 _currTs = TimeLibrary.epochStart(lastEarn[token][tokenId]); // take epoch last claimed in as starting point
+        uint256 _currTs = ProtocolTimeLibrary.epochStart(
+            lastEarn[token][tokenId]
+        ); // take epoch last claimed in as starting point
         uint256 _index = getPriorBalanceIndex(tokenId, _currTs);
         Checkpoint memory cp0 = checkpoints[tokenId][_index];
 
         // accounts for case where lastEarn is before first checkpoint
-        _currTs = Math.max(_currTs, TimeLibrary.epochStart(cp0.timestamp));
+        _currTs = Math.max(
+            _currTs,
+            ProtocolTimeLibrary.epochStart(cp0.timestamp)
+        );
 
         // get epochs between current epoch and first checkpoint in same epoch as last claim
-        uint256 numEpochs = (TimeLibrary.epochStart(block.timestamp) -
+        uint256 numEpochs = (ProtocolTimeLibrary.epochStart(block.timestamp) -
             _currTs) / DURATION;
 
         if (numEpochs > 0) {
@@ -288,7 +292,7 @@ abstract contract Reward is IReward, ERC2771Context, ReentrancyGuard {
         if (amount == 0) revert ZeroAmount();
         IERC20(token).safeTransferFrom(sender, address(this), amount);
 
-        uint256 epochStart = TimeLibrary.epochStart(block.timestamp);
+        uint256 epochStart = ProtocolTimeLibrary.epochStart(block.timestamp);
         tokenRewardsPerEpoch[token][epochStart] += amount;
 
         emit NotifyReward(sender, token, epochStart, amount);

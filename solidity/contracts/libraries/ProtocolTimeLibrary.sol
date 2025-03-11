@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-library TimeLibrary {
+library ProtocolTimeLibrary {
     uint256 internal constant WEEK = 7 days;
 
     /// @dev Returns start of epoch based on current timestamp
