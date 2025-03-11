@@ -33,8 +33,11 @@ contract Deployment is BaseSystemTest {
         assertNotEq(address(factoryRegistry), address(0), "FactoryRegistry address should be non-zero");
 
         assertEq(factoryRegistry.fallbackPoolFactory(), address(poolFactory), "FactoryRegistry fallback PoolFactory should be properly set");
-        assertEq(factoryRegistry.fallbackVotingRewardsFactory(), address(votingRewardsFactory), "FactoryRegistry fallback VotingRewardsFactory should be properly set");
-        assertEq(factoryRegistry.fallbackGaugeFactory(), address(gaugeFactory), "FactoryRegistry fallback GaugeFactory should be properly set");
+        assertEq(factoryRegistry.managedRewardsFactory(), address(managedRewardsFactory), "FactoryRegistry managed RewardsFactory should be properly set");
+
+        (address fallbackVotingRewardsFactory, address fallbackGaugeFactory) = factoryRegistry.factoriesToPoolFactory(address(poolFactory));
+        assertEq(fallbackVotingRewardsFactory, address(votingRewardsFactory), "FactoryRegistry fallback VotingRewardsFactory should be properly approved");
+        assertEq(fallbackGaugeFactory, address(gaugeFactory), "FactoryRegistry fallback GaugeFactory should be properly approved");
     }
 
     function testVeBTC() public {
