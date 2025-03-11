@@ -16,8 +16,7 @@ import {ProtocolTimeLibrary} from "../libraries/ProtocolTimeLibrary.sol";
 abstract contract Reward is IReward, ERC2771Context, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
-    /// @inheritdoc IReward
-    uint256 public constant DURATION = 7 days;
+    uint256 constant DURATION = 7 days;
 
     /// @inheritdoc IReward
     address public immutable voter;
@@ -175,6 +174,11 @@ abstract contract Reward is IReward, ERC2771Context, ReentrancyGuard {
     /// @inheritdoc IReward
     function rewardsListLength() external view returns (uint256) {
         return rewards.length;
+    }
+
+    /// @inheritdoc IReward
+    function duration() external pure returns (uint256) {
+        return DURATION;
     }
 
     /// @inheritdoc IReward

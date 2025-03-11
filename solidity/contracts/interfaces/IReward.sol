@@ -46,7 +46,7 @@ interface IReward {
     }
 
     /// @notice Epoch duration constant (7 days)
-    function DURATION() external view returns (uint256);
+    function duration() external pure returns (uint256);
 
     /// @notice Address of Voter.sol
     function voter() external view returns (address);
