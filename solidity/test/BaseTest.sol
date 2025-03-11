@@ -57,7 +57,7 @@ abstract contract BaseTest is Base, TestOwner {
 
     /// @dev Default set up of local deployment run if Deployment.DEFAULT selected.
     ///      Only _setUp function run if Deployment.CUSTOM selected.
-    ///      _setUp can be overriden to provide additional configuration if desired
+    ///      _setUp can be overridden to provide additional configuration if desired
     function setUp() public {
         if (deploymentType == Deployment.DEFAULT) {
             _testSetup();
@@ -115,17 +115,17 @@ abstract contract BaseTest is Base, TestOwner {
         deployPoolWithOwner(address(owner));
 
         // BTC - mUSD unstable
-        gauge = Gauge(voter.createGauge(address(factory), address(votingRewardsFactory), address(gaugeFactory), address(pool)));
+        gauge = Gauge(voter.createGauge(address(factory), address(pool)));
         feesVotingReward = FeesVotingReward(voter.gaugeToFees(address(gauge)));
         bribeVotingReward = BribeVotingReward(voter.gaugeToBribe(address(gauge)));
 
         // mUSD - LIMPETH unstable
-        gauge2 = Gauge(voter.createGauge(address(factory), address(votingRewardsFactory), address(gaugeFactory), address(pool2)));
+        gauge2 = Gauge(voter.createGauge(address(factory), address(pool2)));
         feesVotingReward2 = FeesVotingReward(voter.gaugeToFees(address(gauge2)));
         bribeVotingReward2 = BribeVotingReward(voter.gaugeToBribe(address(gauge2)));
 
         // mUSD - wtBTC unstable
-        gauge3 = Gauge(voter.createGauge(address(factory), address(votingRewardsFactory), address(gaugeFactory), address(pool3)));
+        gauge3 = Gauge(voter.createGauge(address(factory), address(pool3)));
         feesVotingReward3 = FeesVotingReward(voter.gaugeToFees(address(gauge3)));
         bribeVotingReward3 = BribeVotingReward(voter.gaugeToBribe(address(gauge3)));
 
