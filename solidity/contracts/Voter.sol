@@ -17,7 +17,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import {TimeLibrary} from "./libraries/TimeLibrary.sol";
+import {ProtocolTimeLibrary} from "./libraries/ProtocolTimeLibrary.sol";
 
 /// @title Protocol Voter
 /// @author velodrome.finance, @figs999, @pegahcarter
@@ -104,29 +104,33 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
 
     modifier onlyNewEpoch(uint256 _tokenId) {
         // ensure new epoch since last vote
-        if (TimeLibrary.epochStart(block.timestamp) <= lastVoted[_tokenId])
-            revert AlreadyVotedOrDeposited();
-        if (block.timestamp <= TimeLibrary.epochVoteStart(block.timestamp))
-            revert DistributeWindow();
+        if (
+            ProtocolTimeLibrary.epochStart(block.timestamp) <=
+            lastVoted[_tokenId]
+        ) revert AlreadyVotedOrDeposited();
+        if (
+            block.timestamp <=
+            ProtocolTimeLibrary.epochVoteStart(block.timestamp)
+        ) revert DistributeWindow();
         _;
     }
 
     function epochStart(uint256 _timestamp) external pure returns (uint256) {
-        return TimeLibrary.epochStart(_timestamp);
+        return ProtocolTimeLibrary.epochStart(_timestamp);
     }
 
     function epochNext(uint256 _timestamp) external pure returns (uint256) {
-        return TimeLibrary.epochNext(_timestamp);
+        return ProtocolTimeLibrary.epochNext(_timestamp);
     }
 
     function epochVoteStart(
         uint256 _timestamp
     ) external pure returns (uint256) {
-        return TimeLibrary.epochVoteStart(_timestamp);
+        return ProtocolTimeLibrary.epochVoteStart(_timestamp);
     }
 
     function epochVoteEnd(uint256 _timestamp) external pure returns (uint256) {
-        return TimeLibrary.epochVoteEnd(_timestamp);
+        return ProtocolTimeLibrary.epochVoteEnd(_timestamp);
     }
 
     /// @dev requires initialization with at least rewardToken
@@ -218,8 +222,10 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
 
     /// @inheritdoc IVoter
     function poke(uint256 _tokenId) external nonReentrant {
-        if (block.timestamp <= TimeLibrary.epochVoteStart(block.timestamp))
-            revert DistributeWindow();
+        if (
+            block.timestamp <=
+            ProtocolTimeLibrary.epochVoteStart(block.timestamp)
+        ) revert DistributeWindow();
         uint256 _weight = IVotingEscrow(ve).balanceOfNFT(_tokenId);
         _poke(_tokenId, _weight);
     }
@@ -302,7 +308,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
             revert InactiveManagedNFT();
         uint256 _timestamp = block.timestamp;
         if (
-            (_timestamp > TimeLibrary.epochVoteEnd(_timestamp)) &&
+            (_timestamp > ProtocolTimeLibrary.epochVoteEnd(_timestamp)) &&
             !isWhitelistedNFT[_tokenId]
         ) revert NotWhitelistedNFT();
         lastVoted[_tokenId] = _timestamp;
@@ -321,7 +327,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
         if (IVotingEscrow(ve).deactivated(_mTokenId))
             revert InactiveManagedNFT();
         uint256 _timestamp = block.timestamp;
-        if (_timestamp > TimeLibrary.epochVoteEnd(_timestamp))
+        if (_timestamp > ProtocolTimeLibrary.epochVoteEnd(_timestamp))
             revert SpecialVotingWindow();
         lastVoted[_tokenId] = _timestamp;
         IVotingEscrow(ve).depositManaged(_tokenId, _mTokenId);

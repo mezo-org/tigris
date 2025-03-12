@@ -15,7 +15,7 @@ import {Timers} from "@openzeppelin/contracts/utils/Timers.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IGovernor} from "./IGovernor.sol";
 import {ISplitter} from "../interfaces/ISplitter.sol";
-import {TimeLibrary} from "../libraries/TimeLibrary.sol";
+import {ProtocolTimeLibrary} from "../libraries/ProtocolTimeLibrary.sol";
 
 /**
  * @dev Modified lightly from OpenZeppelin's Governor contract to support three option voting via callback.
@@ -326,7 +326,7 @@ abstract contract GovernorSimple is
         );
 
         bytes32 epochStart = bytes32(
-            TimeLibrary.epochStart(block.timestamp) + (1 weeks)
+            ProtocolTimeLibrary.epochStart(block.timestamp) + (1 weeks)
         );
         uint256 proposalId = hashProposal(
             targets,
@@ -379,7 +379,9 @@ abstract contract GovernorSimple is
         bytes[] memory calldatas,
         bytes32 descriptionHash
     ) public payable virtual override returns (uint256) {
-        bytes32 epochStart = bytes32(TimeLibrary.epochStart(block.timestamp));
+        bytes32 epochStart = bytes32(
+            ProtocolTimeLibrary.epochStart(block.timestamp)
+        );
         uint256 proposalId = hashProposal(
             targets,
             values,
