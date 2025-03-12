@@ -18,7 +18,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     const token1Address = (await deployments.get(token1)).address
     const token2Address = (await deployments.get(token2)).address
 
-    let pool = await poolFactory.getPair(token1Address, token2Address, isStable)
+    let pool = await poolFactory.getPool(token1Address, token2Address, isStable)
     if (pool !== ethers.ZeroAddress) {
       log(`${token1}/${token2} pool already exists at ${pool}`)
     } else {
@@ -32,7 +32,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
         isStable,
       )
 
-      pool = await poolFactory.getPair(token1Address, token2Address, isStable)
+      pool = await poolFactory.getPool(token1Address, token2Address, isStable)
       log(`${token1}/${token2} pool created at ${pool}`)
     }
 

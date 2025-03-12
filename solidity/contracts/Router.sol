@@ -76,7 +76,7 @@ contract Router is IRouter, ERC2771Context {
         (address token0, address token1) = sortTokens(tokenA, tokenB);
         bytes32 salt = keccak256(abi.encodePacked(token0, token1, stable));
         pool = Clones.predictDeterministicAddress(
-            IPoolFactory(factory).getImplementation(),
+            IPoolFactory(factory).implementation(),
             salt,
             factory
         );

@@ -14,7 +14,7 @@ contract Deployment is BaseSystemTest {
     function testPoolFactory() public {
         assertNotEq(address(poolFactory), address(0), "PoolFactory address should be non-zero");
 
-        assertEq(poolFactory.getImplementation(), poolImplementation, "PoolFactory should be wired up to the Pool implementation");
+        assertEq(poolFactory.implementation(), poolImplementation, "PoolFactory should be wired up to the Pool implementation");
     }
 
     function testGaugeFactory() public {

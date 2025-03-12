@@ -118,7 +118,7 @@ abstract contract BaseSystemTest is Script, Test {
 
     function createPoolWithGauge(address token1, address token2, bool stable) internal returns (address pool) {
         vm.startPrank(governance);
-        pool = poolFactory.createPair(token1, token2, stable);
+        pool = poolFactory.createPool(token1, token2, stable);
         veBTCVoter.createGauge(
             address(poolFactory),
             pool
