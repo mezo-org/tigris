@@ -13,7 +13,7 @@ contract PoolFactory is IPoolFactory {
 
     uint256 public stableFee;
     uint256 public volatileFee;
-    uint256 public constant MAX_FEE = 100; // 1%
+    uint256 public constant MAX_FEE = 300; // 3%
     // Override to indicate there is custom 0% fee - as a 0 value in the customFee mapping indicates
     // that no custom fee rate has been set
     uint256 public constant ZERO_FEE_INDICATOR = 420;
@@ -38,17 +38,13 @@ contract PoolFactory is IPoolFactory {
         pauser = msg.sender;
         feeManager = msg.sender;
         isPaused = false;
-        stableFee = 2; // 0.02%
-        volatileFee = 2;
+        stableFee = 5; // 0.05%
+        volatileFee = 30; // 0.3%
     }
 
     /// @inheritdoc IPoolFactory
     function allPoolsLength() external view returns (uint256) {
         return allPools.length;
-    }
-
-    function getImplementation() external view returns (address) {
-        return implementation;
     }
 
     /// @inheritdoc IPoolFactory
@@ -75,21 +71,7 @@ contract PoolFactory is IPoolFactory {
     }
 
     /// @inheritdoc IPoolFactory
-    function getPair(
-        address tokenA,
-        address tokenB,
-        bool stable
-    ) external view returns (address) {
-        return _getPool[tokenA][tokenB][stable];
-    }
-
-    /// @inheritdoc IPoolFactory
     function isPool(address pool) external view returns (bool) {
-        return _isPool[pool];
-    }
-
-    /// @inheritdoc IPoolFactory
-    function isPair(address pool) external view returns (bool) {
         return _isPool[pool];
     }
 
@@ -187,14 +169,5 @@ contract PoolFactory is IPoolFactory {
         allPools.push(pool);
         _isPool[pool] = true;
         emit PoolCreated(token0, token1, stable, pool, allPools.length);
-    }
-
-    /// @inheritdoc IPoolFactory
-    function createPair(
-        address tokenA,
-        address tokenB,
-        bool stable
-    ) external returns (address pool) {
-        return createPool(tokenA, tokenB, stable);
     }
 }

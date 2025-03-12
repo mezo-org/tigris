@@ -70,13 +70,13 @@ contract Router is IRouter, ERC2771Context {
     ) public view returns (address pool) {
         address _defaultFactory = defaultFactory;
         address factory = _factory == address(0) ? _defaultFactory : _factory;
-        if (!IFactoryRegistry(factoryRegistry).poolFactoryExists(factory))
+        if (!IFactoryRegistry(factoryRegistry).isPoolFactoryApproved(factory))
             revert PoolFactoryDoesNotExist();
 
         (address token0, address token1) = sortTokens(tokenA, tokenB);
         bytes32 salt = keccak256(abi.encodePacked(token0, token1, stable));
         pool = Clones.predictDeterministicAddress(
-            IPoolFactory(factory).getImplementation(),
+            IPoolFactory(factory).implementation(),
             salt,
             factory
         );

@@ -112,7 +112,7 @@ contract MezoGovernorTest is BaseTest {
 
     function testGovernorCanCreateGaugesForAnyAddress() public {
         vm.prank(address(governor));
-        voter.createGauge(address(factory), address(votingRewardsFactory), address(gaugeFactory), address(1));
+        voter.createGauge(address(factory), address(1));
     }
 
     function testCannotSetProposalNumeratorAboveMaximum() public {
