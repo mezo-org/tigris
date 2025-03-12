@@ -391,9 +391,9 @@ contract FullEpoch is BaseSystemTest {
         // that were distributed in the previous epoch.
         skipToNextEpoch(0);
 
+        // Assert balances of FeesVotingReward contracts before veBTC holders claim fees.
         // Each gauge has a FeesVotingReward contract where trading fees are pushed for distribution 
         // to veBTC holders (this happens during the veBTCVoter.distribute call done earlier).
-        // Assert balances of FeesVotingReward contracts before veBTC holders claim fees.
         // In general, claimable_fees for the given LP token holder is calculated as follows:
         // - claimable_fees = (lp_token_balance * fee_index) / 1e18
         // - [for each swap] fee_index += (((swap_amount * fee) / 10000) * 1e18) / lp_token_total_supply
