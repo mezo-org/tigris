@@ -17,7 +17,7 @@ interface IRewardsDistributor {
     error UpdatePeriod();
 
     /// @notice 7 days in seconds
-    function WEEK() external view returns (uint256);
+    function week() external pure returns (uint256);
 
     /// @notice Timestamp of contract creation
     function startTime() external view returns (uint256);

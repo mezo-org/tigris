@@ -16,8 +16,8 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
  */
 contract RewardsDistributor is IRewardsDistributor {
     using SafeERC20 for IERC20;
-    /// @inheritdoc IRewardsDistributor
-    uint256 public constant WEEK = 7 * 86400;
+
+    uint256 constant WEEK = 7 * 86400;
 
     /// @inheritdoc IRewardsDistributor
     uint256 public startTime;
@@ -232,5 +232,10 @@ contract RewardsDistributor is IRewardsDistributor {
     function setDepositor(address _depositor) external {
         if (msg.sender != depositor) revert NotDepositor();
         depositor = _depositor;
+    }
+
+    /// @inheritdoc IRewardsDistributor
+    function week() external pure returns (uint256) {
+        return WEEK;
     }
 }
