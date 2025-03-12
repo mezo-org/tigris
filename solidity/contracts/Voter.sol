@@ -384,47 +384,48 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
     /// @inheritdoc IVoter
     function createGauge(
         address _poolFactory,
-        address _votingRewardsFactory,
-        address _gaugeFactory,
         address _pool
     ) external nonReentrant returns (address) {
         address sender = _msgSender();
-        if (gauges[_pool] != address(0)) revert GaugeExists();
         if (
-            !IFactoryRegistry(factoryRegistry).isApproved(
-                _poolFactory,
-                _votingRewardsFactory,
-                _gaugeFactory
+            !IFactoryRegistry(factoryRegistry).isPoolFactoryApproved(
+                _poolFactory
             )
         ) revert FactoryPathNotApproved();
+        if (gauges[_pool] != address(0)) revert GaugeExists();
 
+        (address votingRewardsFactory, address gaugeFactory) = IFactoryRegistry(
+            factoryRegistry
+        ).factoriesToPoolFactory(_poolFactory);
         address[] memory rewards = new address[](2);
-        bool isPool = IPoolFactory(_poolFactory).isPair(_pool); // backwards compatibility to v1
-        address token0;
-        address token1;
+        bool isPool = IPoolFactory(_poolFactory).isPool(_pool);
+        {
+            // stack too deep
+            address token0;
+            address token1;
+            if (isPool) {
+                token0 = IPool(_pool).token0();
+                token1 = IPool(_pool).token1();
+                rewards[0] = token0;
+                rewards[1] = token1;
+            }
 
-        if (isPool) {
-            token0 = IPool(_pool).token0();
-            token1 = IPool(_pool).token1();
-            rewards[0] = token0;
-            rewards[1] = token1;
-        }
-
-        if (sender != governor) {
-            if (!isPool) revert NotAPool();
-            if (!isWhitelistedToken[token0] || !isWhitelistedToken[token1])
-                revert NotWhitelistedToken();
+            if (sender != governor) {
+                if (!isPool) revert NotAPool();
+                if (!isWhitelistedToken[token0] || !isWhitelistedToken[token1])
+                    revert NotWhitelistedToken();
+            }
         }
 
         (
             address _feeVotingReward,
             address _bribeVotingReward
-        ) = IVotingRewardsFactory(_votingRewardsFactory).createRewards(
+        ) = IVotingRewardsFactory(votingRewardsFactory).createRewards(
                 forwarder,
                 rewards
             );
 
-        address _gauge = IGaugeFactory(_gaugeFactory).createGauge(
+        address _gauge = IGaugeFactory(gaugeFactory).createGauge(
             forwarder,
             _pool,
             _feeVotingReward,
@@ -443,8 +444,8 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
 
         emit GaugeCreated(
             _poolFactory,
-            _votingRewardsFactory,
-            _gaugeFactory,
+            votingRewardsFactory,
+            gaugeFactory,
             _pool,
             _bribeVotingReward,
             _feeVotingReward,
