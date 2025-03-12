@@ -10,9 +10,6 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const poolFactory = await helpers.contracts.getContract("PoolFactory")
   const veBTCVoter = await helpers.contracts.getContract("VeBTCVoter")
 
-  const votingRewardsFactory = await deployments.get("VotingRewardsFactory")
-  const gaugeFactory = await deployments.get("GaugeFactory")
-
   const createPool = async (
     token1: string,
     token2: string,
@@ -49,8 +46,6 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
         { from: deployer, log: true, waitConfirmations: 1 },
         "createGauge",
         await poolFactory.getAddress(),
-        votingRewardsFactory.address,
-        gaugeFactory.address,
         pool,
       )
 
@@ -67,13 +62,6 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 export default func
 
 func.tags = ["CreatePools"]
-func.dependencies = [
-  "Bitcoin",
-  "mUSD",
-  "PoolFactory",
-  "GaugeFactory",
-  "VotingRewardsFactory",
-  "VeBTCVoter",
-]
+func.dependencies = ["Bitcoin", "mUSD", "PoolFactory", "VeBTCVoter"]
 
 func.skip = async (hre) => hre.network.name !== "matsnet"

@@ -121,8 +121,6 @@ abstract contract BaseSystemTest is Script, Test {
         pool = poolFactory.createPool(token1, token2, stable);
         veBTCVoter.createGauge(
             address(poolFactory),
-            address(votingRewardsFactory),
-            address(gaugeFactory),
             pool
         );
         vm.stopPrank();
