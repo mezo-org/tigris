@@ -267,10 +267,10 @@ contract FullEpoch is BaseSystemTest {
         // can claim their share from there in the next epoch.
         assertEq(BTC.balanceOf(address(veBTCRewardsDistributor)), withTokenPrecision18(34), "unexpected rewards distributor BTC balance");
 
-        // Claims will be available in the next epoch. For now, it should be 0 for all.
-        assertEq(veBTCRewardsDistributor.claimable(user1TokenId), 0, "unexpected claimable for user1 token");
-        assertEq(veBTCRewardsDistributor.claimable(user2TokenId), 0, "unexpected claimable for user2 token");
-        assertEq(veBTCRewardsDistributor.claimable(user3TokenId), 0, "unexpected claimable for user3 token");
+        // Check available claims.
+        assertEq(veBTCRewardsDistributor.claimable(user1TokenId), 2399872507256055206, "unexpected claimable for user1 token");
+        assertEq(veBTCRewardsDistributor.claimable(user2TokenId), 4846801258853448680, "unexpected claimable for user2 token");
+        assertEq(veBTCRewardsDistributor.claimable(user3TokenId), 9740658762048235628, "unexpected claimable for user3 token");
 
         // Gauge BTC share is calculated as follows:
         // - ratio = total_btc_reward * 1e18 / total_pool_weight
