@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.8.0) (governance/extensions/GovernorVotesQuorumFraction.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.24;
 
 import {VetoGovernorVotes} from "./VetoGovernorVotes.sol";
 import {Checkpoints} from "@openzeppelin/contracts/utils/Checkpoints.sol";
