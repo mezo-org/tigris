@@ -4,7 +4,6 @@ import "./BaseTest.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {IERC721, IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
-import {MockVeArtProxy} from "test/utils/MockVeArtProxy.sol";
 
 contract VotingEscrowTest is BaseTest {
     event DelegateChanged(address indexed delegator, uint256 indexed fromDelegate, uint256 indexed toDelegate);
@@ -482,27 +481,9 @@ contract VotingEscrowTest is BaseTest {
         assertEq(escrow.balanceOfNFT(1), 0);
     }
 
-    function testCheckTokenURICalls() public {
-        // tokenURI should not work for non-existent token ids
-        vm.expectRevert(IVotingEscrow.NonExistentToken.selector);
-        escrow.tokenURI(999);
-        BTC.approve(address(escrow), 1e25);
-        uint256 lockDuration = 7 * 24 * 3600; // 1 week
-        escrow.createLock(1e25, lockDuration);
-
-        uint256 tokenId = 1;
-        skip(lockDuration);
-        vm.roll(block.number + 1); // mine the next block
-
-        // Just check that this doesn't revert
-        escrow.tokenURI(tokenId);
-
-        // Withdraw, which destroys the NFT
-        escrow.withdraw(tokenId);
-
-        // tokenURI should not work for this anymore as the NFT is burnt
-        vm.expectRevert(IVotingEscrow.NonExistentToken.selector);
-        escrow.tokenURI(tokenId);
+    function testTokenURI() public {
+        string memory uri = escrow.tokenURI(123);
+        assertEq(uri, "");
     }
 
     function testConfirmSupportsInterfaceWorksWithAssertedInterfaces() public {
@@ -585,7 +566,7 @@ contract VotingEscrowTest is BaseTest {
         BTC.approve(address(escrow), type(uint256).max);
         uint256 tokenId2 = escrow.createLock(TOKEN_1, 365 days);
 
-        uint256 aeroSupply = escrow.supply();
+        uint256 btcSupply = escrow.supply();
         uint256 expectedLockTime = escrow.locked(tokenId).end;
         skip(1);
 
@@ -598,7 +579,7 @@ contract VotingEscrowTest is BaseTest {
         assertEq(escrow.balanceOf(address(owner)), 1);
         assertEq(escrow.ownerOf(tokenId), address(0));
         assertEq(escrow.ownerOf(tokenId2), address(owner));
-        assertEq(escrow.supply(), aeroSupply);
+        assertEq(escrow.supply(), btcSupply);
 
         IVotingEscrow.UserPoint memory pt = escrow.userPointHistory(tokenId, 2);
         assertEq(uint256(int256(pt.bias)), 0);
@@ -632,7 +613,7 @@ contract VotingEscrowTest is BaseTest {
         BTC.approve(address(escrow), type(uint256).max);
         uint256 tokenId2 = escrow.createLock(TOKEN_1, 365 days);
 
-        uint256 aeroSupply = escrow.supply();
+        uint256 btcSupply = escrow.supply();
         uint256 expectedLockTime = escrow.locked(tokenId).end;
 
         skip(1);
@@ -646,7 +627,7 @@ contract VotingEscrowTest is BaseTest {
         assertEq(escrow.balanceOf(address(owner)), 1);
         assertEq(escrow.ownerOf(tokenId), address(owner));
         assertEq(escrow.ownerOf(tokenId2), address(0));
-        assertEq(escrow.supply(), aeroSupply);
+        assertEq(escrow.supply(), btcSupply);
 
         IVotingEscrow.UserPoint memory pt2 = escrow.userPointHistory(tokenId2, 2);
         assertEq(uint256(int256(pt2.bias)), 0);
@@ -1371,14 +1352,14 @@ contract VotingEscrowTest is BaseTest {
         escrow.createLock((TOKEN_1 * 3) / 4, MAXTIME); // 2
         escrow.createLock(TOKEN_1 / 4, MAXTIME); // 3
         uint256 expectedLockTime = escrow.locked(1).end;
-        uint256 aeroSupply = escrow.supply();
+        uint256 btcSupply = escrow.supply();
 
         vm.expectEmit(true, true, true, true, address(escrow));
         emit Split(1, 4, 5, address(owner), (TOKEN_1 * 3) / 4, TOKEN_1 / 4, 127008000, 907201);
         (uint256 splitTokenId1, uint256 splitTokenId2) = escrow.split(1, TOKEN_1 / 4);
         assertEq(splitTokenId1, 4);
         assertEq(splitTokenId2, 5);
-        assertEq(escrow.supply(), aeroSupply);
+        assertEq(escrow.supply(), btcSupply);
 
         // check new veNFTs have correct amount and locktime
         IVotingEscrow.LockedBalance memory lockedOld = escrow.locked(splitTokenId1);
@@ -1440,14 +1421,14 @@ contract VotingEscrowTest is BaseTest {
         escrow.createLock((TOKEN_1 * 3) / 4, MAXTIME); // 2
         escrow.createLock(TOKEN_1 / 4, MAXTIME); // 3
         uint256 expectedLockTime = escrow.locked(1).end;
-        uint256 aeroSupply = escrow.supply();
+        uint256 btcSupply = escrow.supply();
 
         vm.expectEmit(true, true, true, true, address(escrow));
         emit Split(1, 4, 5, address(owner), (TOKEN_1 * 3) / 4, TOKEN_1 / 4, 127008000, 907201);
         (uint256 splitTokenId1, uint256 splitTokenId2) = escrow.split(1, TOKEN_1 / 4);
         assertEq(splitTokenId1, 4);
         assertEq(splitTokenId2, 5);
-        assertEq(escrow.supply(), aeroSupply);
+        assertEq(escrow.supply(), btcSupply);
 
         // check new veNFTs have correct amount and locktime
         IVotingEscrow.LockedBalance memory lockedOld = escrow.locked(splitTokenId1);
@@ -2219,24 +2200,5 @@ contract VotingEscrowTest is BaseTest {
             escrow.balanceOfNFTAt(tokenId, timestamp) + escrow.balanceOfNFTAt(tokenId2, timestamp),
             escrow.getPastTotalSupply(timestamp)
         );
-    }
-
-    function testCannotSetArtProxyIfNotTeam() public {
-        MockVeArtProxy artProxy2 = new MockVeArtProxy(address(escrow));
-
-        vm.expectRevert();
-        vm.prank(address(owner2));
-        escrow.setArtProxy(address(artProxy2));
-    }
-
-    function testSetArtProxy() public {
-        assertEq(escrow.artProxy(), address(artProxy));
-        MockVeArtProxy artProxy2 = new MockVeArtProxy(address(escrow));
-
-        vm.expectEmit(false, false, false, true, address(escrow));
-        emit BatchMetadataUpdate(0, type(uint256).max);
-        escrow.setArtProxy(address(artProxy2));
-
-        assertEq(escrow.artProxy(), address(artProxy2));
     }
 }

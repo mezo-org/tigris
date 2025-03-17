@@ -1,7 +1,7 @@
 // solhint-disable not-rely-on-time
 // SPDX-License-Identifier: GPL-3.0-only
 // Copied from the GSN implementation https://github.com/opengsn/gsn/tree/master/packages/contracts/src/forwarder
-pragma solidity ^0.8.0;
+pragma solidity 0.8.24;
 pragma abicoder v2;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";

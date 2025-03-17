@@ -123,13 +123,9 @@ abstract contract VotingEscrow is
         self.setTeam(_team);
     }
 
-    function setArtProxy(address _proxy) external {
-        self.setArtProxy(_proxy);
-    }
-
     /// @inheritdoc IVotingEscrow
-    function tokenURI(uint256 _tokenId) external view returns (string memory) {
-        return self.tokenURI(_tokenId);
+    function tokenURI(uint256) external pure returns (string memory) {
+        return "";
     }
 
     /// @inheritdoc IVotingEscrow
@@ -456,11 +452,6 @@ abstract contract VotingEscrow is
     /// @inheritdoc IVotingEscrow
     function allowedManager() external view returns (address) {
         return self.allowedManager;
-    }
-
-    /// @inheritdoc IVotingEscrow
-    function artProxy() external view returns (address) {
-        return self.artProxy;
     }
 
     /// @inheritdoc IVotingEscrow

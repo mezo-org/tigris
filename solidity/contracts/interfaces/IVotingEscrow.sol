@@ -183,9 +183,6 @@ interface IVotingEscrow is IVotes, IERC4906, IERC6372, IERC721Metadata {
     /// @notice Address of Protocol Team multisig
     function team() external view returns (address);
 
-    /// @notice Address of art proxy used for on-chain art generation
-    function artProxy() external view returns (address);
-
     /// @dev address which can create managed NFTs
     function allowedManager() external view returns (address);
 
@@ -276,8 +273,6 @@ interface IVotingEscrow is IVotes, IERC4906, IERC6372, IERC721Metadata {
     function decimals() external view returns (uint8);
 
     function setTeam(address _team) external;
-
-    function setArtProxy(address _proxy) external;
 
     /// @inheritdoc IERC721Metadata
     function tokenURI(uint256 tokenId) external view returns (string memory);

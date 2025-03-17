@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copied from the GSN implementation https://github.com/opengsn/gsn/tree/master/packages/contracts/src/forwarder
-pragma solidity >=0.7.6;
+pragma solidity 0.8.24;
 pragma abicoder v2;
 
 import "@openzeppelin/contracts/interfaces/IERC165.sol";

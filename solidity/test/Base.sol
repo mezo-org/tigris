@@ -26,7 +26,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {SigUtils} from "test/utils/SigUtils.sol";
-import {MockVeArtProxy} from "test/utils/MockVeArtProxy.sol";
 import {TestSplitter} from "test/utils/TestSplitter.sol";
 import {MezoForwarder} from "contracts/forwarder/MezoForwarder.sol";
 import "forge-std/Script.sol";
@@ -51,7 +50,6 @@ abstract contract Base is Script, Test {
     Pool public implementation;
     Router public router;
     VotingEscrow public escrow;
-    MockVeArtProxy public artProxy;
     PoolFactory public factory;
     FactoryRegistry public factoryRegistry;
     GaugeFactory public gaugeFactory;
@@ -89,9 +87,6 @@ abstract contract Base is Script, Test {
             initData
         );
         escrow = VeBTC(address(proxy));
-
-        artProxy = new MockVeArtProxy(address(escrow));
-        escrow.setArtProxy(address(artProxy));
 
         // Setup voter and distributor
         distributor = new RewardsDistributor(address(escrow));

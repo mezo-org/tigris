@@ -8,7 +8,6 @@ import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20P
 contract Mezo is IMezo, ERC20Permit {
     address public minter;
     address private owner;
-    address public sinkManager;
 
     constructor() ERC20("Mezo", "MEZO") ERC20Permit("Mezo") {
         minter = msg.sender;
