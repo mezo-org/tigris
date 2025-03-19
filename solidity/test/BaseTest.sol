@@ -219,20 +219,20 @@ abstract contract BaseTest is Base, TestOwner {
     }
 
     function deployPoolWithOwner(address _owner) public {
-        // TODO: Add pool liquidity once Router implementation is complete.
-
-        factory.createPool(address(BTC), address(mUSD), false);
-        factory.createPool(address(mUSD), address(LIMPETH), false);
-        factory.createPool(address(mUSD), address(wtBTC), false);
-
+        _addLiquidityToPool(_owner, address(router), address(BTC), address(mUSD), false, TOKEN_1, mUSD_1);
+        _addLiquidityToPool(_owner, address(router), address(mUSD), address(LIMPETH), false, mUSD_1, TOKEN_1);
+        _addLiquidityToPool(_owner, address(router), address(mUSD), address(wtBTC), false, mUSD_1, TOKEN_1);
         assertEq(factory.allPoolsLength(), 3);
 
+        // last arg default as these are all v2 pools
+        address create2address = router.poolFor(address(BTC), address(mUSD), false, address(0));
         address address1 = factory.getPool(address(BTC), address(mUSD), false);
         pool = Pool(address1);
         address address2 = factory.getPool(address(mUSD), address(LIMPETH), false);
         pool2 = Pool(address2);
         address address3 = factory.getPool(address(mUSD), address(wtBTC), false);
         pool3 = Pool(address3);
+        assertEq(address(pool), create2address);
     }
 
     /// @dev Helper utility to forward time to next week
@@ -264,6 +264,33 @@ abstract contract BaseTest is Base, TestOwner {
             BTC.approve(_gauge, _amount);
         }
         Gauge(_gauge).notifyRewardAmount(_amount);
+        vm.stopPrank();
+    }
+
+    /// @dev Helper function to deposit liquidity into pool
+    function _addLiquidityToPool(
+        address _owner,
+        address _router,
+        address _token0,
+        address _token1,
+        bool _stable,
+        uint256 _amount0,
+        uint256 _amount1
+    ) internal {
+        vm.startPrank(_owner);
+        IERC20(_token0).approve(address(_router), _amount0);
+        IERC20(_token1).approve(address(_router), _amount1);
+        Router(payable(_router)).addLiquidity(
+            _token0,
+            _token1,
+            _stable,
+            _amount0,
+            _amount1,
+            0,
+            0,
+            address(_owner),
+            block.timestamp
+        );
         vm.stopPrank();
     }
 
