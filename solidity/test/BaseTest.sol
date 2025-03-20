@@ -14,6 +14,7 @@ abstract contract BaseTest is Base, TestOwner {
     uint256 constant mUSD_1 = 1e6;
     uint256 constant mUSD_10K = 1e10; // 1e4 = 10K tokens with 6 decimals
     uint256 constant mUSD_100K = 1e11; // 1e5 = 100K tokens with 6 decimals
+    uint256 constant mUSD_100M = 1e14; // 1e8 = 100M tokens with 6 decimals
     uint256 constant TOKEN_1 = 1e18;
     uint256 constant TOKEN_10K = 1e22; // 1e4 = 10K tokens with 18 decimals
     uint256 constant TOKEN_100K = 1e23; // 1e5 = 100K tokens with 18 decimals
