@@ -224,6 +224,10 @@ abstract contract BaseTest is Base, TestOwner {
         _addLiquidityToPool(_owner, address(router), address(mUSD), address(wtBTC), false, mUSD_1, TOKEN_1);
         assertEq(factory.allPoolsLength(), 3);
 
+        // Mint BTC tokens for the owner again to replenish the tokens used
+        // when adding liquidity to the pool. This is needed in certain unit tests.
+        deal(address(BTC), _owner, TOKEN_10M, true);
+
         // last arg default as these are all v2 pools
         address create2address = router.poolFor(address(BTC), address(mUSD), false, address(0));
         address address1 = factory.getPool(address(BTC), address(mUSD), false);
