@@ -1,0 +1,542 @@
+{
+  "manifestVersion": "3.2",
+  "proxies": [
+    {
+      "address": "0x6f7bF8072cfB4D0B8f1a5e1596c820964fF3c744",
+      "txHash": "0x1d523344c49e134ce03d6eaacd27a658649666ecb0a06fc15a3dd53a04dc4ea2",
+      "kind": "transparent"
+    }
+  ],
+  "impls": {
+    "0831fd33b568456363789a82d87df2fb880bc223fbfb4f2235973a1f1999aed6": {
+      "address": "0xDB3f75156598Fa560D5508BbeeE18B14Cfe74497",
+      "txHash": "0x3fa7f7d115849444b9e4cbf94fb8fc49b6a2945f4f1f5f56d844d714f459461c",
+      "layout": {
+        "solcVersion": "0.8.24",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          },
+          {
+            "label": "_status",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_uint256",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:38"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:88"
+          },
+          {
+            "label": "self",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_struct(Storage)33193_storage",
+            "contract": "VotingEscrow",
+            "src": "contracts/VotingEscrow.sol:36"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_struct(UserPoint)24702_storage)1000000000_storage": {
+            "label": "struct IVotingEscrow.UserPoint[1000000000]",
+            "numberOfBytes": "128000000000"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes4": {
+            "label": "bytes4",
+            "numberOfBytes": "4"
+          },
+          "t_enum(EscrowType)24733": {
+            "label": "enum IVotingEscrow.EscrowType",
+            "members": [
+              "NORMAL",
+              "LOCKED",
+              "MANAGED"
+            ],
+            "numberOfBytes": "1"
+          },
+          "t_int128": {
+            "label": "int128",
+            "numberOfBytes": "16"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_bool))": {
+            "label": "mapping(address => mapping(address => bool))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_uint256,t_uint256))": {
+            "label": "mapping(address => mapping(uint256 => uint256))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes4,t_bool)": {
+            "label": "mapping(bytes4 => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_address)": {
+            "label": "mapping(uint256 => address)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_array(t_struct(UserPoint)24702_storage)1000000000_storage)": {
+            "label": "mapping(uint256 => struct IVotingEscrow.UserPoint[1000000000])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_bool)": {
+            "label": "mapping(uint256 => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_enum(EscrowType)24733)": {
+            "label": "mapping(uint256 => enum IVotingEscrow.EscrowType)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_int128)": {
+            "label": "mapping(uint256 => int128)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_mapping(t_uint256,t_uint256))": {
+            "label": "mapping(uint256 => mapping(uint256 => uint256))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_mapping(t_uint48,t_struct(Checkpoint)24723_storage))": {
+            "label": "mapping(uint256 => mapping(uint48 => struct IVotingEscrow.Checkpoint))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(GlobalPoint)24713_storage)": {
+            "label": "mapping(uint256 => struct IVotingEscrow.GlobalPoint)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(LockedBalance)24691_storage)": {
+            "label": "mapping(uint256 => struct IVotingEscrow.LockedBalance)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_uint48)": {
+            "label": "mapping(uint256 => uint48)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint48,t_struct(Checkpoint)24723_storage)": {
+            "label": "mapping(uint48 => struct IVotingEscrow.Checkpoint)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(Checkpoint)24723_storage": {
+            "label": "struct IVotingEscrow.Checkpoint",
+            "members": [
+              {
+                "label": "fromTimestamp",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "delegatedBalance",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "delegatee",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
+          "t_struct(GlobalPoint)24713_storage": {
+            "label": "struct IVotingEscrow.GlobalPoint",
+            "members": [
+              {
+                "label": "bias",
+                "type": "t_int128",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "slope",
+                "type": "t_int128",
+                "offset": 16,
+                "slot": "0"
+              },
+              {
+                "label": "ts",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "blk",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "permanentLockBalance",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
+          "t_struct(LockedBalance)24691_storage": {
+            "label": "struct IVotingEscrow.LockedBalance",
+            "members": [
+              {
+                "label": "amount",
+                "type": "t_int128",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "end",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "isPermanent",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "2"
+              }
+            ],
+            "numberOfBytes": "96"
+          },
+          "t_struct(Storage)33193_storage": {
+            "label": "struct VotingEscrowState.Storage",
+            "members": [
+              {
+                "label": "trustedForwarder",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "factoryRegistry",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "token",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "distributor",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "voter",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "team",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "5"
+              },
+              {
+                "label": "artProxy",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "6"
+              },
+              {
+                "label": "allowedManager",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "7"
+              },
+              {
+                "label": "_pointHistory",
+                "type": "t_mapping(t_uint256,t_struct(GlobalPoint)24713_storage)",
+                "offset": 0,
+                "slot": "8"
+              },
+              {
+                "label": "supportedInterfaces",
+                "type": "t_mapping(t_bytes4,t_bool)",
+                "offset": 0,
+                "slot": "9"
+              },
+              {
+                "label": "tokenId",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "10"
+              },
+              {
+                "label": "escrowType",
+                "type": "t_mapping(t_uint256,t_enum(EscrowType)24733)",
+                "offset": 0,
+                "slot": "11"
+              },
+              {
+                "label": "idToManaged",
+                "type": "t_mapping(t_uint256,t_uint256)",
+                "offset": 0,
+                "slot": "12"
+              },
+              {
+                "label": "weights",
+                "type": "t_mapping(t_uint256,t_mapping(t_uint256,t_uint256))",
+                "offset": 0,
+                "slot": "13"
+              },
+              {
+                "label": "deactivated",
+                "type": "t_mapping(t_uint256,t_bool)",
+                "offset": 0,
+                "slot": "14"
+              },
+              {
+                "label": "managedToLocked",
+                "type": "t_mapping(t_uint256,t_address)",
+                "offset": 0,
+                "slot": "15"
+              },
+              {
+                "label": "managedToFree",
+                "type": "t_mapping(t_uint256,t_address)",
+                "offset": 0,
+                "slot": "16"
+              },
+              {
+                "label": "idToOwner",
+                "type": "t_mapping(t_uint256,t_address)",
+                "offset": 0,
+                "slot": "17"
+              },
+              {
+                "label": "ownerToNFTokenCount",
+                "type": "t_mapping(t_address,t_uint256)",
+                "offset": 0,
+                "slot": "18"
+              },
+              {
+                "label": "idToApprovals",
+                "type": "t_mapping(t_uint256,t_address)",
+                "offset": 0,
+                "slot": "19"
+              },
+              {
+                "label": "ownerToOperators",
+                "type": "t_mapping(t_address,t_mapping(t_address,t_bool))",
+                "offset": 0,
+                "slot": "20"
+              },
+              {
+                "label": "ownershipChange",
+                "type": "t_mapping(t_uint256,t_uint256)",
+                "offset": 0,
+                "slot": "21"
+              },
+              {
+                "label": "ownerToNFTokenIdList",
+                "type": "t_mapping(t_address,t_mapping(t_uint256,t_uint256))",
+                "offset": 0,
+                "slot": "22"
+              },
+              {
+                "label": "tokenToOwnerIndex",
+                "type": "t_mapping(t_uint256,t_uint256)",
+                "offset": 0,
+                "slot": "23"
+              },
+              {
+                "label": "epoch",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "24"
+              },
+              {
+                "label": "supply",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "25"
+              },
+              {
+                "label": "_locked",
+                "type": "t_mapping(t_uint256,t_struct(LockedBalance)24691_storage)",
+                "offset": 0,
+                "slot": "26"
+              },
+              {
+                "label": "_userPointHistory",
+                "type": "t_mapping(t_uint256,t_array(t_struct(UserPoint)24702_storage)1000000000_storage)",
+                "offset": 0,
+                "slot": "27"
+              },
+              {
+                "label": "userPointEpoch",
+                "type": "t_mapping(t_uint256,t_uint256)",
+                "offset": 0,
+                "slot": "28"
+              },
+              {
+                "label": "slopeChanges",
+                "type": "t_mapping(t_uint256,t_int128)",
+                "offset": 0,
+                "slot": "29"
+              },
+              {
+                "label": "canSplit",
+                "type": "t_mapping(t_address,t_bool)",
+                "offset": 0,
+                "slot": "30"
+              },
+              {
+                "label": "permanentLockBalance",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "31"
+              },
+              {
+                "label": "_delegates",
+                "type": "t_mapping(t_uint256,t_uint256)",
+                "offset": 0,
+                "slot": "32"
+              },
+              {
+                "label": "_checkpoints",
+                "type": "t_mapping(t_uint256,t_mapping(t_uint48,t_struct(Checkpoint)24723_storage))",
+                "offset": 0,
+                "slot": "33"
+              },
+              {
+                "label": "numCheckpoints",
+                "type": "t_mapping(t_uint256,t_uint48)",
+                "offset": 0,
+                "slot": "34"
+              },
+              {
+                "label": "nonces",
+                "type": "t_mapping(t_address,t_uint256)",
+                "offset": 0,
+                "slot": "35"
+              },
+              {
+                "label": "voted",
+                "type": "t_mapping(t_uint256,t_bool)",
+                "offset": 0,
+                "slot": "36"
+              },
+              {
+                "label": "__gap",
+                "type": "t_array(t_uint256)50_storage",
+                "offset": 0,
+                "slot": "37"
+              }
+            ],
+            "numberOfBytes": "2784"
+          },
+          "t_struct(UserPoint)24702_storage": {
+            "label": "struct IVotingEscrow.UserPoint",
+            "members": [
+              {
+                "label": "bias",
+                "type": "t_int128",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "slope",
+                "type": "t_int128",
+                "offset": 16,
+                "slot": "0"
+              },
+              {
+                "label": "ts",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "blk",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "permanent",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint48": {
+            "label": "uint48",
+            "numberOfBytes": "6"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      }
+    }
+  }
+}
