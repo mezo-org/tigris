@@ -44,6 +44,7 @@ abstract contract BaseTest is Base, TestOwner {
     Pool pool;
     Pool pool2;
     Pool pool3;
+    Pool pool4;
 
     FeesVotingReward feesVotingReward;
     BribeVotingReward bribeVotingReward;
@@ -53,6 +54,9 @@ abstract contract BaseTest is Base, TestOwner {
     Gauge gauge3;
     FeesVotingReward feesVotingReward3;
     BribeVotingReward bribeVotingReward3;
+    Gauge gauge4;
+    FeesVotingReward feesVotingReward4;
+    BribeVotingReward bribeVotingReward4;
 
     SigUtils sigUtils;
 
@@ -223,7 +227,8 @@ abstract contract BaseTest is Base, TestOwner {
         _addLiquidityToPool(_owner, address(router), address(BTC), address(mUSD), false, TOKEN_1, mUSD_1);
         _addLiquidityToPool(_owner, address(router), address(mUSD), address(LIMPETH), false, mUSD_1, TOKEN_1);
         _addLiquidityToPool(_owner, address(router), address(mUSD), address(wtBTC), false, mUSD_1, TOKEN_1);
-        assertEq(factory.allPoolsLength(), 3);
+        _addLiquidityToPool(_owner, address(router), address(BTC), address(mUSD), true, TOKEN_1, mUSD_1);
+        assertEq(factory.allPoolsLength(), 4);
 
         // Mint BTC tokens for the owner again to replenish the tokens used
         // when adding liquidity to the pool. This is needed in certain unit tests.
@@ -237,6 +242,8 @@ abstract contract BaseTest is Base, TestOwner {
         pool2 = Pool(address2);
         address address3 = factory.getPool(address(mUSD), address(wtBTC), false);
         pool3 = Pool(address3);
+        address address4 = factory.getPool(address(BTC), address(mUSD), true);
+        pool4 = Pool(address4);
         assertEq(address(pool), create2address);
     }
 
