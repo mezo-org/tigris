@@ -77,7 +77,125 @@ use cases simultaneously, users can maximize the utility and benefits of their B
 
 ### Implementation
 
-_Under construction._
+To achieve this goal, this RFC proposes a new contract called `BorrowLocker` with the following key
+responsibilities:
+
+- Taking ownership of specific veBTC collateral
+- Interacting with the mUSD protocol on behalf of veBTC owners (using EIP-712 signatures)
+- Managing BTC settlement between Tigris and mUSD protocols
+- Returning veBTC to owners when troves are closed
+- Managing veBTC takeovers during liquidation events
+- Preserving Tigris voting and earning capabilities for veBTC owners
+
+The `BorrowLocker` contract is designed to be deployed individually for each veBTC token used
+as collateral. This design choice is primarily driven by Tigris's rewards/fees distribution mechanism,
+where BTC rewards and swap fees are sent directly to veBTC owners via standard ERC20 transfers.
+A singleton `BorrowLocker` contract controlling multiple veBTC tokens would make it impossible to
+correctly distribute rewards and fees among different veBTC owners. Additionally, having a single
+`BorrowLocker` contract would introduce significant centralization risk by concentrating the voting
+power of all locked veBTC collateral in one place. The per-token deployment model ensures proper
+separation of voting power and reward distribution.
+
+The deployment and lifecycle management of `BorrowLocker` contracts is meant to be handled by a
+new contract called `BorrowLockerFactory`. This factory contract has three core responsibilities:
+
+- Creating new `BorrowLocker` instances and initiating the borrow process when a veBTC token is received
+- Retrieving underlying BTC from the veBTC NFT and transferring it to the appropriate `BorrowLocker` contract
+- Maintaining a registry of all `BorrowLocker` instances and their current states
+
+It's important to note that the `VeBTC` contract currently lacks functionality to enable BTC retrieval
+by the `BorrowLockerFactory`. This critical capability will have to be implemented as part of this proposal.
+
+The following sections provide detailed walkthroughs of key interactions with the `BorrowLocker` and
+`BorrowLockerFactory` contracts, illustrating the complete lifecycle of veBTC-collateralized loans.
+
+#### Borrow mUSD against veBTC
+
+The following diagram illustrates the key interactions between the proposed contracts and existing
+Tigris/mUSD components when a veBTC owner initiates a borrow against their veBTC collateral:
+
+![Borrow](../assets/rfc-1-borrow.png)
+
+1. The process begins when a veBTC owner initiates a transfer of their veBTC NFT to the
+   `BorrowLockerFactory` contract using the `safeTransferFrom` function of the `VeBTC`
+   contract. This function supports passing additional data as part of the transfer, which
+   is used to include the call data needed by the `openTroveWithSignature` function of the
+   `BorrowerOperationsSignatures` contract. This allows the trove to be opened atomically in
+   the same transaction as the NFT transfer.
+2. When the veBTC NFT is transferred, the `VeBTC` contract triggers the `onERC721Received` hook on
+   the `BorrowLockerFactory` contract (which implements `IERC721Receiver`). Upon receiving the NFT, 
+   the `BorrowLockerFactory` makes a callback to the `VeBTC` contract to retrieve the underlying BTC 
+   tokens through the new special retrieval path.
+3. The `BorrowLockerFactory` contract deploys a dedicated `BorrowLocker` contract for the veBTC NFT,
+   initializing it with both the retrieved BTC and the `openTroveWithSignature` call data. The
+   original veBTC NFT owner retains control as the owner of this new `BorrowLocker` contract.
+4. The `BorrowLocker` contract calls `openTroveWithSignature` on `BorrowerOperationsSignatures`,
+   providing the obtained call data and a portion of liquid BTC retrieved from the veBTC as collateral.
+   The portion is computed with respect to the `maxAllowedNFTUtilization` parameter.
+5. The `BorrowerOperationsSignatures` contract verifies the signature and passes control to the
+   `BorrowerOperations` contract to open the trove.
+6. The `BorrowerOperations` contract opens the trove and mints the requested amount of mUSD.
+   The BTC collateral is put aside in the `ActivePool` contract.
+7. The minted mUSD is transferred to the veBTC owner.
+
+Important considerations and notes regarding this section:
+
+- The initial `safeTransferFrom` call can be executed either directly by the veBTC owner or through a
+  gasless transaction using the GSN-compatible [MezoForwarder] contract.
+- The code assembling `openTroveWithSignature` call data must accurately determine the upper/lower hints
+  for the sorted trove insertion to avoid excessive gas costs of `openTrove`.
+- The code assembling `openTroveWithSignature` call data must precisely determine the amount of liquid
+  BTC that will be used as collateral, with respect to the `BorrowLockerFactory`'s allowed collateral
+  percentage. This is necessary to ensure proper signature verification by the `BorrowerOperationsSignatures`
+  contract.
+- The `onERC721Received` hook of the `BorrowLockerFactory` must only accept calls from the `VeBTC` contract
+  to prevent unauthorized transfers.
+- The special BTC retrieval path exposed by the `VeBTC` contract must be restricted to the `BorrowLockerFactory`
+  and only for veBTC tokens it owns.
+- This RFC does not force any particular logic of `BorrowLocker` creation. Naive deployment of `BorrowLocker`
+  using the `new` keyword may be costly in terms of gas. Using the clone factory pattern may be a good alternative.
+- It's crucial that the original veBTC owner retains control over the `BorrowLocker` contract.
+  This allows the veBTC owner to continue participating in the `Tigris` protocol indirectly through
+  the `BorrowLocker` contract. That implies the `BorrowLocker` contract must provide the necessary
+  interface to do so.
+- The `maxAllowedNFTUtilization` should be a governable parameter of the `BorrowLockerFactory`.
+- Before opening the trove, the `BorrowLocker` contract must verify that its owner address matches the
+  borrower address in the `openTroveWithSignature` call data to ensure proper trove attribution in mUSD.
+- The original veBTC owner becomes the borrower controlling the newly opened trove. That said, trove 
+  management actions (depositing extra collateral, withdrawing excess collateral, etc.) can be perfomed 
+  only by the veBTC owner directly and are out of scope for the `BorrowLocker` contract.
+- Given the fact that veBTC owner can execute trove manegement actions beyond the `BorrowLocker` contract,
+  the `BorrowLocker` contract must track the trove state and ensure all edge cases are handled correctly so
+  there is no way the custodied veBTC token remains locked indefinitely.
+
+#### Participate in Tigris
+
+_Under construction. Key points to cover:_
+
+- _The `BorrowLocker` must expose methods allowing to vote on gauges and the ChainFeeSplitter's needle parameter.
+  Those methods must be restricted to the `BorrowLocker` owner (i.e. the original owner of the veBTC collateral)._
+- _BTC rewards and swap fees are distributed to the `BorrowLocker` contract. The `BorrowLocker` contract must
+  expose a method allowing to claim them. The method can be unrestricted but must send the rewards/fees to the
+  `BorrowLocker` owner._
+
+#### Repay mUSD loan and withdraw veBTC
+
+_Under construction. Key points to cover:_
+
+- _The `BorrowLocker` must focus on trove state and stay agnostic regarding the details.
+  This is needed to avoid leaking too much mUSD details inside the `BorrowLocker` contract._
+- _The `BorrowLocker` contract unlocks the veBTC if the trove state is `closedByOwner`_
+- _Figure out how to handle the case where the trove state is `closedByRedemption`_
+- _Prevent re-usage of a closed `BorrowLocker` contract._
+
+#### Liquidate mUSD loan and seize veBTC
+
+_Under construction. Key points to cover:_
+
+- _If the trove state is `closedByLiquidation`, the `BorrowLocker` allows to take over the veBTC token
+  by a third party liquidator._
+- _The liquidator must make the `BorrowLocker` whole, i.e. deposit the liquidated amount of BTC.
+  This allows to seize the veBTC at a discount._
 
 ### Limitations
 
@@ -92,7 +210,8 @@ _Under construction._
 - [BorrowerOperations]: Contract managing mUSD borrows.
 - [ActivePool]: Contract holding the BTC collateral of active troves.
 - [BorrowerOperationsSignatures]: Contract managing gas-less EIP-712 signatures for borrower operations.
-
+- [MezoForwarder]: A GSN-compatible contract for gasless transactions.
+  
 <!-- Links definitions -->
 
 [Tigris]: https://blog.mezo.org/mezo-the-2025-roadmap/#3-tigris
@@ -102,3 +221,4 @@ _Under construction._
 [BorrowerOperations]: https://github.com/mezo-org/musd/blob/0c4b3e42c903e1a4602e473e6c1ddd446f20fc4e/solidity/contracts/BorrowerOperations.sol
 [ActivePool]: https://github.com/mezo-org/musd/blob/0c4b3e42c903e1a4602e473e6c1ddd446f20fc4e/solidity/contracts/ActivePool.sol
 [BorrowerOperationsSignatures]: https://github.com/mezo-org/musd/blob/0c4b3e42c903e1a4602e473e6c1ddd446f20fc4e/solidity/contracts/BorrowerOperationsSignatures.sol
+[MezoForwarder]: https://github.com/mezo-org/mezodrome/blob/350acfa966b788272f7c6e9d9402c619c210b5c9/solidity/contracts/forwarder/MezoForwarder.sol
