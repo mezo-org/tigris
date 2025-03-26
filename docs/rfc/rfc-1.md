@@ -242,12 +242,32 @@ Important considerations and notes regarding this section:
 
 #### Liquidate mUSD loan and seize veBTC
 
-_Under construction. Key points to cover:_
+The following diagram illustrates the key interactions between the proposed contracts and existing
+Tigris/mUSD components when a third-party liquidator liquidates a mUSD loan and seizes the veBTC collateral:
 
-- _If the trove state is `closedByLiquidation`, the `BorrowLocker` allows to take over the veBTC token
-  by a third party liquidator._
-- _The liquidator must make the `BorrowLocker` whole, i.e. deposit the liquidated amount of BTC.
-  This allows to seize the veBTC at a discount._
+![rfc-1-liquidate](../assets/rfc-1-liquidate.png)
+
+1. The liquidator initiates the liquidation process by calling the `liquidate` method on the [TroveManager]
+   As a result, the mUSD protocol seizes the BTC collateral and marks the trove as `closedByLiquidation`.
+2. To acquire the veBTC NFT, the liquidator must deposit sufficient BTC into the `BorrowLocker` to cover
+   the liquidated amount. Upon successful deposit, the liquidator gains control of the `BorrowLocker` contract
+   and the underlying veBTC NFT at a discount.
+3. The `BorrowLocker` transfers the BTC collateral to the `BorrowLockerFactory` contract, signaling
+   the completion of its lifecycle and preventing any further operations.
+4. The `BorrowLockerFactory` contract transfers the BTC back to the `VeBTC` contract to repay the BTC debt
+   associated with the given veBTC NFT that was created during the initial borrowing process.
+5. The liquidator gains ownership of the veBTC NFT.
+
+Important considerations and notes regarding this section:
+
+- The `BorrowLocker` contract must verify that trove closure occurred through liquidation before transferring
+  veBTC ownership to the liquidator. This verification is critical as liquidation represents the only scenario
+  where veBTC ownership can be transferred to a party other than the original owner.
+- To protect borrowers, the `BorrowLocker` contract may implement a grace period mechanism. During this period,
+  the original veBTC owner could have precedence to reclaim their veBTC by depositing the liquidated BTC amount
+  into the `BorrowLocker` contract.
+- Upon claiming ownership of the `BorrowLocker` contract, the liquidator automatically inherits all rights to
+  uncollected rewards and fees accumulated within the contract.
 
 ### Limitations
 
@@ -263,6 +283,7 @@ _Under construction._
 - [ActivePool]: Contract holding the BTC collateral of active troves.
 - [BorrowerOperationsSignatures]: Contract managing gas-less EIP-712 signatures for borrower operations.
 - [MezoForwarder]: A GSN-compatible contract for gasless transactions.
+- [TroveManager]: Contract managing mUSD troves.
 
 <!-- Links definitions -->
 
@@ -274,3 +295,4 @@ _Under construction._
 [ActivePool]: https://github.com/mezo-org/musd/blob/0c4b3e42c903e1a4602e473e6c1ddd446f20fc4e/solidity/contracts/ActivePool.sol
 [BorrowerOperationsSignatures]: https://github.com/mezo-org/musd/blob/0c4b3e42c903e1a4602e473e6c1ddd446f20fc4e/solidity/contracts/BorrowerOperationsSignatures.sol
 [MezoForwarder]: https://github.com/mezo-org/mezodrome/blob/350acfa966b788272f7c6e9d9402c619c210b5c9/solidity/contracts/forwarder/MezoForwarder.sol
+[TroveManager]: https://github.com/mezo-org/musd/blob/0c4b3e42c903e1a4602e473e6c1ddd446f20fc4e/solidity/contracts/TroveManager.sol
