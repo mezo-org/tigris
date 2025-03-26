@@ -271,7 +271,27 @@ Important considerations and notes regarding this section:
 
 ### Limitations
 
-_Under construction._
+The proposal presented in this RFC is subject to the following limitations and challenges:
+
+- The complexity of managing multiple `BorrowLocker` instances while coordinating interactions between
+  Tigris and mUSD protocols presents significant UX challenges. Client applications must take the
+  burden of orchestrating complex operations that carry financial risk. It is critical that users receive
+  detailed feedback about system state and available actions at each step to safely navigate this process.
+- The proposed solution offers no built-in mechanism to help borrowers when redemptions reduce BTC
+  collateral of their trove. Borrowers must handle any shortfall themselves by depositing missing BTC
+  to the `BorrowLocker` before they can withdraw their veBTC NFT from this contract.
+- The proposed mechanism can be used to partially circumvent the veBTC lock by borrowing mUSD against
+  the veBTC NFT and immediately withdrawing excessive BTC collateral or redeeming mUSD for BTC.
+  Although the former increases the risk of liquidation and the latter makes withdrawing the veBTC
+  from the `BorrowLocker` problematic, these actions may be attractive to some users. The solution
+  aims to disincentivize this behavior by limiting the percentage of veBTC that can be used
+  as collateral (using the `maxAllowedNFTUtilization` parameter), but this does not mitigate the
+  problem entirely. Additional measures may be needed if this becomes a pressing issue.
+- Upgradeability of the `BorrowLocker` and `BorrowLockerFactory` contracts may be challenging due to the
+  need to coordinate between multiple contracts. This RFC does not propose any specific upgradeability
+  mechanism and leaves it to the discretion of the implementor.
+- The proposed solution may incur significant gas costs for borrowers willing to use veBTC as collateral.
+  The implementation must take this into account and provide necessary optimizations.
 
 ## Related Links
 
