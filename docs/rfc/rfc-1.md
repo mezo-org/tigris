@@ -114,7 +114,7 @@ The following sections provide detailed walkthroughs of key interactions with th
 The following diagram illustrates the key interactions between the proposed contracts and existing
 Tigris/mUSD components when a veBTC owner initiates a borrow against their veBTC collateral:
 
-![Borrow](../assets/rfc-1-borrow.png)
+![rfc-1-borrow](../assets/rfc-1-borrow.png)
 
 1. The process begins when a veBTC owner initiates a transfer of their veBTC NFT to the
    `BorrowLockerFactory` contract using the `safeTransferFrom` function of the `VeBTC`
@@ -123,8 +123,8 @@ Tigris/mUSD components when a veBTC owner initiates a borrow against their veBTC
    `BorrowerOperationsSignatures` contract. This allows the trove to be opened atomically in
    the same transaction as the NFT transfer.
 2. When the veBTC NFT is transferred, the `VeBTC` contract triggers the `onERC721Received` hook on
-   the `BorrowLockerFactory` contract (which implements `IERC721Receiver`). Upon receiving the NFT, 
-   the `BorrowLockerFactory` makes a callback to the `VeBTC` contract to retrieve the underlying BTC 
+   the `BorrowLockerFactory` contract (which implements `IERC721Receiver`). Upon receiving the NFT,
+   the `BorrowLockerFactory` makes a callback to the `VeBTC` contract to retrieve the underlying BTC
    tokens through the new special retrieval path.
 3. The `BorrowLockerFactory` contract deploys a dedicated `BorrowLocker` contract for the veBTC NFT,
    initializing it with both the retrieved BTC and the `openTroveWithSignature` call data. The
@@ -161,8 +161,8 @@ Important considerations and notes regarding this section:
 - The `maxAllowedNFTUtilization` should be a governable parameter of the `BorrowLockerFactory`.
 - Before opening the trove, the `BorrowLocker` contract must verify that its owner address matches the
   borrower address in the `openTroveWithSignature` call data to ensure proper trove attribution in mUSD.
-- The original veBTC owner becomes the borrower controlling the newly opened trove. That said, trove 
-  management actions (depositing extra collateral, withdrawing excess collateral, etc.) can be perfomed 
+- The original veBTC owner becomes the borrower controlling the newly opened trove. That said, trove
+  management actions (depositing extra collateral, withdrawing excess collateral, etc.) can be perfomed
   only by the veBTC owner directly and are out of scope for the `BorrowLocker` contract.
 - Given the fact that veBTC owner can execute trove manegement actions beyond the `BorrowLocker` contract,
   the `BorrowLocker` contract must track the trove state and ensure all edge cases are handled correctly so
@@ -170,13 +170,33 @@ Important considerations and notes regarding this section:
 
 #### Participate in Tigris
 
-_Under construction. Key points to cover:_
+The following diagram illustrates the key interactions between the proposed contracts and existing
+Tigris components when a veBTC owner votes and earns rewards/fees in the Tigris protocol:
 
-- _The `BorrowLocker` must expose methods allowing to vote on gauges and the ChainFeeSplitter's needle parameter.
-  Those methods must be restricted to the `BorrowLocker` owner (i.e. the original owner of the veBTC collateral)._
-- _BTC rewards and swap fees are distributed to the `BorrowLocker` contract. The `BorrowLocker` contract must
-  expose a method allowing to claim them. The method can be unrestricted but must send the rewards/fees to the
-  `BorrowLocker` owner._
+![rfc-1-tigris](../assets/rfc-1-tigris.png)
+
+1. The veBTC owner can continue voting through the `BorrowLocker` contract, which provides methods for both
+   gauge voting and adjusting the `ChainFeeSplitter`'s needle parameter.
+2. The `BorrowLocker` contract forwards these votes to the `VeBTCVoter` and `EpochGovernor` contracts. As
+   the current owner of the veBTC token, the `BorrowLocker` has the necessary permissions to execute these
+   voting actions.
+3. The veBTC owner can claim earned swap fees from pools they voted for by calling a dedicated method on the
+   `BorrowLocker` contract.
+4. The `BorrowLocker` contract forwards the claim request to the `VeBTCVoter` contract, which redirects
+   the request to respective `FeesVotingRewards` and `BribeVotingRewards` contracts. As the current owner
+   of the veBTC token, the `BorrowLocker` has the necessary permissions to execute these claim actions.
+5. The veBTC owner can claim their share of BTC rewards by calling a dedicated method on the
+   `BorrowLocker` contract.
+6. The `BorrowLocker` contract forwards the claim request to the `RewardsDistributor` contract. Since claiming
+   rewards is unrestricted, any address can trigger this action. For unexpired veBTC locks, the claimed BTC
+   rewards automatically increase the locked BTC amount in the veBTC token. For expired locks, the BTC rewards
+   are sent to the `BorrowLocker` contract as the current veBTC token owner.
+
+Important considerations and notes regarding this section:
+
+- The voting methods exposed by the `BorrowLocker` contract must be restricted to the veBTC owner.
+- The claim methods exposed by the `BorrowLocker` contract do not have to be restricted but must
+  ensure claimed rewards/fees are transferred to the veBTC owner.
 
 #### Repay mUSD loan and withdraw veBTC
 
@@ -211,7 +231,7 @@ _Under construction._
 - [ActivePool]: Contract holding the BTC collateral of active troves.
 - [BorrowerOperationsSignatures]: Contract managing gas-less EIP-712 signatures for borrower operations.
 - [MezoForwarder]: A GSN-compatible contract for gasless transactions.
-  
+
 <!-- Links definitions -->
 
 [Tigris]: https://blog.mezo.org/mezo-the-2025-roadmap/#3-tigris
