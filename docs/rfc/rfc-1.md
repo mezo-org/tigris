@@ -200,13 +200,45 @@ Important considerations and notes regarding this section:
 
 #### Repay mUSD loan and withdraw veBTC
 
-_Under construction. Key points to cover:_
+The following diagram illustrates the key interactions between the proposed contracts and existing
+Tigris/mUSD components when a veBTC owner repays their mUSD loan and withdraws their veBTC collateral:
 
-- _The `BorrowLocker` must focus on trove state and stay agnostic regarding the details.
-  This is needed to avoid leaking too much mUSD details inside the `BorrowLocker` contract._
-- _The `BorrowLocker` contract unlocks the veBTC if the trove state is `closedByOwner`_
-- _Figure out how to handle the case where the trove state is `closedByRedemption`_
-- _Prevent re-usage of a closed `BorrowLocker` contract._
+![rfc-1-repay](../assets/rfc-1-repay.png)
+
+1. The veBTC owner prepares a `closeTroveWithSignature` transaction by constructing call data that specifies
+   the `BorrowLocker` contract as the recipient of the released BTC collateral. This transaction can be
+   submitted directly or via a relayer to the `BorrowerOperationsSignatures` contract.
+2. Upon receiving the transaction, the `BorrowerOperationsSignatures` contract validates the signature and
+   delegates execution to the `BorrowerOperations` contract.
+3. The `BorrowerOperations` contract closes the trove and initiates mUSD burning.
+4. The corresponding amount of mUSD is burned from the veBTC owner's balance.
+5. The released BTC collateral is transferred to the `BorrowLocker` contract.
+6. The veBTC owner may be required to deposit additional BTC to cover any collateral shortfall in the
+   `BorrowLocker` contract, particularly if their trove was previously subject to redemptions by other users.
+7. The `BorrowLocker` transfers the BTC collateral to the `BorrowLockerFactory` contract, signaling the completion
+   of its lifecycle and preventing any further operations.
+8. The `BorrowLockerFactory` contract transfers the BTC back to the `VeBTC` contract to repay the BTC debt
+   associated with the given veBTC NFT that was created during the initial borrowing process.
+9. The original veBTC owner regains ownership of the veBTC NFT.
+
+Important considerations and notes regarding this section:
+
+- The flow described above leverages EIP-712 signatures for trove closure, which represents the most
+  gas-efficient approach by minimizing the number of required transactions. However, alternative methods
+  are also possible - for instance, the veBTC owner could opt to directly invoke the `closeTrove` function
+  on the `BorrowerOperations` contract and subsequently transfer the withdrawn BTC collateral to the
+  `BorrowLocker` contract.
+- The `BorrowLocker` may expose a `receive` method to handle incoming BTC transfers and automatically
+  trigger subsequent actions (BTC settlement, veBTC ownership transfer) if the required amount of
+  BTC is under `BorrowLocker`'s control.
+- Before transferring veBTC ownership back to the original owner, the `BorrowLocker` contract must verify that
+  the trove closure resulted from either loan repayment or redemption. In cases where the trove was closed due
+  to liquidation, ownership transfer follows a separate process outlined in the
+  [Liquidate mUSD loan and seize veBTC](#liquidate-musd-loan-and-seize-vebtc) section.
+- The `BorrowLockerFactory` must ensure the `BorrowLocker` contract is not reused after it has been
+  closed.
+- The `BorrowLocker` contract must provide a mechanism to claim any uncollected rewards and fees from its
+  balance, even after closure.
 
 #### Liquidate mUSD loan and seize veBTC
 
