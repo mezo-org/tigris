@@ -155,7 +155,9 @@ Important considerations and notes regarding this section:
 - The special BTC retrieval path exposed by the `VeBTC` contract must be restricted to the `BorrowLockerFactory`
   and only for veBTC tokens it owns.
 - This RFC does not force any particular logic of `BorrowLocker` creation. Naive deployment of `BorrowLocker`
-  using the `new` keyword may be costly in terms of gas. Using the clone factory pattern may be a good alternative.
+  using the `new` keyword may be costly in terms of gas. Using the clone factory pattern can be considered
+  as an alternative. The creation logic should also consider upgreadbility concerns mentioned
+  in the [Limitations](#limitations) section.
 - It's crucial that the original veBTC owner retains control over the `BorrowLocker` contract.
   This allows the veBTC owner to continue participating in the `Tigris` protocol indirectly through
   the `BorrowLocker` contract. That implies the `BorrowLocker` contract must provide the necessary
@@ -290,8 +292,10 @@ The proposal presented in this RFC is subject to the following limitations and c
   as collateral (using the `maxAllowedNFTUtilization` parameter), but this does not mitigate the
   problem entirely. Additional measures may be needed if this becomes a pressing issue.
 - Upgradeability of the `BorrowLocker` and `BorrowLockerFactory` contracts may be challenging due to the
-  need to coordinate between multiple contracts. This RFC does not propose any specific upgradeability
-  mechanism and leaves it to the discretion of the implementor.
+  need to coordinate between multiple contracts. This RFC does not enforce any specific upgradeability
+  mechanism but recommends using a pattern where the `BorrowLocker` contracts are deployed as
+  proxies pointing to a single implementation instance that can be upgraded by governance.
+  A similar pattern is used in the Mezo [Passport] project, which can be taken as a reference.
 - The proposed solution may incur significant gas costs for borrowers willing to use veBTC as collateral.
   The implementation must take this into account and provide necessary optimizations.
 
@@ -306,6 +310,7 @@ The proposal presented in this RFC is subject to the following limitations and c
 - [BorrowerOperationsSignatures]: Contract managing gas-less EIP-712 signatures for borrower operations.
 - [MezoForwarder]: A GSN-compatible contract for gasless transactions.
 - [TroveManager]: Contract managing mUSD troves.
+- [Passport]: The Mezo Passport project.
 
 <!-- Links definitions -->
 
@@ -318,3 +323,4 @@ The proposal presented in this RFC is subject to the following limitations and c
 [BorrowerOperationsSignatures]: https://github.com/mezo-org/musd/blob/0c4b3e42c903e1a4602e473e6c1ddd446f20fc4e/solidity/contracts/BorrowerOperationsSignatures.sol
 [MezoForwarder]: https://github.com/mezo-org/mezodrome/blob/350acfa966b788272f7c6e9d9402c619c210b5c9/solidity/contracts/forwarder/MezoForwarder.sol
 [TroveManager]: https://github.com/mezo-org/musd/blob/0c4b3e42c903e1a4602e473e6c1ddd446f20fc4e/solidity/contracts/TroveManager.sol
+[Passport]: https://github.com/mezo-org/passport
