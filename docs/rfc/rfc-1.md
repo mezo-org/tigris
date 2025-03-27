@@ -127,8 +127,10 @@ Tigris/mUSD components when a veBTC owner initiates a borrow against their veBTC
    the `BorrowLockerFactory` makes a callback to the `VeBTC` contract to retrieve the underlying BTC
    tokens through the new special retrieval path.
 3. The `BorrowLockerFactory` contract deploys a dedicated `BorrowLocker` contract for the veBTC NFT,
-   initializing it with both the retrieved BTC and the `openTroveWithSignature` call data. The
-   original veBTC NFT owner retains control as the owner of this new `BorrowLocker` contract.
+   initializing it with both the retrieved BTC and the `openTroveWithSignature` call data. As part of
+   this process, the `BorrowLockerFactory` transfers the ownership of the veBTC NFT to the freshly
+   deployed `BorrowLocker` contract. The original veBTC NFT owner retains control as the owner of this
+   new `BorrowLocker` contract.
 4. The `BorrowLocker` contract calls `openTroveWithSignature` on `BorrowerOperationsSignatures`,
    providing the obtained call data and a portion of liquid BTC retrieved from the veBTC as collateral.
    The portion is computed with respect to the `maxAllowedNFTUtilization` parameter.
