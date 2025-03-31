@@ -14,6 +14,7 @@ abstract contract BaseTest is Base, TestOwner {
     uint256 constant mUSD_1 = 1e6;
     uint256 constant mUSD_10K = 1e10; // 1e4 = 10K tokens with 6 decimals
     uint256 constant mUSD_100K = 1e11; // 1e5 = 100K tokens with 6 decimals
+    uint256 constant mUSD_1M = 1e12; // 1e6 = 1M tokens with 6 decimals
     uint256 constant mUSD_100M = 1e14; // 1e8 = 100M tokens with 6 decimals
     uint256 constant mUSD_10B = 1e16; // 1e10 = 10B tokens with 6 decimals
     uint256 constant TOKEN_1 = 1e18;
@@ -234,6 +235,8 @@ abstract contract BaseTest is Base, TestOwner {
     }
 
     function deployPoolWithOwner(address _owner) public {
+        uint256 initialBTCBalance = BTC.balanceOf(_owner);
+
         _addLiquidityToPool(_owner, address(router), address(BTC), address(mUSD), false, TOKEN_1, mUSD_1);
         _addLiquidityToPool(_owner, address(router), address(mUSD), address(LIMPETH), false, mUSD_1, TOKEN_1);
         _addLiquidityToPool(_owner, address(router), address(mUSD), address(wtBTC), false, mUSD_1, TOKEN_1);
@@ -242,7 +245,7 @@ abstract contract BaseTest is Base, TestOwner {
 
         // Mint BTC tokens for the owner again to replenish the tokens used
         // when adding liquidity to the pool. This is needed in certain unit tests.
-        deal(address(BTC), _owner, TOKEN_10M, true);
+        deal(address(BTC), _owner, initialBTCBalance, true);
 
         // last arg default as these are all v2 pools
         address create2address = router.poolFor(address(BTC), address(mUSD), false, address(0));
