@@ -38,7 +38,6 @@ contract PoolTest is BaseTest {
         );
         escrow = VeBTC(address(proxy));
 
-
         distributor = new RewardsDistributor(address(escrow));
         voter = new Voter(address(forwarder), address(escrow), address(factoryRegistry));
         router = new Router(
@@ -128,39 +127,37 @@ contract PoolTest is BaseTest {
         assertEq(escrow.ownerOf(3), address(0));
     }
 
-    function confirmTokensForFraxUsdc() public {
+    function confirmTokensForBTCmUSD() public {
         votingEscrowMerge();
 
         (address token0, address token1) = router.sortTokens(address(mUSD), address(BTC));
-        assertEq(pool.token0(), token0);
-        assertEq(pool.token1(), token1);
+        assertEq(pool4.token0(), token0);
+        assertEq(pool4.token1(), token1);
     }
 
-    function mintAndBurnTokensForPoolFraxUsdc() public { // TODO: Rename
-        confirmTokensForFraxUsdc();
+    function mintAndBurnTokensForPoolBTCmUSD() public {
+        confirmTokensForBTCmUSD();
 
-        mUSD.transfer(address(pool), mUSD_1);
-        BTC.transfer(address(pool), TOKEN_1);
-        pool.mint(address(owner));
-        // assertEq(pool.getAmountOut(mUSD_1, address(mUSD)), 982117769725505988);
-        assertEq(pool.getAmountOut(mUSD_1, address(mUSD)), 749943748593714842);
+        mUSD.transfer(address(pool4), mUSD_1);
+        BTC.transfer(address(pool4), TOKEN_1);
+        pool4.mint(address(owner));
+        assertEq(pool4.getAmountOut(mUSD_1, address(mUSD)), 982117769725505988);
     }
 
-    function mintAndBurnTokensForPoolFraxUsdcOwner2() public {
-        mintAndBurnTokensForPoolFraxUsdc();
+    function mintAndBurnTokensForPoolBTCmUSDOwner2() public {
+        mintAndBurnTokensForPoolBTCmUSD();
 
         vm.startPrank(address(owner2));
-        mUSD.transfer(address(pool), mUSD_1);
-        BTC.transfer(address(pool), TOKEN_1);
-        pool.mint(address(owner2));
+        mUSD.transfer(address(pool4), mUSD_1);
+        BTC.transfer(address(pool4), TOKEN_1);
+        pool4.mint(address(owner2));
         vm.stopPrank();
 
-        // assertEq(pool.getAmountOut(mUSD_1, address(mUSD)), 992220948146798746);
-        assertEq(pool.getAmountOut(mUSD_1, address(mUSD)), 799935998719974399);
+        assertEq(pool4.getAmountOut(mUSD_1, address(mUSD)), 992220948146798746);
     }
 
     function routerAddLiquidity() public {
-        mintAndBurnTokensForPoolFraxUsdcOwner2();
+        mintAndBurnTokensForPoolBTCmUSDOwner2();
 
         _addLiquidityToPool(address(owner), address(router), address(mUSD), address(BTC), false, mUSD_100K, TOKEN_100K);
         _addLiquidityToPool(
@@ -176,134 +173,12 @@ contract PoolTest is BaseTest {
         _addLiquidityToPool(address(owner), address(router), address(mUSD), address(BTC), true, mUSD_100K, TOKEN_100K);
     }
 
-    function routerRemoveLiquidity() public {
-        routerAddLiquidity();
-
-        mUSD.approve(address(router), mUSD_100K);
-        BTC.approve(address(router), TOKEN_100K);
-        router.quoteAddLiquidity(address(BTC), address(mUSD), false, address(factory), TOKEN_100K, mUSD_100K);
-        router.quoteRemoveLiquidity(address(BTC), address(mUSD), false, address(factory), mUSD_100K);
-    }
-
-    function routerAddLiquidityOwner2() public {
-        routerRemoveLiquidity();
-
-        _addLiquidityToPool(
-            address(owner2),
-            address(router),
-            address(mUSD),
-            address(BTC),
-            false,
-            mUSD_100K,
-            TOKEN_100K
-        );
-        _addLiquidityToPool(
-            address(owner),
-            address(router),
-            address(mUSD),
-            address(LIMPETH),
-            false,
-            mUSD_100K,
-            TOKEN_100K
-        );
-        _addLiquidityToPool(
-            address(owner),
-            address(router),
-            address(mUSD),
-            address(wtBTC),
-            false,
-            mUSD_100M,
-            TOKEN_100M
-        );
-        _addLiquidityToPool(
-            address(owner),
-            address(router),
-            address(mUSD),
-            address(BTC),
-            true,
-            mUSD_100K,
-            TOKEN_100K
-        );
-    }
-
-    function routerPool1GetAmountsOutAndSwapExactTokensForTokens() public {
-        routerAddLiquidityOwner2();
-
-        IRouter.Route[] memory routes = new IRouter.Route[](1);
-        routes[0] = IRouter.Route(address(mUSD), address(BTC), false, address(0));
-
-        assertEq(router.getAmountsOut(mUSD_1, routes)[1], pool.getAmountOut(mUSD_1, address(mUSD)));
-
-        uint256[] memory assertedOutput = router.getAmountsOut(mUSD_1, routes);
-        mUSD.approve(address(router), mUSD_1);
-        router.swapExactTokensForTokens(mUSD_1, assertedOutput[1], routes, address(owner), block.timestamp);
-        skip(1801);
-        vm.roll(block.number + 1);
-        address poolFees = pool.poolFees();
-        assertEq(mUSD.balanceOf(poolFees), 100);
-        uint256 b = mUSD.balanceOf(address(owner));
-        pool.claimFees();
-        assertGt(mUSD.balanceOf(address(owner)), b);
-    }
-
-    function routerPool1GetAmountsOutAndSwapExactTokensForTokensOwner2() public {
-        routerPool1GetAmountsOutAndSwapExactTokensForTokens();
-
-        IRouter.Route[] memory routes = new IRouter.Route[](1);
-        routes[0] = IRouter.Route(address(mUSD), address(BTC), false, address(0));
-
-        assertEq(router.getAmountsOut(mUSD_1, routes)[1], pool.getAmountOut(mUSD_1, address(mUSD)));
-
-        uint256[] memory expectedOutput = router.getAmountsOut(mUSD_1, routes);
-        vm.startPrank(address(owner2));
-        owner2.approve(address(mUSD), address(router), mUSD_1);
-        router.swapExactTokensForTokens(mUSD_1, expectedOutput[1], routes, address(owner2), block.timestamp);
-        vm.stopPrank();
-        address poolFees = pool.poolFees();
-        assertEq(mUSD.balanceOf(poolFees), 101);
-        uint256 b = mUSD.balanceOf(address(owner));
-        vm.prank(address(owner2));
-        pool.claimFees();
-        assertEq(mUSD.balanceOf(address(owner)), b);
-    }
-
-    function routerPool2GetAmountsOutAndSwapExactTokensForTokens() public {
-        routerPool1GetAmountsOutAndSwapExactTokensForTokensOwner2();
-
-        IRouter.Route[] memory routes = new IRouter.Route[](1);
-        routes[0] = IRouter.Route(address(mUSD), address(BTC), true, address(0));
-
-        assertEq(router.getAmountsOut(mUSD_1, routes)[1], pool4.getAmountOut(mUSD_1, address(mUSD)));
-
-        uint256[] memory expectedOutput = router.getAmountsOut(mUSD_1, routes);
-        mUSD.approve(address(router), mUSD_1);
-        router.swapExactTokensForTokens(mUSD_1, expectedOutput[1], routes, address(owner), block.timestamp);
-    }
-
-    function routerPool3GetAmountsOutAndSwapExactTokensForTokens() public {
-        routerPool2GetAmountsOutAndSwapExactTokensForTokens();
-
-        IRouter.Route[] memory routes = new IRouter.Route[](1);
-        routes[0] = IRouter.Route(address(wtBTC), address(mUSD), false, address(0));
-
-        assertEq(router.getAmountsOut(TOKEN_1M, routes)[1], pool3.getAmountOut(TOKEN_1M, address(wtBTC)));
-
-        uint256[] memory expectedOutput = router.getAmountsOut(TOKEN_1M, routes);
-        wtBTC.approve(address(router), TOKEN_1M);
-        router.swapExactTokensForTokens(TOKEN_1M, expectedOutput[1], routes, address(owner), block.timestamp);
-    }
-
-    function deployMinter() public { // TODO: Rename
+    function deploySplitter() public {
         routerAddLiquidity();
 
         distributor = new RewardsDistributor(address(escrow));
-
-        // minter = new Minter(address(voter), address(escrow), address(distributor));
-        // distributor.setMinter(address(minter));
-        // BTC.setMinter(address(minter));
         chainFeeSplitter = new ChainFeeSplitter(address(voter), address(escrow), address(distributor));
         distributor.setDepositor(address(chainFeeSplitter));
-
 
         address[] memory tokens = new address[](5);
         tokens[0] = address(mUSD);
@@ -315,14 +190,14 @@ contract PoolTest is BaseTest {
     }
 
     function deployPoolFactoryGauge() public {
-        deployMinter();
+        deploySplitter();
 
         BTC.approve(address(gaugeFactory), 15 * TOKEN_100K);
         voter.createGauge(address(factory), address(pool));
         voter.createGauge(address(factory), address(pool2));
         voter.createGauge(address(factory), address(pool3));
         voter.createGauge(address(factory), address(pool4));
-        assertFalse(voter.gauges(address(pool)) == address(0));
+        assertFalse(voter.gauges(address(pool4)) == address(0));
 
         address gaugeAddress = voter.gauges(address(pool));
         address feesVotingRewardAddress = voter.gaugeToFees(gaugeAddress);
@@ -330,12 +205,15 @@ contract PoolTest is BaseTest {
 
         address gaugeAddress2 = voter.gauges(address(pool2));
         address feesVotingRewardAddress2 = voter.gaugeToFees(gaugeAddress2);
+        address bribeVotingRewardAddress2 = voter.gaugeToBribe(gaugeAddress2);
 
         address gaugeAddress3 = voter.gauges(address(pool3));
         address feesVotingRewardAddress3 = voter.gaugeToFees(gaugeAddress3);
+        address bribeVotingRewardAddress3 = voter.gaugeToBribe(gaugeAddress3);
 
         address gaugeAddress4 = voter.gauges(address(pool4));
         address feesVotingRewardAddress4 = voter.gaugeToFees(gaugeAddress4);
+        address bribeVotingRewardAddress4 = voter.gaugeToBribe(gaugeAddress4);
 
         gauge = Gauge(gaugeAddress);
         gauge2 = Gauge(gaugeAddress2);
@@ -344,9 +222,15 @@ contract PoolTest is BaseTest {
 
         feesVotingReward = FeesVotingReward(feesVotingRewardAddress);
         bribeVotingReward = BribeVotingReward(bribeVotingRewardAddress);
+
         feesVotingReward2 = FeesVotingReward(feesVotingRewardAddress2);
+        bribeVotingReward2 = BribeVotingReward(bribeVotingRewardAddress2);
+
         feesVotingReward3 = FeesVotingReward(feesVotingRewardAddress3);
+        bribeVotingReward3 = BribeVotingReward(bribeVotingRewardAddress3);
+
         feesVotingReward4 = FeesVotingReward(feesVotingRewardAddress4);
+        bribeVotingReward4 = BribeVotingReward(bribeVotingRewardAddress4);
 
         pool.approve(address(gauge), POOL_1);
         pool2.approve(address(gauge2), POOL_1);
@@ -356,24 +240,24 @@ contract PoolTest is BaseTest {
         gauge2.deposit(POOL_1);
         gauge3.deposit(POOL_1);
         gauge4.deposit(POOL_1);
-        assertEq(gauge.totalSupply(), POOL_1);
-        assertEq(gauge.earned(address(owner)), 0);
+        assertEq(gauge4.totalSupply(), POOL_1);
+        assertEq(gauge4.earned(address(owner)), 0);
     }
 
     function deployPoolFactoryGaugeOwner2() public {
         deployPoolFactoryGauge();
 
-        owner2.approve(address(pool), address(gauge), POOL_1);
-        owner2.deposit(address(gauge), POOL_1);
-        assertEq(gauge.totalSupply(), 2 * POOL_1);
-        assertEq(gauge.earned(address(owner2)), 0);
+        owner2.approve(address(pool4), address(gauge4), POOL_1);
+        owner2.deposit(address(gauge4), POOL_1);
+        assertEq(gauge4.totalSupply(), 2 * POOL_1);
+        assertEq(gauge4.earned(address(owner2)), 0);
     }
 
     function withdrawGaugeStake() public {
         deployPoolFactoryGaugeOwner2();
 
         gauge.withdraw(gauge.balanceOf(address(owner)));
-        owner2.withdrawGauge(address(gauge), gauge.balanceOf(address(owner2)));
+        owner2.withdrawGauge(address(gauge4), gauge4.balanceOf(address(owner2)));
         gauge2.withdraw(gauge2.balanceOf(address(owner)));
         gauge3.withdraw(gauge3.balanceOf(address(owner)));
         gauge4.withdraw(gauge4.balanceOf(address(owner)));
@@ -386,25 +270,25 @@ contract PoolTest is BaseTest {
     function addGaugeAndVotingRewards() public {
         withdrawGaugeStake();
 
-        _addRewardToGauge(address(voter), address(gauge), POOL_1);
+        _addRewardToGauge(address(voter), address(gauge4), POOL_1);
 
-        BTC.approve(address(bribeVotingReward), POOL_1);
+        BTC.approve(address(bribeVotingReward4), POOL_1);
 
-        bribeVotingReward.notifyRewardAmount(address(BTC), POOL_1);
+        bribeVotingReward4.notifyRewardAmount(address(BTC), POOL_1);
 
-        assertEq(gauge.rewardRate(), 1653);
+        assertEq(gauge4.rewardRate(), 1653);
     }
 
     function exitAndGetRewardGaugeStake() public {
         addGaugeAndVotingRewards();
 
-        uint256 supply = pool.balanceOf(address(owner));
-        pool.approve(address(gauge), supply);
-        gauge.deposit(supply);
-        gauge.withdraw(gauge.balanceOf(address(owner)));
-        assertEq(gauge.totalSupply(), 0);
-        pool.approve(address(gauge), supply);
-        gauge.deposit(POOL_1);
+        uint256 supply = pool4.balanceOf(address(owner));
+        pool4.approve(address(gauge4), supply);
+        gauge4.deposit(supply);
+        gauge4.withdraw(gauge4.balanceOf(address(owner)));
+        assertEq(gauge4.totalSupply(), 0);
+        pool4.approve(address(gauge4), supply);
+        gauge4.deposit(POOL_1);
     }
 
     function voterReset() public {
@@ -434,39 +318,39 @@ contract PoolTest is BaseTest {
         createLock2();
 
         address[] memory pools = new address[](1);
-        pools[0] = address(pool);
+        pools[0] = address(pool4);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 5000;
         skip(1 weeks + 1 hours + 1);
 
         voter.vote(1, pools, weights);
         assertEq(voter.usedWeights(1), escrow.balanceOfNFT(1)); // within 1000
-        assertEq(feesVotingReward.balanceOf(1), uint256(voter.votes(1, address(pool))));
+        assertEq(feesVotingReward4.balanceOf(1), uint256(voter.votes(1, address(pool4))));
         skip(1 weeks);
 
         voter.reset(1);
         assertLt(voter.usedWeights(1), escrow.balanceOfNFT(1));
         assertEq(voter.usedWeights(1), 0);
-        assertEq(feesVotingReward.balanceOf(1), uint256(voter.votes(1, address(pool))));
-        assertEq(feesVotingReward.balanceOf(1), 0);
+        assertEq(feesVotingReward4.balanceOf(1), uint256(voter.votes(1, address(pool4))));
+        assertEq(feesVotingReward4.balanceOf(1), 0);
     }
 
     function gaugePokeHacking() public {
         voteHacking();
 
         assertEq(voter.usedWeights(1), 0);
-        assertEq(voter.votes(1, address(pool)), 0);
+        assertEq(voter.votes(1, address(pool4)), 0);
         voter.poke(1);
         assertEq(voter.usedWeights(1), 0);
-        assertEq(voter.votes(1, address(pool)), 0);
+        assertEq(voter.votes(1, address(pool4)), 0);
     }
 
     function gaugeVoteAndBribeBalanceOf() public {
         gaugePokeHacking();
 
         address[] memory pools = new address[](2);
-        pools[0] = address(pool);
-        pools[1] = address(pool2);
+        pools[0] = address(pool4);
+        pools[1] = address(pool);
         uint256[] memory weights = new uint256[](2);
         weights[0] = 5000;
         weights[1] = 5000;
@@ -478,24 +362,24 @@ contract PoolTest is BaseTest {
 
         voter.vote(4, pools, weights);
         assertFalse(voter.totalWeight() == 0);
-        assertFalse(feesVotingReward.balanceOf(1) == 0);
+        assertFalse(feesVotingReward4.balanceOf(1) == 0);
     }
 
     function gaugePokeHacking2() public {
         gaugeVoteAndBribeBalanceOf();
 
         uint256 weightBefore = voter.usedWeights(1);
-        uint256 votesBefore = voter.votes(1, address(pool));
+        uint256 votesBefore = voter.votes(1, address(pool4));
         voter.poke(1);
         assertEq(voter.usedWeights(1), weightBefore);
-        assertEq(voter.votes(1, address(pool)), votesBefore);
+        assertEq(voter.votes(1, address(pool4)), votesBefore);
     }
 
     function voteHackingBreakMint() public {
         gaugePokeHacking2();
 
         address[] memory pools = new address[](1);
-        pools[0] = address(pool);
+        pools[0] = address(pool4);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 5000;
         skip(1 weeks);
@@ -503,15 +387,15 @@ contract PoolTest is BaseTest {
         voter.vote(1, pools, weights);
 
         assertEq(voter.usedWeights(1), escrow.balanceOfNFT(1)); // within 1000
-        assertEq(feesVotingReward.balanceOf(1), uint256(voter.votes(1, address(pool))));
+        assertEq(feesVotingReward4.balanceOf(1), uint256(voter.votes(1, address(pool4))));
     }
 
     function gaugePokeHacking3() public {
         voteHackingBreakMint();
 
-        assertEq(voter.usedWeights(1), uint256(voter.votes(1, address(pool))));
+        assertEq(voter.usedWeights(1), uint256(voter.votes(1, address(pool4))));
         voter.poke(1);
-        assertEq(voter.usedWeights(1), uint256(voter.votes(1, address(pool))));
+        assertEq(voter.usedWeights(1), uint256(voter.votes(1, address(pool4))));
     }
 
     function gaugeDistributeBasedOnVoting() public {
@@ -533,10 +417,10 @@ contract PoolTest is BaseTest {
 
         address[] memory rewards = new address[](1);
         rewards[0] = address(BTC);
-        feesVotingReward.getReward(1, rewards);
+        feesVotingReward4.getReward(1, rewards);
         skip(8 days);
         vm.roll(block.number + 1);
-        feesVotingReward.getReward(1, rewards);
+        feesVotingReward4.getReward(1, rewards);
     }
 
     function routerPool1GetAmountsOutAndSwapExactTokensForTokens2() public {
@@ -607,114 +491,113 @@ contract PoolTest is BaseTest {
         address[] memory rewards = new address[](2);
         rewards[0] = address(BTC);
         rewards[1] = address(mUSD);
-        feesVotingReward.getReward(1, rewards);
+        feesVotingReward4.getReward(1, rewards);
 
         address[] memory gauges = new address[](1);
-        gauges[0] = address(gauge);
+        gauges[0] = address(gauge4);
     }
 
-    function minterMint() public { // TODO: Rename functions
+    function splitterUpdate() public {
         distributeAndClaimFees();
 
-        // minter.updatePeriod();
         chainFeeSplitter.updatePeriod();
-        voter.updateFor(address(gauge));
+        voter.updateFor(address(gauge4));
         voter.distribute(0, voter.length());
         skip(30 minutes);
         vm.roll(block.number + 1);
     }
 
     function gaugeClaimRewards() public {
-        minterMint();
+        splitterUpdate();
 
         assertEq(address(owner), escrow.ownerOf(1));
         assertTrue(escrow.isApprovedOrOwner(address(owner), 1));
-        gauge.withdraw(gauge.balanceOf(address(owner)));
+        gauge4.withdraw(gauge4.balanceOf(address(owner)));
         skip(1);
-        pool.approve(address(gauge), POOL_1);
+        pool4.approve(address(gauge4), POOL_1);
         skip(1);
-        gauge.deposit(POOL_1);
+        gauge4.deposit(POOL_1);
         skip(1);
         uint256 before = BTC.balanceOf(address(owner));
         skip(1);
-        uint256 earned = gauge.earned(address(owner));
-        gauge.getReward(address(owner));
+        uint256 earned = gauge4.earned(address(owner));
+        gauge4.getReward(address(owner));
         skip(1);
         uint256 after_ = BTC.balanceOf(address(owner));
         uint256 received = after_ - before;
         assertEq(earned, received);
 
-        gauge.withdraw(gauge.balanceOf(address(owner)));
-        pool.approve(address(gauge), POOL_1);
-        gauge.deposit(POOL_1);
-        gauge.getReward(address(owner));
-        gauge.withdraw(gauge.balanceOf(address(owner)));
-        pool.approve(address(gauge), POOL_1);
-        gauge.deposit(POOL_1);
-        gauge.getReward(address(owner));
-        gauge.withdraw(gauge.balanceOf(address(owner)));
-        pool.approve(address(gauge), POOL_1);
-        gauge.deposit(POOL_1);
-        gauge.getReward(address(owner));
-        gauge.withdraw(gauge.balanceOf(address(owner)));
-        pool.approve(address(gauge), POOL_1);
-        gauge.deposit(POOL_1);
-        gauge.getReward(address(owner));
-        gauge.withdraw(gauge.balanceOf(address(owner)));
-        pool.approve(address(gauge), POOL_1);
-        gauge.deposit(POOL_1);
-        gauge.getReward(address(owner));
-        gauge.withdraw(gauge.balanceOf(address(owner)));
-        pool.approve(address(gauge), POOL_1);
-        gauge.deposit(POOL_1);
-        gauge.getReward(address(owner));
+        gauge4.withdraw(gauge4.balanceOf(address(owner)));
+        pool4.approve(address(gauge4), POOL_1);
+        gauge4.deposit(POOL_1);
+        gauge4.getReward(address(owner));
+        gauge4.withdraw(gauge4.balanceOf(address(owner)));
+        pool4.approve(address(gauge4), POOL_1);
+        gauge4.deposit(POOL_1);
+        gauge4.getReward(address(owner));
+        gauge4.withdraw(gauge4.balanceOf(address(owner)));
+        pool4.approve(address(gauge4), POOL_1);
+        gauge4.deposit(POOL_1);
+        gauge4.getReward(address(owner));
+        gauge4.withdraw(gauge4.balanceOf(address(owner)));
+        pool4.approve(address(gauge4), POOL_1);
+        gauge4.deposit(POOL_1);
+        gauge4.getReward(address(owner));
+        gauge4.withdraw(gauge4.balanceOf(address(owner)));
+        pool4.approve(address(gauge4), POOL_1);
+        gauge4.deposit(POOL_1);
+        gauge4.getReward(address(owner));
+        gauge4.withdraw(gauge4.balanceOf(address(owner)));
+        pool4.approve(address(gauge4), POOL_1);
+        gauge4.deposit(POOL_1);
+        gauge4.getReward(address(owner));
         skip(1 weeks);
         vm.roll(block.number + 1);
-        gauge.getReward(address(owner));
-        gauge.withdraw(gauge.balanceOf(address(owner)));
+        gauge4.getReward(address(owner));
+        gauge4.withdraw(gauge4.balanceOf(address(owner)));
     }
 
     function gaugeClaimRewardsAfterExpiry() public {
         gaugeClaimRewards();
 
-        pool.approve(address(gauge), POOL_1);
-        gauge.deposit(POOL_1);
-        gauge.getReward(address(owner));
-        gauge.withdraw(gauge.balanceOf(address(owner)));
-        pool.approve(address(gauge), POOL_1);
-        gauge.deposit(POOL_1);
-        gauge.getReward(address(owner));
-        gauge.withdraw(gauge.balanceOf(address(owner)));
-        pool.approve(address(gauge), POOL_1);
-        gauge.deposit(POOL_1);
-        gauge.getReward(address(owner));
-        gauge.withdraw(gauge.balanceOf(address(owner)));
-        pool.approve(address(gauge), POOL_1);
-        gauge.deposit(POOL_1);
-        gauge.getReward(address(owner));
-        gauge.withdraw(gauge.balanceOf(address(owner)));
-        pool.approve(address(gauge), POOL_1);
-        gauge.deposit(POOL_1);
-        gauge.getReward(address(owner));
-        gauge.withdraw(gauge.balanceOf(address(owner)));
-        pool.approve(address(gauge), POOL_1);
-        gauge.deposit(POOL_1);
-        gauge.getReward(address(owner));
-        gauge.withdraw(gauge.balanceOf(address(owner)));
-        pool.approve(address(gauge), POOL_1);
-        gauge.deposit(POOL_1);
-        gauge.getReward(address(owner));
+        pool4.approve(address(gauge4), POOL_1);
+        gauge4.deposit(POOL_1);
+        gauge4.getReward(address(owner));
+        gauge4.withdraw(gauge4.balanceOf(address(owner)));
+        pool4.approve(address(gauge4), POOL_1);
+        gauge4.deposit(POOL_1);
+        gauge4.getReward(address(owner));
+        gauge4.withdraw(gauge4.balanceOf(address(owner)));
+        pool4.approve(address(gauge4), POOL_1);
+        gauge4.deposit(POOL_1);
+        gauge4.getReward(address(owner));
+        gauge4.withdraw(gauge4.balanceOf(address(owner)));
+        pool4.approve(address(gauge4), POOL_1);
+        gauge4.deposit(POOL_1);
+        gauge4.getReward(address(owner));
+        gauge4.withdraw(gauge4.balanceOf(address(owner)));
+        pool4.approve(address(gauge4), POOL_1);
+        gauge4.deposit(POOL_1);
+        gauge4.getReward(address(owner));
+        gauge4.withdraw(gauge4.balanceOf(address(owner)));
+        pool4.approve(address(gauge4), POOL_1);
+        gauge4.deposit(POOL_1);
+        gauge4.getReward(address(owner));
+        gauge4.withdraw(gauge4.balanceOf(address(owner)));
+        pool4.approve(address(gauge4), POOL_1);
+        gauge4.deposit(POOL_1);
+        gauge4.getReward(address(owner));
         skip(1 weeks);
         vm.roll(block.number + 1);
-        gauge.getReward(address(owner));
-        gauge.withdraw(gauge.balanceOf(address(owner)));
+        gauge4.getReward(address(owner));
+        gauge4.withdraw(gauge4.balanceOf(address(owner)));
     }
 
     function votingEscrowDecay() public {
         gaugeClaimRewardsAfterExpiry();
 
         address[] memory feesVotingRewards_ = new address[](1);
-        feesVotingRewards_[0] = address(feesVotingReward);
+        feesVotingRewards_[0] = address(feesVotingReward4);
         address[][] memory rewards = new address[][](1);
         address[] memory reward = new address[](1);
         reward[0] = address(LIMPETH);
@@ -736,43 +619,43 @@ contract PoolTest is BaseTest {
     function routerAddLiquidityOwner3() public {
         votingEscrowDecay();
 
-        _addLiquidityToPool(address(owner3), address(router), address(mUSD), address(BTC), false, 1e12, TOKEN_1M);
+        _addLiquidityToPool(address(owner3), address(router), address(mUSD), address(BTC), true, 1e12, TOKEN_1M);
     }
 
     function deployPoolFactoryGaugeOwner3() public {
         routerAddLiquidityOwner3();
 
-        owner3.approve(address(pool), address(gauge), POOL_1);
-        owner3.deposit(address(gauge), POOL_1);
+        owner3.approve(address(pool4), address(gauge4), POOL_1);
+        owner3.deposit(address(gauge4), POOL_1);
     }
 
     function gaugeClaimRewardsOwner3() public {
         deployPoolFactoryGaugeOwner3();
 
-        owner3.withdrawGauge(address(gauge), gauge.balanceOf(address(owner3)));
-        owner3.approve(address(pool), address(gauge), POOL_1);
-        owner3.deposit(address(gauge), POOL_1);
-        owner3.withdrawGauge(address(gauge), gauge.balanceOf(address(owner3)));
-        owner3.approve(address(pool), address(gauge), POOL_1);
-        owner3.deposit(address(gauge), POOL_1);
+        owner3.withdrawGauge(address(gauge4), gauge4.balanceOf(address(owner3)));
+        owner3.approve(address(pool4), address(gauge4), POOL_1);
+        owner3.deposit(address(gauge4), POOL_1);
+        owner3.withdrawGauge(address(gauge4), gauge4.balanceOf(address(owner3)));
+        owner3.approve(address(pool4), address(gauge4), POOL_1);
+        owner3.deposit(address(gauge4), POOL_1);
 
-        owner3.getGaugeReward(address(gauge), address(owner3));
-        owner3.withdrawGauge(address(gauge), gauge.balanceOf(address(owner3)));
-        owner3.approve(address(pool), address(gauge), POOL_1);
-        owner3.deposit(address(gauge), POOL_1);
-        owner3.getGaugeReward(address(gauge), address(owner3));
-        owner3.withdrawGauge(address(gauge), gauge.balanceOf(address(owner3)));
-        owner3.approve(address(pool), address(gauge), POOL_1);
-        owner3.deposit(address(gauge), POOL_1);
-        owner3.getGaugeReward(address(gauge), address(owner3));
-        owner3.getGaugeReward(address(gauge), address(owner3));
-        owner3.getGaugeReward(address(gauge), address(owner3));
-        owner3.getGaugeReward(address(gauge), address(owner3));
+        owner3.getGaugeReward(address(gauge4), address(owner3));
+        owner3.withdrawGauge(address(gauge4), gauge4.balanceOf(address(owner3)));
+        owner3.approve(address(pool4), address(gauge4), POOL_1);
+        owner3.deposit(address(gauge4), POOL_1);
+        owner3.getGaugeReward(address(gauge4), address(owner3));
+        owner3.withdrawGauge(address(gauge4), gauge4.balanceOf(address(owner3)));
+        owner3.approve(address(pool4), address(gauge4), POOL_1);
+        owner3.deposit(address(gauge4), POOL_1);
+        owner3.getGaugeReward(address(gauge4), address(owner3));
+        owner3.getGaugeReward(address(gauge4), address(owner3));
+        owner3.getGaugeReward(address(gauge4), address(owner3));
+        owner3.getGaugeReward(address(gauge4), address(owner3));
 
-        owner3.withdrawGauge(address(gauge), gauge.balanceOf(address(owner)));
-        owner3.approve(address(pool), address(gauge), POOL_1);
-        owner3.deposit(address(gauge), POOL_1);
-        owner3.getGaugeReward(address(gauge), address(owner3));
+        owner3.withdrawGauge(address(gauge4), gauge4.balanceOf(address(owner)));
+        owner3.approve(address(pool4), address(gauge4), POOL_1);
+        owner3.deposit(address(gauge4), POOL_1);
+        owner3.getGaugeReward(address(gauge4), address(owner3));
     }
 
     function minterMint2() public {
@@ -780,49 +663,29 @@ contract PoolTest is BaseTest {
 
         skip(2 weeks);
         vm.roll(block.number + 1);
-        // minter.updatePeriod();
         chainFeeSplitter.updatePeriod();
-        voter.updateFor(address(gauge));
+        voter.updateFor(address(gauge4));
         address[] memory gauges = new address[](1);
-        gauges[0] = address(gauge);
+        gauges[0] = address(gauge4);
         voter.updateFor(gauges);
         voter.distribute(0, voter.length());
         voter.claimRewards(gauges);
-        assertEq(gauge.rewardRate(), 1471/*71886434476216289470*/); // <- TODO: check why this number is so low
-        console2.log(gauge.rewardPerTokenStored());
-    }
-
-    function gaugeClaimRewardsOwner3NextCycle() public {
-        minterMint2();
-
-        owner3.withdrawGauge(address(gauge), gauge.balanceOf(address(owner3)));
-        owner3.approve(address(pool), address(gauge), POOL_1);
-        owner3.deposit(address(gauge), POOL_1);
-        uint256 before = BTC.balanceOf(address(owner3));
-        skip(1);
-        owner3.getGaugeReward(address(gauge), address(owner3));
-        uint256 after_ = BTC.balanceOf(address(owner3));
-        uint256 received = after_ - before;
-        assertGt(received, 0);
-
-        owner3.withdrawGauge(address(gauge), gauge.balanceOf(address(owner)));
-        owner3.approve(address(pool), address(gauge), POOL_1);
-        owner3.deposit(address(gauge), POOL_1);
-        owner3.getGaugeReward(address(gauge), address(owner3));
+        assertEq(gauge4.rewardRate(), 1471);
+        console2.log(gauge4.rewardPerTokenStored());
     }
 
     function testGaugeClaimRewards2() public {
-        gaugeClaimRewardsOwner3NextCycle();
+        minterMint2();
 
-        pool.approve(address(gauge), POOL_1);
-        gauge.deposit(POOL_1);
+        pool4.approve(address(gauge4), POOL_1);
+        gauge4.deposit(POOL_1);
 
-        _addRewardToGauge(address(voter), address(gauge), TOKEN_1);
+        _addRewardToGauge(address(voter), address(gauge4), TOKEN_1);
 
         skip(1 weeks);
         vm.roll(block.number + 1);
-        gauge.getReward(address(owner));
-        gauge.withdraw(gauge.balanceOf(address(owner)));
+        gauge4.getReward(address(owner));
+        gauge4.withdraw(gauge4.balanceOf(address(owner)));
     }
 
     function testSetPoolName() external {
