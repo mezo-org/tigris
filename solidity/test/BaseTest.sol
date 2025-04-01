@@ -45,6 +45,7 @@ abstract contract BaseTest is Base, TestOwner {
     Pool pool;
     Pool pool2;
     Pool pool3;
+    Pool pool4;
 
     FeesVotingReward feesVotingReward;
     BribeVotingReward bribeVotingReward;
@@ -54,6 +55,9 @@ abstract contract BaseTest is Base, TestOwner {
     Gauge gauge3;
     FeesVotingReward feesVotingReward3;
     BribeVotingReward bribeVotingReward3;
+    Gauge gauge4;
+    FeesVotingReward feesVotingReward4;
+    BribeVotingReward bribeVotingReward4;
 
     SigUtils sigUtils;
 
@@ -131,6 +135,11 @@ abstract contract BaseTest is Base, TestOwner {
         feesVotingReward3 = FeesVotingReward(voter.gaugeToFees(address(gauge3)));
         bribeVotingReward3 = BribeVotingReward(voter.gaugeToBribe(address(gauge3)));
 
+        // BTC - mUSD stable
+        gauge4 = Gauge(voter.createGauge(address(factory), address(pool4)));
+        feesVotingReward4 = FeesVotingReward(voter.gaugeToFees(address(gauge4)));
+        bribeVotingReward4 = BribeVotingReward(voter.gaugeToBribe(address(gauge4)));
+
         bytes32 domainSeparator = keccak256(
             abi.encode(
                 escrow.DOMAIN_TYPEHASH(),
@@ -157,6 +166,7 @@ abstract contract BaseTest is Base, TestOwner {
         vm.label(address(pool), "Pool");
         vm.label(address(pool2), "Pool 2");
         vm.label(address(pool3), "Pool 3");
+        vm.label(address(pool4), "Pool 4");
 
         vm.label(address(escrow), "Voting Escrow");
         vm.label(address(gaugeFactory), "Gauge Factory");
@@ -174,6 +184,9 @@ abstract contract BaseTest is Base, TestOwner {
         vm.label(address(gauge3), "Gauge 3");
         vm.label(address(feesVotingReward3), "Fees Voting Reward 3");
         vm.label(address(bribeVotingReward3), "Bribe Voting Reward 3");
+        vm.label(address(gauge4), "Gauge 4");
+        vm.label(address(feesVotingReward4), "Fees Voting Reward 4");
+        vm.label(address(bribeVotingReward4), "Bribe Voting Reward 4");
     }
 
     function deployOwners() public {
@@ -224,7 +237,8 @@ abstract contract BaseTest is Base, TestOwner {
         _addLiquidityToPool(_owner, address(router), address(BTC), address(mUSD), false, TOKEN_1, mUSD_1);
         _addLiquidityToPool(_owner, address(router), address(mUSD), address(LIMPETH), false, mUSD_1, TOKEN_1);
         _addLiquidityToPool(_owner, address(router), address(mUSD), address(wtBTC), false, mUSD_1, TOKEN_1);
-        assertEq(factory.allPoolsLength(), 3);
+        _addLiquidityToPool(_owner, address(router), address(BTC), address(mUSD), true, TOKEN_1, mUSD_1);
+        assertEq(factory.allPoolsLength(), 4);
 
         // Mint BTC tokens for the owner again to replenish the tokens used
         // when adding liquidity to the pool. This is needed in certain unit tests.
@@ -238,6 +252,8 @@ abstract contract BaseTest is Base, TestOwner {
         pool2 = Pool(address2);
         address address3 = factory.getPool(address(mUSD), address(wtBTC), false);
         pool3 = Pool(address3);
+        address address4 = factory.getPool(address(BTC), address(mUSD), true);
+        pool4 = Pool(address4);
         assertEq(address(pool), create2address);
     }
 
