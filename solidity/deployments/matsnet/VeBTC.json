@@ -1,5 +1,5 @@
 {
-  "address": "0x6f7bF8072cfB4D0B8f1a5e1596c820964fF3c744",
+  "address": "0x08C6F456724a8Fe9C48c20430819c07A2A4b186E",
   "abi": [
     {
       "inputs": [],
@@ -838,19 +838,6 @@
       "name": "approve",
       "outputs": [],
       "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "artProxy",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -1827,19 +1814,6 @@
     {
       "inputs": [
         {
-          "internalType": "address",
-          "name": "_proxy",
-          "type": "address"
-        }
-      ],
-      "name": "setArtProxy",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
           "internalType": "uint256",
           "name": "_mTokenId",
           "type": "uint256"
@@ -2040,7 +2014,7 @@
       "inputs": [
         {
           "internalType": "uint256",
-          "name": "_tokenId",
+          "name": "",
           "type": "uint256"
         }
       ],
@@ -2052,7 +2026,7 @@
           "type": "string"
         }
       ],
-      "stateMutability": "view",
+      "stateMutability": "pure",
       "type": "function"
     },
     {
@@ -2307,15 +2281,15 @@
       "type": "function"
     }
   ],
-  "transactionHash": "0x1d523344c49e134ce03d6eaacd27a658649666ecb0a06fc15a3dd53a04dc4ea2",
+  "transactionHash": "0x7879059d4e8126aaaa39d47cd345fdf3892e3242d0ae5edc924e9315dc3fe3f6",
   "numDeployments": 1,
   "libraries": {
-    "Balance": "0x4a8759c1A0D2126cF435E4303264595935E5771d",
-    "Delegation": "0x6630E1209B65EC2deEddF98Ba46b6247B73a1468",
-    "Escrow": "0xd72D81E103FF0baF796D88b956D1D066A18Fb058",
-    "ManagedNFT": "0x4E1d74B093a0d2835AAaCA6f93a3BFe69bFa66c4",
-    "NFT": "0xB1349Ac5c77b1EA2abe5b2e4654309A8A05448Eb"
+    "Balance": "0x93acCF14d143132DA0F592552baad5AF0d14CDF2",
+    "Delegation": "0x85727F4725A4B2834e00Db1AA8e1b843a188162F",
+    "Escrow": "0x04BE8F183572ec802aD26756F3E9398098700E76",
+    "ManagedNFT": "0x31A15e213B59E230b45e8c5c99dAFAc3d1236Ee2",
+    "NFT": "0x43e50B4082568C1A083E02acD41748C2C64041F4"
   },
-  "implementation": "0xDB3f75156598Fa560D5508BbeeE18B14Cfe74497",
+  "implementation": "0x6c76f3e6a6ffA45371835e51e6Bf0dDBE2c1FAFE",
   "devdoc": "Contract deployed as upgradable proxy"
 }
