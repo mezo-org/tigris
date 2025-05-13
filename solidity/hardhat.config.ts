@@ -20,7 +20,7 @@ import dotenv from "dotenv-safer"
 
 dotenv.config({
   allowEmptyValues: true,
-  example: ".env.example",
+  example: process.env.CI ? ".env.ci.example" : ".env.example",
 })
 
 const TESTNET_PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY
