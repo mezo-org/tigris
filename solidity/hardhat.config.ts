@@ -17,11 +17,15 @@ import dotenv from "dotenv-safer"
 
 dotenv.config({
   allowEmptyValues: true,
-  example: process.env.CI ? ".env.ci.example" : ".env.example",
+  example: ".env.example",
 })
 
 const TESTNET_PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY
   ? [process.env.TESTNET_PRIVATE_KEY]
+  : []
+
+const MAINNET_PRIVATE_KEY = process.env.MAINNET_PRIVATE_KEY
+  ? [process.env.MAINNET_PRIVATE_KEY]
   : []
 
 const config: HardhatUserConfig = {
@@ -44,10 +48,16 @@ const config: HardhatUserConfig = {
       chainId: 31611,
       accounts: TESTNET_PRIVATE_KEY,
     },
+    mainnet: {
+      chainId: 31612,
+      url: process.env.MAINNET_RPC_URL || "",
+      accounts: MAINNET_PRIVATE_KEY,
+    },
   },
   external: {
     deployments: {
       testnet: ["./external/testnet"],
+      mainnet: ["./external/mainnet"],
     },
   },
   etherscan: {
@@ -63,6 +73,14 @@ const config: HardhatUserConfig = {
           browserURL: "https://explorer.test.mezo.org",
         },
       },
+      {
+        network: "mainnet",
+        chainId: 31612,
+        urls: {
+          apiURL: "https://api.explorer.mezo.org/api",
+          browserURL: "https://explorer.mezo.org"
+        }
+      }
     ],
   },
   namedAccounts: {
@@ -70,7 +88,7 @@ const config: HardhatUserConfig = {
     governance: {
       default: 0,
       testnet: "0x6e80164ea60673d64d5d6228beb684a1274bb017", // testertesting.eth
-      mainnet: "0x98d8899c3030741925be630c710a98b57f397c7a",
+      mainnet: "0x98d8899c3030741925be630c710a98b57f397c7a", // mezo multisig
     },
   },
   contractSizer: {
