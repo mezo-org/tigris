@@ -61,9 +61,9 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     }
   }
 
-  await createPool("Bitcoin", "MUSD", false)
-  await createPool("MUSD", "LIMPETH", false)
-  await createPool("MUSD", "wtBTC", false)
+  await createPool("MUSD", "Bitcoin", false)
+  await createPool("MUSD", "mUSDC", true)
+  await createPool("MUSD", "mUSDT", true)
 }
 
 export default func
