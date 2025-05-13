@@ -78,4 +78,5 @@ export default func
 func.tags = ["CreatePools"]
 func.dependencies = ["Bitcoin", "MUSD", "PoolFactory"]
 
-func.skip = async (hre) => hre.network.name !== "testnet" && hre.network.name !== "mainnet"
+func.skip = async (hre) =>
+  hre.network.name !== "testnet" && hre.network.name !== "mainnet"
