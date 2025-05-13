@@ -63,6 +63,7 @@ const config: HardhatUserConfig = {
   etherscan: {
     apiKey: {
       testnet: "empty",
+      mainnet: "empty",
     },
     customChains: [
       {
@@ -78,9 +79,9 @@ const config: HardhatUserConfig = {
         chainId: 31612,
         urls: {
           apiURL: "https://api.explorer.mezo.org/api",
-          browserURL: "https://explorer.mezo.org"
-        }
-      }
+          browserURL: "https://explorer.mezo.org",
+        },
+      },
     ],
   },
   namedAccounts: {
