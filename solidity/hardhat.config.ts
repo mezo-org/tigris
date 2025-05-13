@@ -15,6 +15,9 @@ import "hardhat-gas-reporter"
 
 import dotenv from "dotenv-safer"
 
+// TODO: Refactor the Hardhat config to publish only deployment artifacts to NPM.
+//       See https://github.com/mezo-org/musd/pull/226 as reference.
+
 dotenv.config({
   allowEmptyValues: true,
   example: ".env.example",
