@@ -20,8 +20,8 @@ dotenv.config({
   example: process.env.CI ? ".env.ci.example" : ".env.example",
 })
 
-const MATSNET_PRIVATE_KEY = process.env.MATSNET_PRIVATE_KEY
-  ? [process.env.MATSNET_PRIVATE_KEY]
+const TESTNET_PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY
+  ? [process.env.TESTNET_PRIVATE_KEY]
   : []
 
 const config: HardhatUserConfig = {
@@ -32,31 +32,31 @@ const config: HardhatUserConfig = {
         enabled: true,
         runs: 100,
       },
-      evmVersion: "london", // latest EVM version supported on Matsnet is London
+      evmVersion: "london", // latest EVM version supported on Mezo is London
     },
   },
   typechain: {
     outDir: "typechain",
   },
   networks: {
-    matsnet: {
+    testnet: {
       url: "https://rpc.test.mezo.org",
       chainId: 31611,
-      accounts: MATSNET_PRIVATE_KEY,
+      accounts: TESTNET_PRIVATE_KEY,
     },
   },
   external: {
     deployments: {
-      matsnet: ["./external/matsnet"],
+      testnet: ["./external/testnet"],
     },
   },
   etherscan: {
     apiKey: {
-      matsnet: "empty",
+      testnet: "empty",
     },
     customChains: [
       {
-        network: "matsnet",
+        network: "testnet",
         chainId: 31611,
         urls: {
           apiURL: "https://api.explorer.test.mezo.org/api",
@@ -69,7 +69,7 @@ const config: HardhatUserConfig = {
     deployer: 0,
     governance: {
       default: 0,
-      matsnet: "0x6e80164ea60673d64d5d6228beb684a1274bb017", // testertesting.eth
+      testnet: "0x6e80164ea60673d64d5d6228beb684a1274bb017", // testertesting.eth
       mainnet: "0x98d8899c3030741925be630c710a98b57f397c7a",
     },
   },

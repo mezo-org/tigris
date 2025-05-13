@@ -61,14 +61,14 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     }
   }
 
-  await createPool("Bitcoin", "mUSD", false)
-  await createPool("mUSD", "LIMPETH", false)
-  await createPool("mUSD", "wtBTC", false)
+  await createPool("Bitcoin", "MUSD", false)
+  await createPool("MUSD", "LIMPETH", false)
+  await createPool("MUSD", "wtBTC", false)
 }
 
 export default func
 
 func.tags = ["CreatePools"]
-func.dependencies = ["Bitcoin", "mUSD", "PoolFactory", "VeBTCVoter"]
+func.dependencies = ["Bitcoin", "MUSD", "PoolFactory", "VeBTCVoter"]
 
-func.skip = async (hre) => hre.network.name !== "matsnet"
+func.skip = async (hre) => hre.network.name !== "testnet"
