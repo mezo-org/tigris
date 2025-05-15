@@ -1,4 +1,4 @@
-\_\_# Mezodrome Contracts
+# Tigris Contracts
 
 Smart contracts powering the Mezo gauge system and DEX, inspired by Solidly.
 
@@ -99,3 +99,26 @@ a Hardhat network with deployment scripts applied.
 
 Note that Foundry test runner expects specific compilation artifacts so Foundry
 is used to compile contracts for this concrete use case instead of Hardhat.
+
+## Contract Addresses
+
+Here are the addresses of the most important contracts on Mezo mainnet and testnet.
+For the full list of deployed contracts, see the [deployments](./deployments) directory.
+
+### Mainnet contracts
+
+| Name            | Address                                    |
+| --------------- | ------------------------------------------ |
+| PoolFactory     | 0x83FE469C636C4081b87bA5b3Ae9991c6Ed104248 |
+| MUSD/BTC Pool   | 0x52e604c44417233b6CcEDDDc0d640A405Caacefb |
+| MUSD/mUSDC Pool | 0xEd812AEc0Fecc8fD882Ac3eccC43f3aA80A6c356 |
+| MUSD/mUSDT Pool | 0x10906a9E9215939561597b4C8e4b98F93c02031A |
+
+### Testnet contracts
+
+| Name            | Address                                    |
+| --------------- | ------------------------------------------ |
+| PoolFactory     | 0xc316C9D57ae0966E5155Bf03007464C3F88da4Fe |
+| MUSD/BTC Pool   | 0x7e6d67fD714194127973B7eF4748868a90392916 |
+| MUSD/mUSDC Pool | 0x19916204edb20A46209C7FbEA508CEb292939730 |
+| MUSD/mUSDT Pool | 0xdE1172b6F39712FcecF17edEbE272828f8428c1a |

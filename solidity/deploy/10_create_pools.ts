@@ -8,7 +8,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployer } = await getNamedAccounts()
 
   const poolFactory = await helpers.contracts.getContract("PoolFactory")
-  const veBTCVoter = await helpers.contracts.getContract("VeBTCVoter")
+  const veBTCVoterDeployment = await deployments.getOrNull("VeBTCVoter")
 
   const createPool = async (
     token1: string,
@@ -43,6 +43,13 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       log(`${token1}/${token2} pool created at ${pool}`)
     }
 
+    if (!veBTCVoterDeployment) {
+      log("VeBTCVoter not deployed, skipping gauge creation")
+      return
+    }
+
+    const veBTCVoter = await helpers.contracts.getContract("VeBTCVoter")
+
     let gauge = await veBTCVoter.gauges(pool)
     if (gauge !== ethers.ZeroAddress) {
       log(`${token1}/${token2} gauge already exists at ${gauge}`)
@@ -61,14 +68,15 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     }
   }
 
-  await createPool("Bitcoin", "mUSD", false)
-  await createPool("mUSD", "LIMPETH", false)
-  await createPool("mUSD", "wtBTC", false)
+  await createPool("MUSD", "Bitcoin", false)
+  await createPool("MUSD", "mUSDC", true)
+  await createPool("MUSD", "mUSDT", true)
 }
 
 export default func
 
 func.tags = ["CreatePools"]
-func.dependencies = ["Bitcoin", "mUSD", "PoolFactory", "VeBTCVoter"]
+func.dependencies = ["Bitcoin", "MUSD", "PoolFactory"]
 
-func.skip = async (hre) => hre.network.name !== "matsnet"
+func.skip = async (hre) =>
+  hre.network.name !== "testnet" && hre.network.name !== "mainnet"
