@@ -69,6 +69,9 @@ abstract contract Base is Script, Test {
     /// @dev Dummy address of the proxy admin
     address public constant proxyAdmin = 0x1234567890123456789012345678901234567890;
 
+    /// @dev Dummy address of the router deployer
+    address public routerDeployer = 0x21ebdAC67b1F9e9e9f2739bE30C407dc97C71D2C;
+
     function _coreSetup() public {
         deployFactories();
 
@@ -95,11 +98,11 @@ abstract contract Base is Script, Test {
         escrow.setVoterAndDistributor(address(voter), address(distributor));
         escrow.setAllowedManager(allowedManager);
 
+        vm.prank(routerDeployer);
         router = new Router(
             address(forwarder),
             address(factoryRegistry),
-            address(factory),
-            address(voter)
+            address(factory)
         );
 
         // Setup fee splitter

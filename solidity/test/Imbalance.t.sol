@@ -62,8 +62,7 @@ contract ImbalanceTest is BaseTest {
         router = new Router(
             address(forwarder),
             address(factoryRegistry),
-            address(factory),
-            address(voter)
+            address(factory)
         );
         deployPoolWithOwner(address(owner));
 

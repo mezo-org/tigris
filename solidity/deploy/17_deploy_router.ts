@@ -16,9 +16,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const poolFactoryAddress = (await deployments.get("PoolFactory")).address
   log(`PoolFactory address is ${poolFactoryAddress}`)
 
-  const veBTCVoterAddress = (await deployments.get("VeBTCVoter")).address
-  log(`veBTCVoter address is ${veBTCVoterAddress}`)
-
   const Router = await deployments.getOrNull("Router")
 
   const isValidDeployment = Router && helpers.address.isValid(Router.address)
@@ -30,12 +27,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   log("Deploying Router contract...")
   const routerDeployment = await deploy("Router", {
     from: deployer,
-    args: [
-      mezoForwarderAddress,
-      factoryRegistryAddress,
-      poolFactoryAddress,
-      veBTCVoterAddress,
-    ],
+    args: [mezoForwarderAddress, factoryRegistryAddress, poolFactoryAddress],
     log: true,
     waitConfirmations: 1,
   })
@@ -49,9 +41,4 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 export default func
 
 func.tags = ["Router"]
-func.dependencies = [
-  "MezoForwarder",
-  "FactoryRegistry",
-  "PoolFactory",
-  "VeBTCVoter",
-]
+func.dependencies = ["MezoForwarder", "FactoryRegistry", "PoolFactory"]

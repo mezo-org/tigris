@@ -62,9 +62,10 @@ contract ZapTest is BaseTest {
         _router = new Router(
             address(forwarder),
             address(factoryRegistry),
-            address(factory),
-            address(voter)
+            address(factory)
         );
+        _router.initializeVoter(address(voter));
+
         vm.startPrank(address(governor));
         vGauge = Gauge(voter.createGauge(address(factory), address(vPool)));
         sGauge = Gauge(voter.gauges(address(sPool)));
