@@ -43,8 +43,7 @@ contract PoolTest is BaseTest {
         router = new Router(
             address(forwarder),
             address(factoryRegistry),
-            address(factory),
-            address(voter)
+            address(factory)
         );
 
         escrow.setVoterAndDistributor(address(voter), address(distributor));

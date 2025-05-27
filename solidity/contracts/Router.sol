@@ -24,10 +24,18 @@ contract Router is IRouter, ERC2771Context {
     address public immutable factoryRegistry;
     /// @inheritdoc IRouter
     address public immutable defaultFactory;
+    /// @notice The address of the Router deployer.
+    address public immutable deployer;
     /// @inheritdoc IRouter
-    address public immutable voter;
+    address public voter;
 
     uint256 internal constant MINIMUM_LIQUIDITY = 10 ** 3;
+
+    error NotDeployer();
+
+    error VoterAlreadyInitialized();
+
+    error VoterNotInitialized();
 
     modifier ensure(uint256 deadline) {
         _ensureDeadline(deadline);
@@ -41,11 +49,18 @@ contract Router is IRouter, ERC2771Context {
     constructor(
         address _forwarder,
         address _factoryRegistry,
-        address _factory,
-        address _voter
+        address _factory
     ) ERC2771Context(_forwarder) {
         factoryRegistry = _factoryRegistry;
         defaultFactory = _factory;
+        deployer = _msgSender();
+    }
+
+    function initializeVoter(address _voter) external {
+        if (_msgSender() != deployer) revert NotDeployer();
+        if (voter != address(0)) revert VoterAlreadyInitialized();
+        if (_voter == address(0)) revert ZeroAddress();
+
         voter = _voter;
     }
 
@@ -504,6 +519,8 @@ contract Router is IRouter, ERC2771Context {
         );
 
         if (stake) {
+            if (voter == address(0)) revert VoterNotInitialized();
+
             liquidity = IPool(pool).mint(address(this));
             address gauge = IVoter(voter).gauges(pool);
             IERC20(pool).safeApprove(address(gauge), liquidity);

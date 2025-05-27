@@ -44,6 +44,35 @@ contract RouterTest is BaseTest {
         poolFee = Pool(factory.getPool(address(erc20Fee), address(mUSD), false));
     }
 
+    function testInitializeVoter() public {
+        vm.prank(routerDeployer);
+        router.initializeVoter(address(voter));
+        assertEq(router.voter(), address(voter));
+    }
+
+    function testCannotInitializeVoterIfNotDeployer() public {
+        vm.expectRevert(Router.NotDeployer.selector);
+        router.initializeVoter(address(voter));
+    }
+
+    function testCannotInitializeVoterTwice() public {
+        vm.startPrank(routerDeployer);
+
+        router.initializeVoter(address(voter));
+
+        vm.expectRevert(Router.VoterAlreadyInitialized.selector);
+        // Try to initialize voter again, with a different address.
+        router.initializeVoter(0x4D8bC8d0E2238e0CF406f8F9A3B4683ba9B6a8D7);
+
+        vm.stopPrank();
+    }
+
+    function testCannotInitializeVoterWithZeroAddress() public {
+        vm.expectRevert(IRouter.ZeroAddress.selector);
+        vm.prank(routerDeployer);
+        router.initializeVoter(address(0));
+    }
+
     function testCannotSortTokensSameRoute() public {
         vm.expectRevert(IRouter.SameAddresses.selector);
         router.sortTokens(address(_pool), address(_pool));
