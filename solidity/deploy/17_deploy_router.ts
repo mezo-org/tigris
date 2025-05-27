@@ -27,11 +27,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   log("Deploying Router contract...")
   const routerDeployment = await deploy("Router", {
     from: deployer,
-    args: [
-      mezoForwarderAddress,
-      factoryRegistryAddress,
-      poolFactoryAddress
-    ],
+    args: [mezoForwarderAddress, factoryRegistryAddress, poolFactoryAddress],
     log: true,
     waitConfirmations: 1,
   })
@@ -45,8 +41,4 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 export default func
 
 func.tags = ["Router"]
-func.dependencies = [
-  "MezoForwarder",
-  "FactoryRegistry",
-  "PoolFactory",
-]
+func.dependencies = ["MezoForwarder", "FactoryRegistry", "PoolFactory"]
