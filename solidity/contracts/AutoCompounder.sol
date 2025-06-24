@@ -177,7 +177,7 @@ contract AutoCompounder is
         ve.increaseAmount(tokenId, _value);
     }
 
-    /// @notice Vote for Mezodrome pools with the given weights
+    /// @notice Vote for Tigris pools with the given weights
     /// @dev Refer to IVoter.vote()
     function vote(
         address[] calldata _poolVote,
