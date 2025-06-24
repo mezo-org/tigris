@@ -30,11 +30,11 @@ contract TestSplitter is Splitter {
         token.transfer(firstRecipient, amount);
     }
 
-    function transferSecondRecipient(uint256 amount) internal override{
+    function transferSecondRecipient(uint256 amount) internal override {
         token.transfer(secondRecipient, amount);
     }
 
-    function epochGovernor() internal override view returns (address) {
+    function epochGovernor() internal view override returns (address) {
         return address(mockEpochGovernor);
     }
 

@@ -58,7 +58,11 @@ contract ImbalanceTest is BaseTest {
         deployFactories();
         factory.setFee(true, 1);
         factory.setFee(false, 1);
-        voter = new Voter(address(forwarder), address(escrow), address(factoryRegistry));
+        voter = new Voter(
+            address(forwarder),
+            address(escrow),
+            address(factoryRegistry)
+        );
         router = new Router(
             address(forwarder),
             address(factoryRegistry),
@@ -66,7 +70,10 @@ contract ImbalanceTest is BaseTest {
         );
         deployPoolWithOwner(address(owner));
 
-        (address token0, address token1) = router.sortTokens(address(BTC), address(mUSD));
+        (address token0, address token1) = router.sortTokens(
+            address(BTC),
+            address(mUSD)
+        );
         assertEq(pool.token0(), token0);
         assertEq(pool.token1(), token1);
     }
@@ -127,7 +134,11 @@ contract ImbalanceTest is BaseTest {
     function deployVoter() public {
         routerAddLiquidity();
 
-        voter = new Voter(address(forwarder), address(escrow), address(factoryRegistry));
+        voter = new Voter(
+            address(forwarder),
+            address(escrow),
+            address(factoryRegistry)
+        );
         address[] memory tokens = new address[](4);
         tokens[0] = address(mUSD);
         tokens[1] = address(wtBTC);
@@ -160,20 +171,42 @@ contract ImbalanceTest is BaseTest {
         deployPoolFactoryGauge();
 
         IRouter.Route[] memory routes = new IRouter.Route[](1);
-        routes[0] = IRouter.Route(address(mUSD), address(wtBTC), false, address(0));
+        routes[0] = IRouter.Route(
+            address(mUSD),
+            address(wtBTC),
+            false,
+            address(0)
+        );
         IRouter.Route[] memory routes2 = new IRouter.Route[](1);
-        routes2[0] = IRouter.Route(address(wtBTC), address(mUSD), false, address(0));
+        routes2[0] = IRouter.Route(
+            address(wtBTC),
+            address(mUSD),
+            false,
+            address(0)
+        );
 
         uint256 mb = mUSD.balanceOf(address(owner));
         uint256 wb = wtBTC.balanceOf(address(owner));
 
         uint256 i;
         for (i = 0; i < 10; i++) {
-            assertEq(router.getAmountsOut(1e10, routes)[1], pool3.getAmountOut(1e10, address(mUSD)));
+            assertEq(
+                router.getAmountsOut(1e10, routes)[1],
+                pool3.getAmountOut(1e10, address(mUSD))
+            );
 
-            uint256[] memory expectedOutput = router.getAmountsOut(1e10, routes);
+            uint256[] memory expectedOutput = router.getAmountsOut(
+                1e10,
+                routes
+            );
             mUSD.approve(address(router), 1e10);
-            router.swapExactTokensForTokens(1e10, expectedOutput[1], routes, address(owner), block.timestamp);
+            router.swapExactTokensForTokens(
+                1e10,
+                expectedOutput[1],
+                routes,
+                address(owner),
+                block.timestamp
+            );
         }
 
         mUSD.approve(address(router), mUSD_10B);
@@ -194,14 +227,35 @@ contract ImbalanceTest is BaseTest {
         uint256 LPBal = poolAfter - poolBefore;
 
         for (i = 0; i < 10; i++) {
-            assertEq(router.getAmountsOut(1e25, routes2)[1], pool3.getAmountOut(1e25, address(wtBTC)));
+            assertEq(
+                router.getAmountsOut(1e25, routes2)[1],
+                pool3.getAmountOut(1e25, address(wtBTC))
+            );
 
-            uint256[] memory expectedOutput2 = router.getAmountsOut(1e25, routes2);
+            uint256[] memory expectedOutput2 = router.getAmountsOut(
+                1e25,
+                routes2
+            );
             wtBTC.approve(address(router), 1e25);
-            router.swapExactTokensForTokens(1e25, expectedOutput2[1], routes2, address(owner), block.timestamp);
+            router.swapExactTokensForTokens(
+                1e25,
+                expectedOutput2[1],
+                routes2,
+                address(owner),
+                block.timestamp
+            );
         }
         pool3.approve(address(router), LPBal);
-        router.removeLiquidity(address(mUSD), address(wtBTC), false, LPBal, 0, 0, address(owner), block.timestamp);
+        router.removeLiquidity(
+            address(mUSD),
+            address(wtBTC),
+            false,
+            LPBal,
+            0,
+            0,
+            address(owner),
+            block.timestamp
+        );
 
         uint256 ma = mUSD.balanceOf(address(owner));
         uint256 wa = wtBTC.balanceOf(address(owner));

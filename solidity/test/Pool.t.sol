@@ -39,7 +39,11 @@ contract PoolTest is BaseTest {
         escrow = VeBTC(address(proxy));
 
         distributor = new RewardsDistributor(address(escrow));
-        voter = new Voter(address(forwarder), address(escrow), address(factoryRegistry));
+        voter = new Voter(
+            address(forwarder),
+            address(escrow),
+            address(factoryRegistry)
+        );
         router = new Router(
             address(forwarder),
             address(factoryRegistry),
@@ -129,7 +133,10 @@ contract PoolTest is BaseTest {
     function confirmTokensForBTCmUSD() public {
         votingEscrowMerge();
 
-        (address token0, address token1) = router.sortTokens(address(mUSD), address(BTC));
+        (address token0, address token1) = router.sortTokens(
+            address(mUSD),
+            address(BTC)
+        );
         assertEq(pool4.token0(), token0);
         assertEq(pool4.token1(), token1);
     }
@@ -158,7 +165,15 @@ contract PoolTest is BaseTest {
     function routerAddLiquidity() public {
         mintAndBurnTokensForPoolBTCmUSDOwner2();
 
-        _addLiquidityToPool(address(owner), address(router), address(mUSD), address(BTC), false, mUSD_100K, TOKEN_100K);
+        _addLiquidityToPool(
+            address(owner),
+            address(router),
+            address(mUSD),
+            address(BTC),
+            false,
+            mUSD_100K,
+            TOKEN_100K
+        );
         _addLiquidityToPool(
             address(owner),
             address(router),
@@ -168,15 +183,35 @@ contract PoolTest is BaseTest {
             mUSD_100K,
             TOKEN_100K
         );
-        _addLiquidityToPool(address(owner), address(router), address(mUSD), address(wtBTC), false, mUSD_100M, TOKEN_100M);
-        _addLiquidityToPool(address(owner), address(router), address(mUSD), address(BTC), true, mUSD_100K, TOKEN_100K);
+        _addLiquidityToPool(
+            address(owner),
+            address(router),
+            address(mUSD),
+            address(wtBTC),
+            false,
+            mUSD_100M,
+            TOKEN_100M
+        );
+        _addLiquidityToPool(
+            address(owner),
+            address(router),
+            address(mUSD),
+            address(BTC),
+            true,
+            mUSD_100K,
+            TOKEN_100K
+        );
     }
 
     function deploySplitter() public {
         routerAddLiquidity();
 
         distributor = new RewardsDistributor(address(escrow));
-        chainFeeSplitter = new ChainFeeSplitter(address(voter), address(escrow), address(distributor));
+        chainFeeSplitter = new ChainFeeSplitter(
+            address(voter),
+            address(escrow),
+            address(distributor)
+        );
         distributor.setDepositor(address(chainFeeSplitter));
 
         address[] memory tokens = new address[](5);
@@ -256,7 +291,10 @@ contract PoolTest is BaseTest {
         deployPoolFactoryGaugeOwner2();
 
         gauge.withdraw(gauge.balanceOf(address(owner)));
-        owner2.withdrawGauge(address(gauge4), gauge4.balanceOf(address(owner2)));
+        owner2.withdrawGauge(
+            address(gauge4),
+            gauge4.balanceOf(address(owner2))
+        );
         gauge2.withdraw(gauge2.balanceOf(address(owner)));
         gauge3.withdraw(gauge3.balanceOf(address(owner)));
         gauge4.withdraw(gauge4.balanceOf(address(owner)));
@@ -324,13 +362,19 @@ contract PoolTest is BaseTest {
 
         voter.vote(1, pools, weights);
         assertEq(voter.usedWeights(1), escrow.balanceOfNFT(1)); // within 1000
-        assertEq(feesVotingReward4.balanceOf(1), uint256(voter.votes(1, address(pool4))));
+        assertEq(
+            feesVotingReward4.balanceOf(1),
+            uint256(voter.votes(1, address(pool4)))
+        );
         skip(1 weeks);
 
         voter.reset(1);
         assertLt(voter.usedWeights(1), escrow.balanceOfNFT(1));
         assertEq(voter.usedWeights(1), 0);
-        assertEq(feesVotingReward4.balanceOf(1), uint256(voter.votes(1, address(pool4))));
+        assertEq(
+            feesVotingReward4.balanceOf(1),
+            uint256(voter.votes(1, address(pool4)))
+        );
         assertEq(feesVotingReward4.balanceOf(1), 0);
     }
 
@@ -386,7 +430,10 @@ contract PoolTest is BaseTest {
         voter.vote(1, pools, weights);
 
         assertEq(voter.usedWeights(1), escrow.balanceOfNFT(1)); // within 1000
-        assertEq(feesVotingReward4.balanceOf(1), uint256(voter.votes(1, address(pool4))));
+        assertEq(
+            feesVotingReward4.balanceOf(1),
+            uint256(voter.votes(1, address(pool4)))
+        );
     }
 
     function gaugePokeHacking3() public {
@@ -426,58 +473,117 @@ contract PoolTest is BaseTest {
         feesVotingRewardClaimRewards();
 
         IRouter.Route[] memory routes = new IRouter.Route[](1);
-        routes[0] = IRouter.Route(address(mUSD), address(BTC), true, address(0));
+        routes[0] = IRouter.Route(
+            address(mUSD),
+            address(BTC),
+            true,
+            address(0)
+        );
 
         uint256[] memory expectedOutput = router.getAmountsOut(mUSD_1, routes);
         mUSD.approve(address(router), mUSD_1);
-        router.swapExactTokensForTokens(mUSD_1, expectedOutput[1], routes, address(owner), block.timestamp);
+        router.swapExactTokensForTokens(
+            mUSD_1,
+            expectedOutput[1],
+            routes,
+            address(owner),
+            block.timestamp
+        );
     }
 
     function routerPool2GetAmountsOutAndSwapExactTokensForTokens2() public {
         routerPool1GetAmountsOutAndSwapExactTokensForTokens2();
 
         IRouter.Route[] memory routes = new IRouter.Route[](1);
-        routes[0] = IRouter.Route(address(mUSD), address(BTC), false, address(0));
+        routes[0] = IRouter.Route(
+            address(mUSD),
+            address(BTC),
+            false,
+            address(0)
+        );
 
         uint256[] memory expectedOutput = router.getAmountsOut(mUSD_1, routes);
         mUSD.approve(address(router), mUSD_1);
-        router.swapExactTokensForTokens(mUSD_1, expectedOutput[1], routes, address(owner), block.timestamp);
+        router.swapExactTokensForTokens(
+            mUSD_1,
+            expectedOutput[1],
+            routes,
+            address(owner),
+            block.timestamp
+        );
     }
 
-    function routerPool1GetAmountsOutAndSwapExactTokensForTokens2Again() public {
+    function routerPool1GetAmountsOutAndSwapExactTokensForTokens2Again()
+        public
+    {
         routerPool2GetAmountsOutAndSwapExactTokensForTokens2();
 
         IRouter.Route[] memory routes = new IRouter.Route[](1);
-        routes[0] = IRouter.Route(address(BTC), address(mUSD), false, address(0));
+        routes[0] = IRouter.Route(
+            address(BTC),
+            address(mUSD),
+            false,
+            address(0)
+        );
 
         uint256[] memory expectedOutput = router.getAmountsOut(TOKEN_1, routes);
         BTC.approve(address(router), TOKEN_1);
-        router.swapExactTokensForTokens(TOKEN_1, expectedOutput[1], routes, address(owner), block.timestamp);
+        router.swapExactTokensForTokens(
+            TOKEN_1,
+            expectedOutput[1],
+            routes,
+            address(owner),
+            block.timestamp
+        );
     }
 
-    function routerPool2GetAmountsOutAndSwapExactTokensForTokens2Again() public {
+    function routerPool2GetAmountsOutAndSwapExactTokensForTokens2Again()
+        public
+    {
         routerPool1GetAmountsOutAndSwapExactTokensForTokens2Again();
 
         IRouter.Route[] memory routes = new IRouter.Route[](1);
-        routes[0] = IRouter.Route(address(BTC), address(mUSD), false, address(0));
+        routes[0] = IRouter.Route(
+            address(BTC),
+            address(mUSD),
+            false,
+            address(0)
+        );
 
         uint256[] memory expectedOutput = router.getAmountsOut(TOKEN_1, routes);
         BTC.approve(address(router), TOKEN_1);
-        router.swapExactTokensForTokens(TOKEN_1, expectedOutput[1], routes, address(owner), block.timestamp);
+        router.swapExactTokensForTokens(
+            TOKEN_1,
+            expectedOutput[1],
+            routes,
+            address(owner),
+            block.timestamp
+        );
     }
 
     function routerPool1Pool2GetAmountsOutAndSwapExactTokensForTokens() public {
         routerPool2GetAmountsOutAndSwapExactTokensForTokens2Again();
 
         IRouter.Route[] memory route = new IRouter.Route[](2);
-        route[0] = IRouter.Route(address(BTC), address(mUSD), false, address(0));
+        route[0] = IRouter.Route(
+            address(BTC),
+            address(mUSD),
+            false,
+            address(0)
+        );
         route[1] = IRouter.Route(address(mUSD), address(BTC), true, address(0));
 
         uint256 before = BTC.balanceOf(address(owner)) - TOKEN_1;
 
         uint256[] memory expectedOutput = router.getAmountsOut(TOKEN_1, route);
         BTC.approve(address(router), TOKEN_1);
-        router.swapExactTokensForTokens(TOKEN_1, expectedOutput[2], route, address(owner), block.timestamp);
+        router.swapExactTokensForTokens(
+            TOKEN_1,
+            expectedOutput[2],
+            route,
+            address(owner),
+            block.timestamp
+        );
         uint256 after_ = BTC.balanceOf(address(owner));
         assertEq(after_ - before, expectedOutput[2]);
     }
@@ -618,7 +724,15 @@ contract PoolTest is BaseTest {
     function routerAddLiquidityOwner3() public {
         votingEscrowDecay();
 
-        _addLiquidityToPool(address(owner3), address(router), address(mUSD), address(BTC), true, 1e12, TOKEN_1M);
+        _addLiquidityToPool(
+            address(owner3),
+            address(router),
+            address(mUSD),
+            address(BTC),
+            true,
+            1e12,
+            TOKEN_1M
+        );
     }
 
     function deployPoolFactoryGaugeOwner3() public {
@@ -631,19 +745,31 @@ contract PoolTest is BaseTest {
     function gaugeClaimRewardsOwner3() public {
         deployPoolFactoryGaugeOwner3();
 
-        owner3.withdrawGauge(address(gauge4), gauge4.balanceOf(address(owner3)));
+        owner3.withdrawGauge(
+            address(gauge4),
+            gauge4.balanceOf(address(owner3))
+        );
         owner3.approve(address(pool4), address(gauge4), POOL_1);
         owner3.deposit(address(gauge4), POOL_1);
-        owner3.withdrawGauge(address(gauge4), gauge4.balanceOf(address(owner3)));
+        owner3.withdrawGauge(
+            address(gauge4),
+            gauge4.balanceOf(address(owner3))
+        );
         owner3.approve(address(pool4), address(gauge4), POOL_1);
         owner3.deposit(address(gauge4), POOL_1);
 
         owner3.getGaugeReward(address(gauge4), address(owner3));
-        owner3.withdrawGauge(address(gauge4), gauge4.balanceOf(address(owner3)));
+        owner3.withdrawGauge(
+            address(gauge4),
+            gauge4.balanceOf(address(owner3))
+        );
         owner3.approve(address(pool4), address(gauge4), POOL_1);
         owner3.deposit(address(gauge4), POOL_1);
         owner3.getGaugeReward(address(gauge4), address(owner3));
-        owner3.withdrawGauge(address(gauge4), gauge4.balanceOf(address(owner3)));
+        owner3.withdrawGauge(
+            address(gauge4),
+            gauge4.balanceOf(address(owner3))
+        );
         owner3.approve(address(pool4), address(gauge4), POOL_1);
         owner3.deposit(address(gauge4), POOL_1);
         owner3.getGaugeReward(address(gauge4), address(owner3));

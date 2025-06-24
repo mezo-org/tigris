@@ -56,7 +56,7 @@ contract FullEpoch is BaseSystemTest {
         user2 = accounts[2];
         user3 = accounts[3];
         // Define liquidity providers.
-        user4 = accounts[4]; // stakes LP tokens  
+        user4 = accounts[4]; // stakes LP tokens
         user5 = accounts[5]; // stakes LP tokens
         user6 = accounts[6]; // DOES NOT stake LP tokens
         // Define traders.
@@ -65,7 +65,7 @@ contract FullEpoch is BaseSystemTest {
         // *********************************************************************************
         // Locking BTC into veBTC
         // *********************************************************************************
-        
+
         // Mint BTC to the users.
         vm.startPrank(governance);
         BTC.mint(user1, withTokenPrecision18(10));
@@ -75,8 +75,16 @@ contract FullEpoch is BaseSystemTest {
 
         // Mint veBTC to the users.
         uint256 user1TokenId = mintVeBTC(user1, withTokenPrecision18(10), YEAR);
-        uint256 user2TokenId = mintVeBTC(user2, withTokenPrecision18(10), 2 * YEAR);
-        uint256 user3TokenId = mintVeBTC(user3, withTokenPrecision18(10), 4 * YEAR); // max lock duration
+        uint256 user2TokenId = mintVeBTC(
+            user2,
+            withTokenPrecision18(10),
+            2 * YEAR
+        );
+        uint256 user3TokenId = mintVeBTC(
+            user3,
+            withTokenPrecision18(10),
+            4 * YEAR
+        ); // max lock duration
 
         // Check veBTC balances and total supply.
         // Balance of NFT is a function at timestamp t defined as:
@@ -98,63 +106,113 @@ contract FullEpoch is BaseSystemTest {
         // - slope = (10 * 1e18) / (4 * 365 * 86400) = 79274479959
         // - bias = 79274479959 * 31449599 = 2493150605644086441
         // - balance = 2493150605644086441 - 79274479959 * 0 = 2493150605644086441
-        assertEq(veBTC.balanceOfNFT(user1TokenId), 2493150605644086441, "unexpected user1 token veBTC balance");
+        assertEq(
+            veBTC.balanceOfNFT(user1TokenId),
+            2493150605644086441,
+            "unexpected user1 token veBTC balance"
+        );
 
         // User2 balance calculation, at timestamp T + 1s:
         // - lock_duration = (((2 * 365 * 86400) / 604800) * 604800) - 1 = 104 (rounded) * 604800 - 1 (offset) = 62899199
         // - slope = (10 * 1e18) / (4 * 365 * 86400) = 79274479959
         // - bias = 79274479959 * 62899199 = 4986301290562652841
         // - balance = 4986301290562652841 - 79274479959 * 0 = 4986301290562652841
-        assertEq(veBTC.balanceOfNFT(user2TokenId), 4986301290562652841, "unexpected user2 token veBTC balance");
+        assertEq(
+            veBTC.balanceOfNFT(user2TokenId),
+            4986301290562652841,
+            "unexpected user2 token veBTC balance"
+        );
 
         // User3 balance calculation, at timestamp T + 1s:
         // - lock_duration = (((4 * 365 * 86400) / 604800) * 604800) - 1 = 208 (rounded) * 604800 - 1 (offset) = 125798399
         // - slope = (10 * 1e18) / (4 * 365 * 86400) = 79274479959
         // - bias = 79274479959 * 125798399 = 9972602660399785641
         // - balance = 9972602660399785641 - 79274479959 * 0 = 9972602660399785641
-        assertEq(veBTC.balanceOfNFT(user3TokenId), 9972602660399785641, "unexpected user3 token veBTC balance");
+        assertEq(
+            veBTC.balanceOfNFT(user3TokenId),
+            9972602660399785641,
+            "unexpected user3 token veBTC balance"
+        );
 
         // Sum of all veBTC balances.
-        assertEq(veBTC.totalSupply(), 17452054556606524923, "unexpected veBTC total supply");
+        assertEq(
+            veBTC.totalSupply(),
+            17452054556606524923,
+            "unexpected veBTC total supply"
+        );
 
         // Make sure BTC was transferred to the veBTC contract as expected.
         assertEq(BTC.balanceOf(user1), 0, "unexpected user1 BTC balance");
         assertEq(BTC.balanceOf(user2), 0, "unexpected user2 BTC balance");
         assertEq(BTC.balanceOf(user3), 0, "unexpected user3 BTC balance");
-        assertEq(BTC.balanceOf(address(veBTC)), withTokenPrecision18(30), "unexpected veBTC contract BTC balance");
+        assertEq(
+            BTC.balanceOf(address(veBTC)),
+            withTokenPrecision18(30),
+            "unexpected veBTC contract BTC balance"
+        );
 
         // *********************************************************************************
         // Adding liquidity into the pools
-        // *********************************************************************************    
+        // *********************************************************************************
 
         // Assert pools state.
         assertEq(veBTCVoter.length(), 3, "unexpected pools count");
 
         // Add liquidity to pools.
-        addLiquidityToPool(user4, address(BTC), address(mUSD), withTokenPrecision18(10), withTokenPrecision18(10));
-        addLiquidityToPool(user5, address(mUSD), address(LIMPETH), withTokenPrecision18(10), withTokenPrecision18(10));
-        addLiquidityToPool(user6, address(mUSD), address(wtBTC), withTokenPrecision18(10), withTokenPrecision18(10));
+        addLiquidityToPool(
+            user4,
+            address(BTC),
+            address(mUSD),
+            withTokenPrecision18(10),
+            withTokenPrecision18(10)
+        );
+        addLiquidityToPool(
+            user5,
+            address(mUSD),
+            address(LIMPETH),
+            withTokenPrecision18(10),
+            withTokenPrecision18(10)
+        );
+        addLiquidityToPool(
+            user6,
+            address(mUSD),
+            address(wtBTC),
+            withTokenPrecision18(10),
+            withTokenPrecision18(10)
+        );
 
         // Assert LP token balances for each liquidity provider.
         // We expect each liquidity provider to have all liquidity in the pool minus the minimum liquidity.
-        // The pool locks the minimum liquidity upon first liquidity addition in order to prevent the pool 
+        // The pool locks the minimum liquidity upon first liquidity addition in order to prevent the pool
         // from being drained completely and to avoid division by zero scenarios in the calculations.
         uint256 minimumLiquidity = 10 ** 3;
-        assertEq(IERC20(pool_BTC_mUSD).balanceOf(user4), IERC20(pool_BTC_mUSD).totalSupply() - minimumLiquidity, "user4 should own proper amount of pool LP tokens");
-        assertEq(IERC20(pool_mUSD_LIMPETH).balanceOf(user5), IERC20(pool_mUSD_LIMPETH).totalSupply() - minimumLiquidity, "user5 should own proper amount of pool LP tokens");
-        assertEq(IERC20(pool_mUSD_wtBTC).balanceOf(user6), IERC20(pool_mUSD_wtBTC).totalSupply() - minimumLiquidity, "user6 should own proper amount of pool LP tokens");
+        assertEq(
+            IERC20(pool_BTC_mUSD).balanceOf(user4),
+            IERC20(pool_BTC_mUSD).totalSupply() - minimumLiquidity,
+            "user4 should own proper amount of pool LP tokens"
+        );
+        assertEq(
+            IERC20(pool_mUSD_LIMPETH).balanceOf(user5),
+            IERC20(pool_mUSD_LIMPETH).totalSupply() - minimumLiquidity,
+            "user5 should own proper amount of pool LP tokens"
+        );
+        assertEq(
+            IERC20(pool_mUSD_wtBTC).balanceOf(user6),
+            IERC20(pool_mUSD_wtBTC).totalSupply() - minimumLiquidity,
+            "user6 should own proper amount of pool LP tokens"
+        );
 
         // *********************************************************************************
         // Staking LP tokens into gauges
         // *********************************************************************************
 
         // Stake LP tokens for user4 and user5 but not for user6.
-        stakeGauge(user4, pool_BTC_mUSD); 
+        stakeGauge(user4, pool_BTC_mUSD);
         stakeGauge(user5, pool_mUSD_LIMPETH);
 
         // *********************************************************************************
         // Swapping tokens in the pools
-        // *********************************************************************************    
+        // *********************************************************************************
 
         // Execute trades on each pool with user7.
         executeSwap(
@@ -199,40 +257,85 @@ contract FullEpoch is BaseSystemTest {
         // Assert state before the proposal voting:
         // --- assert voting parameters:
         (uint256 votingDelay, uint256 votingPeriod) = (15 minutes, 1 weeks);
-        assertEq(veBTCEpochGovernor.votingDelay(), votingDelay, "unexpected voting delay");
-        assertEq(veBTCEpochGovernor.votingPeriod(), votingPeriod, "unexpected voting period");
+        assertEq(
+            veBTCEpochGovernor.votingDelay(),
+            votingDelay,
+            "unexpected voting delay"
+        );
+        assertEq(
+            veBTCEpochGovernor.votingPeriod(),
+            votingPeriod,
+            "unexpected voting period"
+        );
         // --- assert proposal state:
-        assertEq(uint256(veBTCEpochGovernor.state(proposalId)), uint256(IGovernor.ProposalState.Pending), "unexpected proposal status");
-        assertEq(uint256(veBTCEpochGovernor.result()), uint256(IGovernor.ProposalState.Pending), "unexpected result");
+        assertEq(
+            uint256(veBTCEpochGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Pending),
+            "unexpected proposal status"
+        );
+        assertEq(
+            uint256(veBTCEpochGovernor.result()),
+            uint256(IGovernor.ProposalState.Pending),
+            "unexpected result"
+        );
         // --- assert proposal votes:
-        (uint256 againstVotes, uint256 forVotes, uint256 abstainVotes) = veBTCEpochGovernor.proposalVotes(proposalId);
+        (
+            uint256 againstVotes,
+            uint256 forVotes,
+            uint256 abstainVotes
+        ) = veBTCEpochGovernor.proposalVotes(proposalId);
         assertEq(againstVotes, 0, "unexpected against votes");
         assertEq(forVotes, 0, "unexpected for votes");
         assertEq(abstainVotes, 0, "unexpected abstain votes");
         // --- assert proposal snapshot and deadline:
-        assertEq(veBTCEpochGovernor.proposalSnapshot(proposalId), vm.getBlockTimestamp() + votingDelay, "unexpected proposal snapshot");
-        assertEq(veBTCEpochGovernor.proposalDeadline(proposalId), vm.getBlockTimestamp() + votingDelay + votingPeriod, "unexpected proposal deadline");
+        assertEq(
+            veBTCEpochGovernor.proposalSnapshot(proposalId),
+            vm.getBlockTimestamp() + votingDelay,
+            "unexpected proposal snapshot"
+        );
+        assertEq(
+            veBTCEpochGovernor.proposalDeadline(proposalId),
+            vm.getBlockTimestamp() + votingDelay + votingPeriod,
+            "unexpected proposal deadline"
+        );
 
         // We must go past the voting delay (15m since proposal creation) to allow voting.
         // We created the proposal at T + 1s, we need to jump 15m1s at least.
         // We land at T + 15m2s after the jump.
         skip(votingDelay + 1);
-        assertEq(uint256(veBTCEpochGovernor.state(proposalId)), uint256(IGovernor.ProposalState.Active), "unexpected proposal status");
+        assertEq(
+            uint256(veBTCEpochGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Active),
+            "unexpected proposal status"
+        );
 
         // Cast votes.
         vm.prank(user1);
-        veBTCEpochGovernor.castVote(proposalId, user1TokenId, uint8(GovernorCountingMajority.VoteType.Against));
+        veBTCEpochGovernor.castVote(
+            proposalId,
+            user1TokenId,
+            uint8(GovernorCountingMajority.VoteType.Against)
+        );
         vm.prank(user2);
-        veBTCEpochGovernor.castVote(proposalId, user2TokenId, uint8(GovernorCountingMajority.VoteType.Against));
+        veBTCEpochGovernor.castVote(
+            proposalId,
+            user2TokenId,
+            uint8(GovernorCountingMajority.VoteType.Against)
+        );
         vm.prank(user3);
-        veBTCEpochGovernor.castVote(proposalId, user3TokenId, uint8(GovernorCountingMajority.VoteType.For));
+        veBTCEpochGovernor.castVote(
+            proposalId,
+            user3TokenId,
+            uint8(GovernorCountingMajority.VoteType.For)
+        );
 
         // Assert proposal votes after voting. Voting power of all users
         // decayed a bit since locks creation (which happened at T + 1s)
         // because we actually moved 15m (900s) ahead from this point.
         // The slope is the same for all users - 79274479959.
         // That said, voting power per user decayed by 79274479959 * 900 = 71347031963100.
-        (againstVotes, forVotes, abstainVotes) = veBTCEpochGovernor.proposalVotes(proposalId);
+        (againstVotes, forVotes, abstainVotes) = veBTCEpochGovernor
+            .proposalVotes(proposalId);
         // User1 and User2 with respective initial voting power of
         // 2493150605644086441 and 4986301290562652841 were against.
         // Total against including the 15m decay should be:
@@ -296,20 +399,36 @@ contract FullEpoch is BaseSystemTest {
         // - User1: 3333 * 2492865217516234041 / 10000 = 830871976998160805 (rounded down)
         // - User2: 5000 * 4986015902434800441 / 10000 = 2493007951217400220 (rounded down)
         // So, 830871976998160805 + 2493007951217400220 = 3323879928215561025
-        assertEq(veBTCVoter.weights(pool_BTC_mUSD), 3323879928215561025, "unexpected BTC_mUSD pool weight");
+        assertEq(
+            veBTCVoter.weights(pool_BTC_mUSD),
+            3323879928215561025,
+            "unexpected BTC_mUSD pool weight"
+        );
         // Total weight of the second pool should be a sum of:
         // - User1: 3333 * 2492865217516234041 / 10000 = 830871976998160805 (rounded down)
         // - User2: 5000 * 4986015902434800441 / 10000 = 2493007951217400220 (rounded down)
         // So, 830871976998160805 + 2493007951217400220 = 3323879928215561025
-        assertEq(veBTCVoter.weights(pool_mUSD_LIMPETH), 3323879928215561025, "unexpected mUSD_LIMPETH pool weight");
+        assertEq(
+            veBTCVoter.weights(pool_mUSD_LIMPETH),
+            3323879928215561025,
+            "unexpected mUSD_LIMPETH pool weight"
+        );
         // Total weight of the third pool should be a sum of:
         // - User1: 3334 * 2492865217516234041 / 10000 = 831121263519912429 (rounded down)
         // - User3: 10000 * 9972317272271933241 / 10000 = 9972317272271933241 (rounded down)
         // So, 831121263519912429 + 9972317272271933241 = 10803438535791845670
-        assertEq(veBTCVoter.weights(pool_mUSD_wtBTC), 10803438535791845670, "unexpected mUSD_wtBTC pool weight");
+        assertEq(
+            veBTCVoter.weights(pool_mUSD_wtBTC),
+            10803438535791845670,
+            "unexpected mUSD_wtBTC pool weight"
+        );
         // Sum of all pool weights:
         // 3323879928215561025 + 3323879928215561025 + 10803438535791845670 = 17451198392222967720.
-        assertEq(veBTCVoter.totalWeight(), 17451198392222967720, "unexpected voter total weight");
+        assertEq(
+            veBTCVoter.totalWeight(),
+            17451198392222967720,
+            "unexpected voter total weight"
+        );
 
         // *********************************************************************************
         // Distributing the BTC chain fees between gauges and reward distributor
@@ -333,8 +452,14 @@ contract FullEpoch is BaseSystemTest {
         assertEq(chainFeeSplitter.needle(), 33, "unexpected needle value");
         // Execute the proposal and assert the new needle is as expected.
         executeChainFeeSplitterNudge();
-        assertEq(uint256(veBTCEpochGovernor.state(proposalId)), uint256(IGovernor.ProposalState.Executed));
-        assertEq(uint256(veBTCEpochGovernor.result()), uint256(IGovernor.ProposalState.Succeeded));
+        assertEq(
+            uint256(veBTCEpochGovernor.state(proposalId)),
+            uint256(IGovernor.ProposalState.Executed)
+        );
+        assertEq(
+            uint256(veBTCEpochGovernor.result()),
+            uint256(IGovernor.ProposalState.Succeeded)
+        );
         assertEq(chainFeeSplitter.needle(), 34, "unexpected needle value");
 
         // Prepare for period update in the ChainFeeSplitter. Assert
@@ -350,36 +475,61 @@ contract FullEpoch is BaseSystemTest {
         // The needle is 34 so we expect 34% of 100 BTC accumulated on the
         // splitter to go veBTC holders (through the RewardsDistributor contract)
         // and the remaining 66% to gauges.
-        emit Splitter.PeriodUpdated(epoch1Start, epoch2Start, withTokenPrecision18(34), withTokenPrecision18(66));
+        emit Splitter.PeriodUpdated(
+            epoch1Start,
+            epoch2Start,
+            withTokenPrecision18(34),
+            withTokenPrecision18(66)
+        );
         veBTCVoter.distribute(0, veBTCVoter.length());
 
         // ChainFeeSplitter's BTC balance should be zeroed out.
-        assertEq(BTC.balanceOf(address(chainFeeSplitter)), 0, "unexpected chain fee splitter BTC balance");
+        assertEq(
+            BTC.balanceOf(address(chainFeeSplitter)),
+            0,
+            "unexpected chain fee splitter BTC balance"
+        );
 
         // 34 BTC should be pushed to RewardsDistributor so veBTC holders
         // can claim their share from there in the next epoch.
-        assertEq(BTC.balanceOf(address(veBTCRewardsDistributor)), withTokenPrecision18(34), "unexpected rewards distributor BTC balance");
+        assertEq(
+            BTC.balanceOf(address(veBTCRewardsDistributor)),
+            withTokenPrecision18(34),
+            "unexpected rewards distributor BTC balance"
+        );
 
         // Claimable amount for user 1 is obtained from values:
         // - balance = 2445205558713843159
         // - tokens_per_week = 16987332528157739516
         // - supply = 17308219415815795077
         // - claimable = balance * tokens_per_week / supply = 2399872507256055206
-        assertEq(veBTCRewardsDistributor.claimable(user1TokenId), 2399872507256055206, "unexpected claimable for user1 token");
+        assertEq(
+            veBTCRewardsDistributor.claimable(user1TokenId),
+            2399872507256055206,
+            "unexpected claimable for user1 token"
+        );
 
         // Claimable amount for user 2 is obtained from values:
         // - balance = 4938356243632409559
         // - tokens_per_week = 16987332528157739516
         // - supply = 17308219415815795077
         // - claimable = balance * tokens_per_week / supply = 4846801258853448680
-        assertEq(veBTCRewardsDistributor.claimable(user2TokenId), 4846801258853448680, "unexpected claimable for user2 token");
+        assertEq(
+            veBTCRewardsDistributor.claimable(user2TokenId),
+            4846801258853448680,
+            "unexpected claimable for user2 token"
+        );
 
         // Claimable amount for user 3 is obtained from values:
         // - balance = 9924657613469542359
         // - tokens_per_week = 16987332528157739516
         // - supply = 17308219415815795077
         // - claimable = balance * tokens_per_week / supply = 9740658762048235628
-        assertEq(veBTCRewardsDistributor.claimable(user3TokenId), 9740658762048235628, "unexpected claimable for user3 token");
+        assertEq(
+            veBTCRewardsDistributor.claimable(user3TokenId),
+            9740658762048235628,
+            "unexpected claimable for user3 token"
+        );
 
         // Gauge BTC share is calculated as follows:
         // - ratio = total_btc_reward * 1e18 / total_pool_weight
@@ -390,25 +540,37 @@ contract FullEpoch is BaseSystemTest {
 
         // The BTC_mUSD pool vote weight was 3323879928215561025.
         // share = (3323879928215561025 * 3781975226951321774) / 1e18 = 12570831545871989534 (rounded down)
-        assertEq(BTC.balanceOf(address(veBTCVoter.gauges(pool_BTC_mUSD))), 12570831545871989534, "unexpected BTC_mUSD gauge BTC balance");
+        assertEq(
+            BTC.balanceOf(address(veBTCVoter.gauges(pool_BTC_mUSD))),
+            12570831545871989534,
+            "unexpected BTC_mUSD gauge BTC balance"
+        );
         // The mUSD_LIMPETH pool vote weight was 3323879928215561025.
         // share = (3323879928215561025 * 3781975226951321774) / 1e18 = 12570831545871989534 (rounded down)
-        assertEq(BTC.balanceOf(address(veBTCVoter.gauges(pool_mUSD_LIMPETH))), 12570831545871989534, "unexpected mUSD_LIMPETH gauge BTC balance");
+        assertEq(
+            BTC.balanceOf(address(veBTCVoter.gauges(pool_mUSD_LIMPETH))),
+            12570831545871989534,
+            "unexpected mUSD_LIMPETH gauge BTC balance"
+        );
         // The mUSD_wtBTC pool vote weight was 10803438535791845670.
         // share = (10803438535791845670 * 3781975226951321774) / 1e18 = 40858336908256020929 (rounded down)
-        assertEq(BTC.balanceOf(address(veBTCVoter.gauges(pool_mUSD_wtBTC))), 40858336908256020929, "unexpected mUSD_wtBTC gauge BTC balance");
+        assertEq(
+            BTC.balanceOf(address(veBTCVoter.gauges(pool_mUSD_wtBTC))),
+            40858336908256020929,
+            "unexpected mUSD_wtBTC gauge BTC balance"
+        );
 
         // *********************************************************************************
         // Claiming trading fees from gauges
         // *********************************************************************************
 
         // Skip to Epoch 3 which is effectively T + 2w.
-        // This is required to claim trading fees from gauges, 
+        // This is required to claim trading fees from gauges,
         // that were distributed in the previous epoch.
         skipToNextEpoch(0);
 
         // Assert balances of FeesVotingReward contracts before veBTC holders claim fees.
-        // Each gauge has a FeesVotingReward contract where trading fees are pushed for distribution 
+        // Each gauge has a FeesVotingReward contract where trading fees are pushed for distribution
         // to veBTC holders (this happens during the veBTCVoter.distribute call done earlier).
         // In general, claimable_fees for the given LP token holder is calculated as follows:
         // - claimable_fees = (lp_token_balance * fee_index) / 1e18
@@ -422,20 +584,28 @@ contract FullEpoch is BaseSystemTest {
         // - Each pool had a single swap.
         // - Each pool is unstable. Fee for unstable pool is 4 (0.04%).
 
-        // Check the BTC_mUSD pool. 
+        // Check the BTC_mUSD pool.
         // - swap_amount = 5 * 1e18 BTC
         // - fee_index += (((5 * 1e18 * 4) / 10000) * 1e18) / 9999999999999999000 = 200000000000000 (rounded down)
         // - claimable_fees = (9999999999999999000 * 200000000000000) / 1e18 = 1999999999999999 (rounded down)
-        assertFeesVotingRewardBalance(pool_BTC_mUSD, address(BTC), 1999999999999999);
+        assertFeesVotingRewardBalance(
+            pool_BTC_mUSD,
+            address(BTC),
+            1999999999999999
+        );
         assertFeesVotingRewardBalance(pool_BTC_mUSD, address(mUSD), 0);
         // Check the mUSD_LIMPETH pool.
         // - swap_amount = 6 * 1e18 mUSD
         // - fee_index += (((6 * 1e18 * 4) / 10000) * 1e18) / 9999999999999999000 = 240000000000000 (rounded down)
         // - claimable_fees = (9999999999999999000 * 240000000000000) / 1e18 = 2399999999999999 (rounded down)
-        assertFeesVotingRewardBalance(pool_mUSD_LIMPETH, address(mUSD), 2399999999999999);
+        assertFeesVotingRewardBalance(
+            pool_mUSD_LIMPETH,
+            address(mUSD),
+            2399999999999999
+        );
         assertFeesVotingRewardBalance(pool_mUSD_LIMPETH, address(LIMPETH), 0);
-        // Check the mUSD_wtBTC pool. There was one swap but the single LP provider of this pool (user6) 
-        // did not stake its LP tokens to the gauge. That said, the FeesVotingReward contract for 
+        // Check the mUSD_wtBTC pool. There was one swap but the single LP provider of this pool (user6)
+        // did not stake its LP tokens to the gauge. That said, the FeesVotingReward contract for
         // this pool did not receive any fees. Fees can be claimed by the LP provider, directly from the pool.
         // For the sake of the future assertion, the mUSD fees claimable directly from the pool are computed
         // as follows (remember this is not available in the FeesVotingReward contract hence the two following assertions expect 0):
@@ -456,7 +626,7 @@ contract FullEpoch is BaseSystemTest {
         preClaimBalances[0][1] = mUSD.balanceOf(user1);
         preClaimBalances[0][2] = LIMPETH.balanceOf(user1);
         preClaimBalances[0][3] = wtBTC.balanceOf(user1);
-        // Sub-array for user2. 
+        // Sub-array for user2.
         preClaimBalances[1] = new uint256[](4);
         preClaimBalances[1][0] = BTC.balanceOf(user2);
         preClaimBalances[1][1] = mUSD.balanceOf(user2);
@@ -486,43 +656,123 @@ contract FullEpoch is BaseSystemTest {
         //   BTC share is 1999999999999999 * 830871976998160805 / 3323879928215561025 = 499941029725593 (rounded down).
         // - 830871976998160805 out of 3323879928215561025 total weight for the mUSD_LIMPETH pool.
         //   mUSD share is 2399999999999999 * 830871976998160805 / 3323879928215561025 = 599929235670712 (rounded down).
-        assertTokenBalanceChange(user1, address(BTC), preClaimBalances[0][0], 499941029725593);
-        assertTokenBalanceChange(user1, address(mUSD), preClaimBalances[0][1], 599929235670712);
-        assertTokenBalanceChange(user1, address(LIMPETH), preClaimBalances[0][2], 0);
-        assertTokenBalanceChange(user1, address(wtBTC), preClaimBalances[0][3], 0);
+        assertTokenBalanceChange(
+            user1,
+            address(BTC),
+            preClaimBalances[0][0],
+            499941029725593
+        );
+        assertTokenBalanceChange(
+            user1,
+            address(mUSD),
+            preClaimBalances[0][1],
+            599929235670712
+        );
+        assertTokenBalanceChange(
+            user1,
+            address(LIMPETH),
+            preClaimBalances[0][2],
+            0
+        );
+        assertTokenBalanceChange(
+            user1,
+            address(wtBTC),
+            preClaimBalances[0][3],
+            0
+        );
         // Assert for user2. It has:
         // - 2493007951217400220 out of 3323879928215561025 total weight for the BTC_mUSD pool.
         //   BTC share is 1999999999999999 * 2493007951217400220 / 3323879928215561025 = 1500058970274405 (rounded down).
         // - 2493007951217400220 out of 3323879928215561025 total weight for the mUSD_LIMPETH pool.
         //   mUSD share is 2399999999999999 * 2493007951217400220 / 3323879928215561025 = 1800070764329286 (rounded down).
-        assertTokenBalanceChange(user2, address(BTC), preClaimBalances[1][0], 1500058970274405);
-        assertTokenBalanceChange(user2, address(mUSD), preClaimBalances[1][1], 1800070764329286);
-        assertTokenBalanceChange(user2, address(LIMPETH), preClaimBalances[1][2], 0);
-        assertTokenBalanceChange(user2, address(wtBTC), preClaimBalances[1][3], 0);
+        assertTokenBalanceChange(
+            user2,
+            address(BTC),
+            preClaimBalances[1][0],
+            1500058970274405
+        );
+        assertTokenBalanceChange(
+            user2,
+            address(mUSD),
+            preClaimBalances[1][1],
+            1800070764329286
+        );
+        assertTokenBalanceChange(
+            user2,
+            address(LIMPETH),
+            preClaimBalances[1][2],
+            0
+        );
+        assertTokenBalanceChange(
+            user2,
+            address(wtBTC),
+            preClaimBalances[1][3],
+            0
+        );
         // Assert for user3. It voted on the mUSD_wtBTC pool whose LP provider did not stake its LP tokens to the gauge.
         // That said, user3 should not receive any fees.
-        assertTokenBalanceChange(user3, address(BTC), preClaimBalances[2][0], 0);
-        assertTokenBalanceChange(user3, address(mUSD), preClaimBalances[2][1], 0);
-        assertTokenBalanceChange(user3, address(LIMPETH), preClaimBalances[2][2], 0);
-        assertTokenBalanceChange(user3, address(wtBTC), preClaimBalances[2][3], 0);
+        assertTokenBalanceChange(
+            user3,
+            address(BTC),
+            preClaimBalances[2][0],
+            0
+        );
+        assertTokenBalanceChange(
+            user3,
+            address(mUSD),
+            preClaimBalances[2][1],
+            0
+        );
+        assertTokenBalanceChange(
+            user3,
+            address(LIMPETH),
+            preClaimBalances[2][2],
+            0
+        );
+        assertTokenBalanceChange(
+            user3,
+            address(wtBTC),
+            preClaimBalances[2][3],
+            0
+        );
 
         // *********************************************************************************
         // Claiming trading fees from pools
-        // *********************************************************************************    
+        // *********************************************************************************
 
         // User6 is the LP provider of the mUSD_wtBTC pool. User6 can claim fees from the pool directly
         // because they did not stake their LP tokens to the gauge.
         vm.prank(user6);
         IPool(pool_mUSD_wtBTC).claimFees();
-        assertTokenBalanceChange(user6, address(BTC), preClaimBalances[2][0], 0);
-        assertTokenBalanceChange(user6, address(mUSD), preClaimBalances[2][1], 2799999999999999);
-        assertTokenBalanceChange(user6, address(LIMPETH), preClaimBalances[2][2], 0);
-        assertTokenBalanceChange(user6, address(wtBTC), preClaimBalances[2][3], 0);
+        assertTokenBalanceChange(
+            user6,
+            address(BTC),
+            preClaimBalances[2][0],
+            0
+        );
+        assertTokenBalanceChange(
+            user6,
+            address(mUSD),
+            preClaimBalances[2][1],
+            2799999999999999
+        );
+        assertTokenBalanceChange(
+            user6,
+            address(LIMPETH),
+            preClaimBalances[2][2],
+            0
+        );
+        assertTokenBalanceChange(
+            user6,
+            address(wtBTC),
+            preClaimBalances[2][3],
+            0
+        );
 
         // *********************************************************************************
         // Claiming BTC rewards from gauges
         // *********************************************************************************
-        
+
         // Capture pre-claim BTC balances of liquidity providers who staked their LP tokens.
         uint256 preClaimBTCUser4 = BTC.balanceOf(user4);
         uint256 preClaimBTCUser5 = BTC.balanceOf(user5);
@@ -533,21 +783,21 @@ contract FullEpoch is BaseSystemTest {
         gauges[1] = veBTCVoter.gauges(pool_mUSD_LIMPETH);
         gauges[2] = veBTCVoter.gauges(pool_mUSD_wtBTC);
 
-        // The BTC rewards for gauges were distributed earlier when we called 
+        // The BTC rewards for gauges were distributed earlier when we called
         // veBTCVoter.distribute(0, veBTCVoter.length()):
         // - the BTC_mUSD gauge received 12570831545871989534 BTC
         // - the mUSD_LIMPETH gauge received 12570831545871989534 BTC
         // - the mUSD_wtBTC gauge received 40858336908256020929 BTC
         //
-        // For each gauge, the rewards are distributed proportionally to the LP 
+        // For each gauge, the rewards are distributed proportionally to the LP
         // token balance of each staker.
         //
         // User4 staked all its LP tokens to the BTC_mUSD gauge.
-        // The claim action will take only this gauge into account. 
+        // The claim action will take only this gauge into account.
         vm.prank(user4);
         veBTCVoter.claimRewards(gauges);
         // User5 staked all its LP tokens to the mUSD_LIMPETH gauge.
-        // The claim action will take only this gauge into account. 
+        // The claim action will take only this gauge into account.
         vm.prank(user5);
         veBTCVoter.claimRewards(gauges);
 
@@ -562,12 +812,26 @@ contract FullEpoch is BaseSystemTest {
         // - reward_rate = 12570831545871989534 / 603898 = 20816150319875 (rounded down)
         // - reward_per_token = (603898 * 20816150319875 * 1e18) / 9999999999999999000 = 1257083154587187400 (rounded down)
         // - reward = (9999999999999999000 * 1257083154587187400) / 1e18 = 12570831545871872742
-        assertTokenBalanceChange(user4, address(BTC), preClaimBTCUser4, 12570831545871872742);
+        assertTokenBalanceChange(
+            user4,
+            address(BTC),
+            preClaimBTCUser4,
+            12570831545871872742
+        );
         // Same applies to user5.
-        assertTokenBalanceChange(user5, address(BTC), preClaimBTCUser5, 12570831545871872742);
+        assertTokenBalanceChange(
+            user5,
+            address(BTC),
+            preClaimBTCUser5,
+            12570831545871872742
+        );
     }
 
-    function mintVeBTC(address user, uint256 amount, uint256 lockDuration) internal returns (uint256 tokenId) {
+    function mintVeBTC(
+        address user,
+        uint256 amount,
+        uint256 lockDuration
+    ) internal returns (uint256 tokenId) {
         vm.startPrank(user);
         BTC.approve(address(veBTC), amount);
         tokenId = veBTC.createLock(amount, lockDuration);
@@ -589,8 +853,16 @@ contract FullEpoch is BaseSystemTest {
         TestERC20(tokenB).mint(user, amountB);
         vm.stopPrank();
 
-        assertEq(IERC20(tokenA).balanceOf(user), initialBalanceA + amountA, "user should have the correct amount of tokenA");
-        assertEq(IERC20(tokenB).balanceOf(user), initialBalanceB + amountB, "user should have the correct amount of tokenB");
+        assertEq(
+            IERC20(tokenA).balanceOf(user),
+            initialBalanceA + amountA,
+            "user should have the correct amount of tokenA"
+        );
+        assertEq(
+            IERC20(tokenB).balanceOf(user),
+            initialBalanceB + amountB,
+            "user should have the correct amount of tokenB"
+        );
 
         vm.startPrank(user);
         IERC20(tokenA).approve(address(router), amountA);
@@ -607,9 +879,17 @@ contract FullEpoch is BaseSystemTest {
             vm.getBlockTimestamp() + 1 hours
         );
         vm.stopPrank();
-        
-        assertEq(IERC20(tokenA).balanceOf(user), initialBalanceA, "user should have the correct amount of tokenA");
-        assertEq(IERC20(tokenB).balanceOf(user), initialBalanceB, "user should have the correct amount of tokenB");
+
+        assertEq(
+            IERC20(tokenA).balanceOf(user),
+            initialBalanceA,
+            "user should have the correct amount of tokenA"
+        );
+        assertEq(
+            IERC20(tokenB).balanceOf(user),
+            initialBalanceB,
+            "user should have the correct amount of tokenB"
+        );
     }
 
     function stakeGauge(address user, address pool) internal {
@@ -617,7 +897,11 @@ contract FullEpoch is BaseSystemTest {
         assertNotEq(gauge, address(0), "gauge should exist");
 
         uint256 initialUserPoolBalance = IERC20(pool).balanceOf(user);
-        assertNotEq(initialUserPoolBalance, 0, "user should have some LP tokens");
+        assertNotEq(
+            initialUserPoolBalance,
+            0,
+            "user should have some LP tokens"
+        );
 
         uint256 initialGaugePoolBalance = IERC20(pool).balanceOf(gauge);
 
@@ -626,8 +910,16 @@ contract FullEpoch is BaseSystemTest {
         IGauge(gauge).deposit(initialUserPoolBalance);
         vm.stopPrank();
 
-        assertEq(IERC20(pool).balanceOf(user), 0, "user should have spent all of pool LP tokens");
-        assertEq(IERC20(pool).balanceOf(gauge), initialGaugePoolBalance + initialUserPoolBalance, "gauge should have the correct amount of pool LP tokens");
+        assertEq(
+            IERC20(pool).balanceOf(user),
+            0,
+            "user should have spent all of pool LP tokens"
+        );
+        assertEq(
+            IERC20(pool).balanceOf(gauge),
+            initialGaugePoolBalance + initialUserPoolBalance,
+            "gauge should have the correct amount of pool LP tokens"
+        );
     }
 
     function proposeChainFeeSplitterNudge(
@@ -691,8 +983,12 @@ contract FullEpoch is BaseSystemTest {
         TestERC20(tokenIn).mint(user, amountIn);
         vm.stopPrank();
 
-        assertEq(IERC20(tokenIn).balanceOf(user), initialUserTokenInBalance + amountIn, "user should have the correct amount of tokenIn");
-        
+        assertEq(
+            IERC20(tokenIn).balanceOf(user),
+            initialUserTokenInBalance + amountIn,
+            "user should have the correct amount of tokenIn"
+        );
+
         IRouter.Route[] memory routes = new IRouter.Route[](1);
         routes[0] = IRouter.Route({
             from: tokenIn,
@@ -712,16 +1008,28 @@ contract FullEpoch is BaseSystemTest {
         );
         vm.stopPrank();
 
-        assertEq(IERC20(tokenIn).balanceOf(user), initialUserTokenInBalance, "user should have spent the correct amount of tokenIn");
-        assertGe(IERC20(tokenOut).balanceOf(user), initialUserTokenOutBalance + amountOutMin, "user should have received the correct amount of tokenOut");
+        assertEq(
+            IERC20(tokenIn).balanceOf(user),
+            initialUserTokenInBalance,
+            "user should have spent the correct amount of tokenIn"
+        );
+        assertGe(
+            IERC20(tokenOut).balanceOf(user),
+            initialUserTokenOutBalance + amountOutMin,
+            "user should have received the correct amount of tokenOut"
+        );
     }
 
     function claimVeBTCVoterFees(address user, uint256 tokenId) internal {
         // Determine addresses of FeesVotingReward contract for each pool.
         address[] memory poolFees = new address[](3);
         poolFees[0] = veBTCVoter.gaugeToFees(veBTCVoter.gauges(pool_BTC_mUSD));
-        poolFees[1] = veBTCVoter.gaugeToFees(veBTCVoter.gauges(pool_mUSD_LIMPETH));
-        poolFees[2] = veBTCVoter.gaugeToFees(veBTCVoter.gauges(pool_mUSD_wtBTC));
+        poolFees[1] = veBTCVoter.gaugeToFees(
+            veBTCVoter.gauges(pool_mUSD_LIMPETH)
+        );
+        poolFees[2] = veBTCVoter.gaugeToFees(
+            veBTCVoter.gauges(pool_mUSD_wtBTC)
+        );
 
         // Each pool has two tokens that can be claimed as fees.
         address[][] memory poolTokens = new address[][](3);
@@ -743,9 +1051,19 @@ contract FullEpoch is BaseSystemTest {
         veBTCVoter.claimFees(poolFees, poolTokens, tokenId);
     }
 
-    function assertFeesVotingRewardBalance(address pool, address token, uint256 expectedClaimable) internal {
-        address feesVotingReward = veBTCVoter.gaugeToFees(veBTCVoter.gauges(pool));
-        assertEq(IERC20(token).balanceOf(feesVotingReward), expectedClaimable, "fees voting reward should have the correct amount of token");
+    function assertFeesVotingRewardBalance(
+        address pool,
+        address token,
+        uint256 expectedClaimable
+    ) internal {
+        address feesVotingReward = veBTCVoter.gaugeToFees(
+            veBTCVoter.gauges(pool)
+        );
+        assertEq(
+            IERC20(token).balanceOf(feesVotingReward),
+            expectedClaimable,
+            "fees voting reward should have the correct amount of token"
+        );
     }
 
     function assertTokenBalanceChange(

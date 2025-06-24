@@ -43,11 +43,19 @@ contract EpochGovernorTest is BaseTest {
                     IGovernor.getVotesWithParams.selector
             )
         );
-        assertTrue(epochGovernor.supportsInterface(type(IGovernor).interfaceId ^ type(IERC6372).interfaceId));
-        assertTrue(epochGovernor.supportsInterface(type(IERC1155Receiver).interfaceId));
+        assertTrue(
+            epochGovernor.supportsInterface(
+                type(IGovernor).interfaceId ^ type(IERC6372).interfaceId
+            )
+        );
+        assertTrue(
+            epochGovernor.supportsInterface(type(IERC1155Receiver).interfaceId)
+        );
         assertFalse(
             epochGovernor.supportsInterface(
-                type(IGovernor).interfaceId ^ type(IERC6372).interfaceId ^ OZGovernor.cancel.selector
+                type(IGovernor).interfaceId ^
+                    type(IERC6372).interfaceId ^
+                    OZGovernor.cancel.selector
             )
         );
         assertFalse(
@@ -81,7 +89,9 @@ contract EpochGovernorTest is BaseTest {
         uint256[] memory values = new uint256[](1);
         values[0] = 0;
         bytes[] memory calldatas = new bytes[](1);
-        calldatas[0] = abi.encodeWithSelector(chainFeeSplitter.updatePeriod.selector);
+        calldatas[0] = abi.encodeWithSelector(
+            chainFeeSplitter.updatePeriod.selector
+        );
         string memory description = "";
 
         vm.expectRevert("GovernorSimple: only nudge allowed");
@@ -100,49 +110,86 @@ contract EpochGovernorTest is BaseTest {
         string memory description = "";
 
         // propose
-        uint256 pid = epochGovernor.propose(1, targets, values, calldatas, description);
+        uint256 pid = epochGovernor.propose(
+            1,
+            targets,
+            values,
+            calldatas,
+            description
+        );
 
         skipAndRoll(15 minutes);
         assertEq(escrow.balanceOfNFT(1), 1994506262572926509); // voting power at proposal start
         assertEq(escrow.balanceOfNFT(2), 997253131223564505); // voting power at proposal start
         vm.expectRevert("GovernorSimple: vote not currently active");
         epochGovernor.castVote(pid, 1, 1);
-        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Pending));
+        assertEq(
+            uint256(epochGovernor.state(pid)),
+            uint256(IGovernor.ProposalState.Pending)
+        );
 
         skipAndRoll(1);
-        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Active));
+        assertEq(
+            uint256(epochGovernor.state(pid)),
+            uint256(IGovernor.ProposalState.Active)
+        );
 
         // vote
         epochGovernor.castVote(pid, 1, 1); // for: 2
         assertEq(epochGovernor.hasVoted(pid, 1), true);
-        (uint256 againstVotes, uint256 forVotes, uint256 abstainVotes) = epochGovernor.proposalVotes(pid);
+        (
+            uint256 againstVotes,
+            uint256 forVotes,
+            uint256 abstainVotes
+        ) = epochGovernor.proposalVotes(pid);
         assertEq(againstVotes, 0);
         assertEq(forVotes, 1994506262572926509);
         assertEq(abstainVotes, 0);
         vm.prank(address(owner2));
         epochGovernor.castVote(pid, 2, 0); // against: 1
         assertEq(epochGovernor.hasVoted(pid, 2), true);
-        (againstVotes, forVotes, abstainVotes) = epochGovernor.proposalVotes(pid);
+        (againstVotes, forVotes, abstainVotes) = epochGovernor.proposalVotes(
+            pid
+        );
         assertEq(againstVotes, 997253131223564505);
         assertEq(forVotes, 1994506262572926509);
         assertEq(abstainVotes, 0);
         vm.prank(address(owner3));
         epochGovernor.castVote(pid, 3, 2); // abstain: 1
         assertEq(epochGovernor.hasVoted(pid, 3), true);
-        (againstVotes, forVotes, abstainVotes) = epochGovernor.proposalVotes(pid);
+        (againstVotes, forVotes, abstainVotes) = epochGovernor.proposalVotes(
+            pid
+        );
         assertEq(againstVotes, 997253131223564505);
         assertEq(forVotes, 1994506262572926509);
         assertEq(abstainVotes, 997253131223564505);
-        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Active));
+        assertEq(
+            uint256(epochGovernor.state(pid)),
+            uint256(IGovernor.ProposalState.Active)
+        );
         assertEq(epochGovernor.hasVoted(pid, 4), false);
 
         skipAndRoll(1 weeks);
-        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Succeeded));
+        assertEq(
+            uint256(epochGovernor.state(pid)),
+            uint256(IGovernor.ProposalState.Succeeded)
+        );
 
         // execute
-        epochGovernor.execute(targets, values, calldatas, keccak256(bytes(description)));
-        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Executed));
-        assertEq(uint256(epochGovernor.result()), uint256(IGovernor.ProposalState.Succeeded));
+        epochGovernor.execute(
+            targets,
+            values,
+            calldatas,
+            keccak256(bytes(description))
+        );
+        assertEq(
+            uint256(epochGovernor.state(pid)),
+            uint256(IGovernor.ProposalState.Executed)
+        );
+        assertEq(
+            uint256(epochGovernor.result()),
+            uint256(IGovernor.ProposalState.Succeeded)
+        );
 
         assertEq(chainFeeSplitter.needle(), 34);
     }
@@ -159,49 +206,86 @@ contract EpochGovernorTest is BaseTest {
         string memory description = "";
 
         // propose
-        uint256 pid = epochGovernor.propose(1, targets, values, calldatas, description);
+        uint256 pid = epochGovernor.propose(
+            1,
+            targets,
+            values,
+            calldatas,
+            description
+        );
 
         skipAndRoll(15 minutes);
         assertEq(escrow.balanceOfNFT(1), 1994506262572926509); // voting power at proposal start
         assertEq(escrow.balanceOfNFT(2), 997253131223564505); // voting power at proposal start
         vm.expectRevert("GovernorSimple: vote not currently active");
         epochGovernor.castVote(pid, 1, 1);
-        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Pending));
+        assertEq(
+            uint256(epochGovernor.state(pid)),
+            uint256(IGovernor.ProposalState.Pending)
+        );
 
         skipAndRoll(1);
-        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Active));
+        assertEq(
+            uint256(epochGovernor.state(pid)),
+            uint256(IGovernor.ProposalState.Active)
+        );
 
         // vote
         epochGovernor.castVote(pid, 1, 0); // against: 2
         assertEq(epochGovernor.hasVoted(pid, 1), true);
-        (uint256 againstVotes, uint256 forVotes, uint256 abstainVotes) = epochGovernor.proposalVotes(pid);
+        (
+            uint256 againstVotes,
+            uint256 forVotes,
+            uint256 abstainVotes
+        ) = epochGovernor.proposalVotes(pid);
         assertEq(againstVotes, 1994506262572926509);
         assertEq(forVotes, 0);
         assertEq(abstainVotes, 0);
         vm.prank(address(owner2));
         epochGovernor.castVote(pid, 2, 1); // for: 1
         assertEq(epochGovernor.hasVoted(pid, 2), true);
-        (againstVotes, forVotes, abstainVotes) = epochGovernor.proposalVotes(pid);
+        (againstVotes, forVotes, abstainVotes) = epochGovernor.proposalVotes(
+            pid
+        );
         assertEq(againstVotes, 1994506262572926509);
         assertEq(forVotes, 997253131223564505);
         assertEq(abstainVotes, 0);
         vm.prank(address(owner3));
         epochGovernor.castVote(pid, 3, 2); // abstain: 1
         assertEq(epochGovernor.hasVoted(pid, 3), true);
-        (againstVotes, forVotes, abstainVotes) = epochGovernor.proposalVotes(pid);
+        (againstVotes, forVotes, abstainVotes) = epochGovernor.proposalVotes(
+            pid
+        );
         assertEq(againstVotes, 1994506262572926509);
         assertEq(forVotes, 997253131223564505);
         assertEq(abstainVotes, 997253131223564505);
-        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Active));
+        assertEq(
+            uint256(epochGovernor.state(pid)),
+            uint256(IGovernor.ProposalState.Active)
+        );
         assertEq(epochGovernor.hasVoted(pid, 4), false);
 
         skipAndRoll(1 weeks);
-        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Defeated));
+        assertEq(
+            uint256(epochGovernor.state(pid)),
+            uint256(IGovernor.ProposalState.Defeated)
+        );
 
         // execute
-        epochGovernor.execute(targets, values, calldatas, keccak256(bytes(description)));
-        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Executed));
-        assertEq(uint256(epochGovernor.result()), uint256(IGovernor.ProposalState.Defeated));
+        epochGovernor.execute(
+            targets,
+            values,
+            calldatas,
+            keccak256(bytes(description))
+        );
+        assertEq(
+            uint256(epochGovernor.state(pid)),
+            uint256(IGovernor.ProposalState.Executed)
+        );
+        assertEq(
+            uint256(epochGovernor.result()),
+            uint256(IGovernor.ProposalState.Defeated)
+        );
 
         assertEq(chainFeeSplitter.needle(), 32);
     }
@@ -218,50 +302,87 @@ contract EpochGovernorTest is BaseTest {
         string memory description = "";
 
         // propose
-        uint256 pid = epochGovernor.propose(1, targets, values, calldatas, description);
+        uint256 pid = epochGovernor.propose(
+            1,
+            targets,
+            values,
+            calldatas,
+            description
+        );
 
         skipAndRoll(15 minutes);
         assertEq(escrow.balanceOfNFT(2), 997253131223564505); // voting power at proposal start
         vm.expectRevert("GovernorSimple: vote not currently active");
         epochGovernor.castVote(pid, 1, 1);
-        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Pending));
+        assertEq(
+            uint256(epochGovernor.state(pid)),
+            uint256(IGovernor.ProposalState.Pending)
+        );
 
         skipAndRoll(1);
-        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Active));
+        assertEq(
+            uint256(epochGovernor.state(pid)),
+            uint256(IGovernor.ProposalState.Active)
+        );
 
         // vote
         vm.prank(address(owner2));
         epochGovernor.castVote(pid, 2, 0); // against: 1
         assertEq(epochGovernor.hasVoted(pid, 2), true);
-        (uint256 againstVotes, uint256 forVotes, uint256 abstainVotes) = epochGovernor.proposalVotes(pid);
+        (
+            uint256 againstVotes,
+            uint256 forVotes,
+            uint256 abstainVotes
+        ) = epochGovernor.proposalVotes(pid);
         assertEq(againstVotes, 997253131223564505);
         assertEq(forVotes, 0);
         assertEq(abstainVotes, 0);
         vm.prank(address(owner3));
         epochGovernor.castVote(pid, 3, 1); // for: 1
         assertEq(epochGovernor.hasVoted(pid, 3), true);
-        (againstVotes, forVotes, abstainVotes) = epochGovernor.proposalVotes(pid);
+        (againstVotes, forVotes, abstainVotes) = epochGovernor.proposalVotes(
+            pid
+        );
         assertEq(againstVotes, 997253131223564505);
         assertEq(forVotes, 997253131223564505);
         assertEq(abstainVotes, 0);
         vm.prank(address(owner4));
         epochGovernor.castVote(pid, 4, 2); // abstain: 1
         assertEq(epochGovernor.hasVoted(pid, 4), true);
-        (againstVotes, forVotes, abstainVotes) = epochGovernor.proposalVotes(pid);
+        (againstVotes, forVotes, abstainVotes) = epochGovernor.proposalVotes(
+            pid
+        );
         assertEq(againstVotes, 997253131223564505);
         assertEq(forVotes, 997253131223564505);
         assertEq(abstainVotes, 997253131223564505);
         // tie: should still expire
-        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Active));
+        assertEq(
+            uint256(epochGovernor.state(pid)),
+            uint256(IGovernor.ProposalState.Active)
+        );
         assertEq(epochGovernor.hasVoted(pid, 1), false);
 
         skipAndRoll(1 weeks);
-        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Expired));
+        assertEq(
+            uint256(epochGovernor.state(pid)),
+            uint256(IGovernor.ProposalState.Expired)
+        );
 
         // execute
-        epochGovernor.execute(targets, values, calldatas, keccak256(bytes(description)));
-        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Executed));
-        assertEq(uint256(epochGovernor.result()), uint256(IGovernor.ProposalState.Expired));
+        epochGovernor.execute(
+            targets,
+            values,
+            calldatas,
+            keccak256(bytes(description))
+        );
+        assertEq(
+            uint256(epochGovernor.state(pid)),
+            uint256(IGovernor.ProposalState.Executed)
+        );
+        assertEq(
+            uint256(epochGovernor.result()),
+            uint256(IGovernor.ProposalState.Expired)
+        );
 
         assertEq(chainFeeSplitter.needle(), 33);
     }
@@ -283,52 +404,92 @@ contract EpochGovernorTest is BaseTest {
         string memory description = "";
 
         // propose
-        uint256 pid = epochGovernor.propose(1, targets, values, calldatas, description);
+        uint256 pid = epochGovernor.propose(
+            1,
+            targets,
+            values,
+            calldatas,
+            description
+        );
 
         skipAndRoll(15 minutes);
         assertEq(escrow.balanceOfNFT(1), 1994506262572926509); // voting power at proposal start
-        assertEq(escrow.getPastVotes(address(owner), 1, block.timestamp), TOKEN_1 + 1994506262572926509);
+        assertEq(
+            escrow.getPastVotes(address(owner), 1, block.timestamp),
+            TOKEN_1 + 1994506262572926509
+        );
         assertEq(escrow.balanceOfNFT(4), TOKEN_1);
         assertEq(escrow.getPastVotes(address(owner4), 4, block.timestamp), 0);
         assertEq(escrow.balanceOfNFT(2), 997253131223564505); // voting power at proposal start
         vm.expectRevert("GovernorSimple: vote not currently active");
         epochGovernor.castVote(pid, 1, 1);
-        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Pending));
+        assertEq(
+            uint256(epochGovernor.state(pid)),
+            uint256(IGovernor.ProposalState.Pending)
+        );
 
         skipAndRoll(1);
-        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Active));
+        assertEq(
+            uint256(epochGovernor.state(pid)),
+            uint256(IGovernor.ProposalState.Active)
+        );
 
         // vote
         epochGovernor.castVote(pid, 1, 1); // for: 2
         assertEq(epochGovernor.hasVoted(pid, 1), true);
-        (uint256 againstVotes, uint256 forVotes, uint256 abstainVotes) = epochGovernor.proposalVotes(pid);
+        (
+            uint256 againstVotes,
+            uint256 forVotes,
+            uint256 abstainVotes
+        ) = epochGovernor.proposalVotes(pid);
         assertEq(againstVotes, 0);
         assertEq(forVotes, TOKEN_1 + 1994506262572926509);
         assertEq(abstainVotes, 0);
         vm.prank(address(owner2));
         epochGovernor.castVote(pid, 2, 0); // against: 1
         assertEq(epochGovernor.hasVoted(pid, 2), true);
-        (againstVotes, forVotes, abstainVotes) = epochGovernor.proposalVotes(pid);
+        (againstVotes, forVotes, abstainVotes) = epochGovernor.proposalVotes(
+            pid
+        );
         assertEq(againstVotes, 997253131223564505);
         assertEq(forVotes, TOKEN_1 + 1994506262572926509);
         assertEq(abstainVotes, 0);
         vm.prank(address(owner3));
         epochGovernor.castVote(pid, 3, 2); // abstain: 1
         assertEq(epochGovernor.hasVoted(pid, 3), true);
-        (againstVotes, forVotes, abstainVotes) = epochGovernor.proposalVotes(pid);
+        (againstVotes, forVotes, abstainVotes) = epochGovernor.proposalVotes(
+            pid
+        );
         assertEq(againstVotes, 997253131223564505);
         assertEq(forVotes, TOKEN_1 + 1994506262572926509);
         assertEq(abstainVotes, 997253131223564505);
-        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Active));
+        assertEq(
+            uint256(epochGovernor.state(pid)),
+            uint256(IGovernor.ProposalState.Active)
+        );
         assertEq(epochGovernor.hasVoted(pid, 4), false);
 
         skipAndRoll(1 weeks);
-        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Succeeded));
+        assertEq(
+            uint256(epochGovernor.state(pid)),
+            uint256(IGovernor.ProposalState.Succeeded)
+        );
 
         // execute
-        epochGovernor.execute(targets, values, calldatas, keccak256(bytes(description)));
-        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Executed));
-        assertEq(uint256(epochGovernor.result()), uint256(IGovernor.ProposalState.Succeeded));
+        epochGovernor.execute(
+            targets,
+            values,
+            calldatas,
+            keccak256(bytes(description))
+        );
+        assertEq(
+            uint256(epochGovernor.state(pid)),
+            uint256(IGovernor.ProposalState.Executed)
+        );
+        assertEq(
+            uint256(epochGovernor.result()),
+            uint256(IGovernor.ProposalState.Succeeded)
+        );
 
         assertEq(chainFeeSplitter.needle(), 34);
     }

@@ -61,7 +61,11 @@ contract WashTradeTest is BaseTest {
         deployFactories();
         factory.setFee(true, 1);
         factory.setFee(false, 1);
-        voter = new Voter(address(forwarder), address(escrow), address(factoryRegistry));
+        voter = new Voter(
+            address(forwarder),
+            address(escrow),
+            address(factoryRegistry)
+        );
         router = new Router(
             address(forwarder),
             address(factoryRegistry),
@@ -69,7 +73,10 @@ contract WashTradeTest is BaseTest {
         );
         deployPoolWithOwner(address(owner));
 
-        (address token0, address token1) = router.sortTokens(address(mUSD), address(BTC));
+        (address token0, address token1) = router.sortTokens(
+            address(mUSD),
+            address(BTC)
+        );
         assertEq(pool4.token0(), token0);
         assertEq(pool4.token1(), token1);
     }
@@ -143,7 +150,11 @@ contract WashTradeTest is BaseTest {
     function deployVoter() public {
         routerAddLiquidity();
 
-        voter = new Voter(address(forwarder), address(escrow), address(factoryRegistry));
+        voter = new Voter(
+            address(forwarder),
+            address(escrow),
+            address(factoryRegistry)
+        );
         address[] memory tokens = new address[](4);
         tokens[0] = address(mUSD);
         tokens[1] = address(wtBTC);
@@ -180,23 +191,57 @@ contract WashTradeTest is BaseTest {
         deployPoolFactoryGauge();
 
         IRouter.Route[] memory routes = new IRouter.Route[](1);
-        routes[0] = IRouter.Route(address(BTC), address(mUSD), true, address(0));
+        routes[0] = IRouter.Route(
+            address(BTC),
+            address(mUSD),
+            true,
+            address(0)
+        );
         IRouter.Route[] memory routes2 = new IRouter.Route[](1);
-        routes2[0] = IRouter.Route(address(mUSD), address(BTC), true, address(0));
+        routes2[0] = IRouter.Route(
+            address(mUSD),
+            address(BTC),
+            true,
+            address(0)
+        );
 
         uint256 i;
         for (i = 0; i < 10; i++) {
-            assertEq(router.getAmountsOut(TOKEN_1M, routes)[1], pool4.getAmountOut(TOKEN_1M, address(BTC)));
+            assertEq(
+                router.getAmountsOut(TOKEN_1M, routes)[1],
+                pool4.getAmountOut(TOKEN_1M, address(BTC))
+            );
 
-            uint256[] memory expectedOutput = router.getAmountsOut(TOKEN_1M, routes);
+            uint256[] memory expectedOutput = router.getAmountsOut(
+                TOKEN_1M,
+                routes
+            );
             BTC.approve(address(router), TOKEN_1M);
-            router.swapExactTokensForTokens(TOKEN_1M, expectedOutput[1], routes, address(owner), block.timestamp);
+            router.swapExactTokensForTokens(
+                TOKEN_1M,
+                expectedOutput[1],
+                routes,
+                address(owner),
+                block.timestamp
+            );
 
-            assertEq(router.getAmountsOut(mUSD_1M, routes2)[1], pool4.getAmountOut(mUSD_1M, address(mUSD)));
+            assertEq(
+                router.getAmountsOut(mUSD_1M, routes2)[1],
+                pool4.getAmountOut(mUSD_1M, address(mUSD))
+            );
 
-            uint256[] memory expectedOutput2 = router.getAmountsOut(mUSD_1M, routes2);
+            uint256[] memory expectedOutput2 = router.getAmountsOut(
+                mUSD_1M,
+                routes2
+            );
             mUSD.approve(address(router), mUSD_1M);
-            router.swapExactTokensForTokens(mUSD_1M, expectedOutput2[1], routes2, address(owner), block.timestamp);
+            router.swapExactTokensForTokens(
+                mUSD_1M,
+                expectedOutput2[1],
+                routes2,
+                address(owner),
+                block.timestamp
+            );
         }
     }
 

@@ -56,7 +56,15 @@ contract GaugeTest is BaseTest {
         assertEq(pre - post, POOL_1);
 
         skip(1 hours);
-        _addLiquidityToPool(address(owner2), address(router), address(BTC), address(mUSD), false, TOKEN_1, mUSD_1);
+        _addLiquidityToPool(
+            address(owner2),
+            address(router),
+            address(BTC),
+            address(mUSD),
+            false,
+            TOKEN_1,
+            mUSD_1
+        );
 
         skip(1 hours);
         // deposit to owner4 from owner2
@@ -103,7 +111,15 @@ contract GaugeTest is BaseTest {
         assertEq(pre - post, POOL_1);
 
         skip(1 hours);
-        _addLiquidityToPool(address(owner2), address(router), address(BTC), address(mUSD), false, TOKEN_1, mUSD_1);
+        _addLiquidityToPool(
+            address(owner2),
+            address(router),
+            address(BTC),
+            address(mUSD),
+            false,
+            TOKEN_1,
+            mUSD_1
+        );
 
         skip(1 hours);
         pre = pool.balanceOf(address(owner2));
@@ -125,7 +141,15 @@ contract GaugeTest is BaseTest {
         pool.approve(address(gauge), POOL_1);
         gauge.deposit(POOL_1);
 
-        _addLiquidityToPool(address(owner2), address(router), address(BTC), address(mUSD), false, TOKEN_1, mUSD_1);
+        _addLiquidityToPool(
+            address(owner2),
+            address(router),
+            address(BTC),
+            address(mUSD),
+            false,
+            TOKEN_1,
+            mUSD_1
+        );
 
         vm.prank(address(owner2));
         pool.approve(address(gauge), POOL_1);
@@ -165,7 +189,15 @@ contract GaugeTest is BaseTest {
         pool.approve(address(gauge), POOL_1);
         gauge.deposit(POOL_1);
 
-        _addLiquidityToPool(address(owner2), address(router), address(BTC), address(mUSD), false, TOKEN_1, mUSD_1);
+        _addLiquidityToPool(
+            address(owner2),
+            address(router),
+            address(BTC),
+            address(mUSD),
+            false,
+            TOKEN_1,
+            mUSD_1
+        );
 
         vm.prank(address(owner2));
         pool.approve(address(gauge), POOL_1);
@@ -207,7 +239,15 @@ contract GaugeTest is BaseTest {
         pool.approve(address(gauge), POOL_1);
         gauge.deposit(POOL_1);
 
-        _addLiquidityToPool(address(owner2), address(router), address(BTC), address(mUSD), false, TOKEN_1, mUSD_1);
+        _addLiquidityToPool(
+            address(owner2),
+            address(router),
+            address(BTC),
+            address(mUSD),
+            false,
+            TOKEN_1,
+            mUSD_1
+        );
 
         vm.prank(address(owner2));
         pool.approve(address(gauge), POOL_1);
@@ -252,7 +292,15 @@ contract GaugeTest is BaseTest {
         pool.approve(address(gauge), POOL_1);
         gauge.deposit(POOL_1);
 
-        _addLiquidityToPool(address(owner2), address(router), address(BTC), address(mUSD), false, TOKEN_1, mUSD_1);
+        _addLiquidityToPool(
+            address(owner2),
+            address(router),
+            address(BTC),
+            address(mUSD),
+            false,
+            TOKEN_1,
+            mUSD_1
+        );
 
         vm.prank(address(owner2));
         pool.approve(address(gauge), POOL_1);
@@ -304,7 +352,15 @@ contract GaugeTest is BaseTest {
         assertApproxEqRel(gauge.earned(address(owner)), reward / 7, 1e6);
         gauge.getReward(address(owner));
 
-        _addLiquidityToPool(address(owner2), address(router), address(BTC), address(mUSD), false, TOKEN_1, mUSD_1);
+        _addLiquidityToPool(
+            address(owner2),
+            address(router),
+            address(BTC),
+            address(mUSD),
+            false,
+            TOKEN_1,
+            mUSD_1
+        );
         vm.prank(address(owner2));
         pool.approve(address(gauge), POOL_1);
         vm.prank(address(owner2));
@@ -325,7 +381,11 @@ contract GaugeTest is BaseTest {
         skip(1 days);
         // two deposits, owner with twice the size of owner2, 1/7th of epoch
         expectedReward = reward / 7 / 3;
-        assertApproxEqRel(gauge.earned(address(owner)), expectedReward * 2, 1e6);
+        assertApproxEqRel(
+            gauge.earned(address(owner)),
+            expectedReward * 2,
+            1e6
+        );
         assertApproxEqRel(gauge.earned(address(owner2)), expectedReward, 1e6);
         gauge.getReward(address(owner));
         vm.prank(address(owner2));
@@ -337,11 +397,17 @@ contract GaugeTest is BaseTest {
         skip(1 days);
         // two deposits, owner with four times the size of owner 2, 1/7th of epoch
         expectedReward = reward / 7 / 5;
-        assertApproxEqRel(gauge.earned(address(owner)), expectedReward * 4, 1e6);
+        assertApproxEqRel(
+            gauge.earned(address(owner)),
+            expectedReward * 4,
+            1e6
+        );
         assertApproxEqRel(gauge.earned(address(owner2)), expectedReward, 1e6);
     }
 
-    function testEarnedWithStaggeredDepositsAndWithdrawalsWithoutIntermediateClaims() public {
+    function testEarnedWithStaggeredDepositsAndWithdrawalsWithoutIntermediateClaims()
+        public
+    {
         // add deposits
         pool.approve(address(gauge), POOL_1);
         gauge.deposit(POOL_1);
@@ -355,7 +421,15 @@ contract GaugeTest is BaseTest {
         uint256 ownerBal = reward / 7;
         assertApproxEqRel(gauge.earned(address(owner)), reward / 7, 1e6);
 
-        _addLiquidityToPool(address(owner2), address(router), address(BTC), address(mUSD), false, TOKEN_1, mUSD_1);
+        _addLiquidityToPool(
+            address(owner2),
+            address(router),
+            address(BTC),
+            address(mUSD),
+            false,
+            TOKEN_1,
+            mUSD_1
+        );
         vm.prank(address(owner2));
         pool.approve(address(gauge), POOL_1);
         vm.prank(address(owner2));
@@ -394,7 +468,15 @@ contract GaugeTest is BaseTest {
         pool.approve(address(gauge), POOL_1);
         gauge.deposit(POOL_1);
 
-        _addLiquidityToPool(address(owner2), address(router), address(BTC), address(mUSD), false, TOKEN_1, mUSD_1);
+        _addLiquidityToPool(
+            address(owner2),
+            address(router),
+            address(BTC),
+            address(mUSD),
+            false,
+            TOKEN_1,
+            mUSD_1
+        );
 
         vm.prank(address(owner2));
         pool.approve(address(gauge), POOL_1);
@@ -425,11 +507,19 @@ contract GaugeTest is BaseTest {
 
         skip(1 days);
         assertApproxEqRel(gauge.earned(address(owner)), reward2 / 2 / 6, 1e6);
-        assertApproxEqRel(gauge.earned(address(owner2)), reward / 2 + reward2 / 2 / 6, 1e6);
+        assertApproxEqRel(
+            gauge.earned(address(owner2)),
+            reward / 2 + reward2 / 2 / 6,
+            1e6
+        );
 
         skipToNextEpoch(0);
         assertApproxEqRel(gauge.earned(address(owner)), reward2 / 2, 1e6);
-        assertApproxEqRel(gauge.earned(address(owner2)), (reward + reward2) / 2, 1e6);
+        assertApproxEqRel(
+            gauge.earned(address(owner2)),
+            (reward + reward2) / 2,
+            1e6
+        );
 
         uint256 pre = BTC.balanceOf(address(owner));
         vm.prank(address(owner));
@@ -450,7 +540,15 @@ contract GaugeTest is BaseTest {
         pool.approve(address(gauge), POOL_1);
         gauge.deposit(POOL_1);
 
-        _addLiquidityToPool(address(owner2), address(router), address(BTC), address(mUSD), false, TOKEN_1, mUSD_1);
+        _addLiquidityToPool(
+            address(owner2),
+            address(router),
+            address(BTC),
+            address(mUSD),
+            false,
+            TOKEN_1,
+            mUSD_1
+        );
 
         vm.prank(address(owner2));
         pool.approve(address(gauge), POOL_1);
@@ -489,35 +587,59 @@ contract GaugeTest is BaseTest {
         deal(address(BTC), address(voter), reward);
         vm.startPrank(address(voter));
         BTC.approve(address(gauge), reward);
-        vm.expectCall(Gauge(gauge).stakingToken(), abi.encodeCall(IPool.claimFees, ()), 1);
+        vm.expectCall(
+            Gauge(gauge).stakingToken(),
+            abi.encodeCall(IPool.claimFees, ()),
+            1
+        );
         Gauge(gauge).notifyRewardAmount(reward);
         vm.stopPrank();
 
         uint256 epochStart = _getEpochStart(block.timestamp);
         assertApproxEqRel(gauge.rewardRate(), reward / DURATION, 1e6);
-        assertApproxEqRel(gauge.rewardRateByEpoch(epochStart), reward / DURATION, 1e6);
+        assertApproxEqRel(
+            gauge.rewardRateByEpoch(epochStart),
+            reward / DURATION,
+            1e6
+        );
         assertEq(BTC.balanceOf(address(gauge)), TOKEN_1);
         assertEq(gauge.lastUpdateTime(), block.timestamp);
-        assertEq(gauge.periodFinish(), _getEpochStart(block.timestamp) + DURATION);
+        assertEq(
+            gauge.periodFinish(),
+            _getEpochStart(block.timestamp) + DURATION
+        );
     }
 
-    function testNotifyRewardAmountWithNonZeroAmountOneDayAfterEpochFlip() public {
+    function testNotifyRewardAmountWithNonZeroAmountOneDayAfterEpochFlip()
+        public
+    {
         skipAndRoll(1 days);
 
         uint256 reward = TOKEN_1;
         deal(address(BTC), address(voter), reward);
         vm.startPrank(address(voter));
         BTC.approve(address(gauge), reward);
-        vm.expectCall(Gauge(gauge).stakingToken(), abi.encodeCall(IPool.claimFees, ()), 1);
+        vm.expectCall(
+            Gauge(gauge).stakingToken(),
+            abi.encodeCall(IPool.claimFees, ()),
+            1
+        );
         Gauge(gauge).notifyRewardAmount(reward);
         vm.stopPrank();
 
         uint256 epochStart = _getEpochStart(block.timestamp);
         assertApproxEqRel(gauge.rewardRate(), (reward / (6 days)), 1e6);
-        assertApproxEqRel(gauge.rewardRateByEpoch(epochStart), reward / (6 days), 1e6);
+        assertApproxEqRel(
+            gauge.rewardRateByEpoch(epochStart),
+            reward / (6 days),
+            1e6
+        );
         assertEq(BTC.balanceOf(address(gauge)), TOKEN_1);
         assertEq(gauge.lastUpdateTime(), block.timestamp);
-        assertEq(gauge.periodFinish(), _getEpochStart(block.timestamp) + DURATION);
+        assertEq(
+            gauge.periodFinish(),
+            _getEpochStart(block.timestamp) + DURATION
+        );
     }
 
     function testCannotNotifyRewardAmountWithZeroAmount() public {
@@ -541,16 +663,27 @@ contract GaugeTest is BaseTest {
 
         uint256 epochStart = _getEpochStart(block.timestamp);
         assertApproxEqRel(gauge.rewardRate(), reward / DURATION, 1e6);
-        assertApproxEqRel(gauge.rewardRateByEpoch(epochStart), reward / DURATION, 1e6);
+        assertApproxEqRel(
+            gauge.rewardRateByEpoch(epochStart),
+            reward / DURATION,
+            1e6
+        );
         assertEq(BTC.balanceOf(address(gauge)), TOKEN_1);
         assertEq(gauge.lastUpdateTime(), block.timestamp);
-        assertEq(gauge.periodFinish(), _getEpochStart(block.timestamp) + DURATION);
+        assertEq(
+            gauge.periodFinish(),
+            _getEpochStart(block.timestamp) + DURATION
+        );
 
         skipAndRoll(1 days);
 
         vm.startPrank(team);
         BTC.approve(address(gauge), reward);
-        vm.expectCall(Gauge(gauge).stakingToken(), abi.encodeCall(IPool.claimFees, ()), 0);
+        vm.expectCall(
+            Gauge(gauge).stakingToken(),
+            abi.encodeCall(IPool.claimFees, ()),
+            0
+        );
         Gauge(gauge).notifyRewardWithoutClaim(reward);
         vm.stopPrank();
 
@@ -559,44 +692,75 @@ contract GaugeTest is BaseTest {
 
         epochStart = _getEpochStart(block.timestamp);
         assertApproxEqRel(gauge.rewardRate(), (reward / (6 days)), 1e6);
-        assertApproxEqRel(gauge.rewardRateByEpoch(epochStart), reward / (6 days), 1e6);
+        assertApproxEqRel(
+            gauge.rewardRateByEpoch(epochStart),
+            reward / (6 days),
+            1e6
+        );
         assertEq(BTC.balanceOf(address(gauge)), 2 * TOKEN_1);
         assertEq(gauge.lastUpdateTime(), block.timestamp);
-        assertEq(gauge.periodFinish(), _getEpochStart(block.timestamp) + DURATION);
+        assertEq(
+            gauge.periodFinish(),
+            _getEpochStart(block.timestamp) + DURATION
+        );
     }
 
     function testNotifyRewardWithoutClaimNonZeroAmount() public {
         uint256 reward = TOKEN_1;
         vm.startPrank(team);
         BTC.approve(address(gauge), reward);
-        vm.expectCall(Gauge(gauge).stakingToken(), abi.encodeCall(IPool.claimFees, ()), 0);
+        vm.expectCall(
+            Gauge(gauge).stakingToken(),
+            abi.encodeCall(IPool.claimFees, ()),
+            0
+        );
         Gauge(gauge).notifyRewardWithoutClaim(reward);
         vm.stopPrank();
 
         uint256 epochStart = _getEpochStart(block.timestamp);
         assertApproxEqRel(gauge.rewardRate(), reward / DURATION, 1e6);
-        assertApproxEqRel(gauge.rewardRateByEpoch(epochStart), reward / DURATION, 1e6);
+        assertApproxEqRel(
+            gauge.rewardRateByEpoch(epochStart),
+            reward / DURATION,
+            1e6
+        );
         assertEq(BTC.balanceOf(address(gauge)), TOKEN_1);
         assertEq(gauge.lastUpdateTime(), block.timestamp);
-        assertEq(gauge.periodFinish(), _getEpochStart(block.timestamp) + DURATION);
+        assertEq(
+            gauge.periodFinish(),
+            _getEpochStart(block.timestamp) + DURATION
+        );
     }
 
-    function testNotifyRewardWithoutClaimNonZeroAmountOneDayAfterEpochFlip() public {
+    function testNotifyRewardWithoutClaimNonZeroAmountOneDayAfterEpochFlip()
+        public
+    {
         skipAndRoll(1 days);
 
         uint256 reward = TOKEN_1;
         vm.startPrank(team);
         BTC.approve(address(gauge), reward);
-        vm.expectCall(Gauge(gauge).stakingToken(), abi.encodeCall(IPool.claimFees, ()), 0);
+        vm.expectCall(
+            Gauge(gauge).stakingToken(),
+            abi.encodeCall(IPool.claimFees, ()),
+            0
+        );
         Gauge(gauge).notifyRewardWithoutClaim(reward);
         vm.stopPrank();
 
         uint256 epochStart = _getEpochStart(block.timestamp);
         assertApproxEqRel(gauge.rewardRate(), (reward / (6 days)), 1e6);
-        assertApproxEqRel(gauge.rewardRateByEpoch(epochStart), reward / (6 days), 1e6);
+        assertApproxEqRel(
+            gauge.rewardRateByEpoch(epochStart),
+            reward / (6 days),
+            1e6
+        );
         assertEq(BTC.balanceOf(address(gauge)), TOKEN_1);
         assertEq(gauge.lastUpdateTime(), block.timestamp);
-        assertEq(gauge.periodFinish(), _getEpochStart(block.timestamp) + DURATION);
+        assertEq(
+            gauge.periodFinish(),
+            _getEpochStart(block.timestamp) + DURATION
+        );
     }
 
     function testCannotNotifyRewardWithoutClaimIfNotTeam() public {

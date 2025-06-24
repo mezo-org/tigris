@@ -3,7 +3,12 @@ pragma solidity 0.8.24;
 import "./BaseTest.sol";
 
 contract FeesVotingRewardTest is BaseTest {
-    event NotifyReward(address indexed from, address indexed reward, uint256 indexed epoch, uint256 amount);
+    event NotifyReward(
+        address indexed from,
+        address indexed reward,
+        uint256 indexed epoch,
+        uint256 amount
+    );
 
     function _setUp() public override {
         // ve
@@ -170,7 +175,9 @@ contract FeesVotingRewardTest is BaseTest {
         assertEq(post_post - pre, TOKEN_1 / 2);
     }
 
-    function testCannotGetRewardMoreThanOncePerEpochWithMultipleRewards() public {
+    function testCannotGetRewardMoreThanOncePerEpochWithMultipleRewards()
+        public
+    {
         skip(1 weeks / 2);
 
         // create a reward
@@ -782,7 +789,10 @@ contract FeesVotingRewardTest is BaseTest {
         BTC.approve(address(feesVotingReward), reward3);
         feesVotingReward.notifyRewardAmount(address(BTC), reward3);
         vm.stopPrank();
-        assertEq(BTC.balanceOf(address(feesVotingReward)), reward + reward2 + reward3);
+        assertEq(
+            BTC.balanceOf(address(feesVotingReward)),
+            reward + reward2 + reward3
+        );
         skip(1 hours);
 
         // poked into voting for same pool
@@ -1540,7 +1550,9 @@ contract FeesVotingRewardTest is BaseTest {
         assertEq(sBalance, 0);
     }
 
-    function testDepositAndWithdrawWithinSameEpochOverwritesCheckpoints() public {
+    function testDepositAndWithdrawWithinSameEpochOverwritesCheckpoints()
+        public
+    {
         skip(1 weeks / 2);
 
         // test vote and poke overwrites checkpoints
@@ -1631,7 +1643,9 @@ contract FeesVotingRewardTest is BaseTest {
         assertEq(sBalance, 0);
     }
 
-    function testDepositFromManyUsersInSameTimestampOverwritesSupplyCheckpoint() public {
+    function testDepositFromManyUsersInSameTimestampOverwritesSupplyCheckpoint()
+        public
+    {
         skip(1 weeks / 2);
 
         // deposit by voting
@@ -1749,7 +1763,10 @@ contract FeesVotingRewardTest is BaseTest {
         emit NotifyReward(address(gauge), address(BTC), 604800, TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(BTC), TOKEN_1);
 
-        assertEq(feesVotingReward.tokenRewardsPerEpoch(address(BTC), 604800), TOKEN_1);
+        assertEq(
+            feesVotingReward.tokenRewardsPerEpoch(address(BTC), 604800),
+            TOKEN_1
+        );
         assertEq(BTC.balanceOf(address(feesVotingReward)), TOKEN_1);
 
         skip(1 hours);
@@ -1759,7 +1776,10 @@ contract FeesVotingRewardTest is BaseTest {
         emit NotifyReward(address(gauge), address(BTC), 604800, TOKEN_1 * 2);
         feesVotingReward.notifyRewardAmount(address(BTC), TOKEN_1 * 2);
 
-        assertEq(feesVotingReward.tokenRewardsPerEpoch(address(BTC), 604800), TOKEN_1 * 3);
+        assertEq(
+            feesVotingReward.tokenRewardsPerEpoch(address(BTC), 604800),
+            TOKEN_1 * 3
+        );
         assertEq(BTC.balanceOf(address(feesVotingReward)), TOKEN_1 * 3);
     }
 }

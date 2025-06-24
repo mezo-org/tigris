@@ -6,9 +6,23 @@ import {IERC721, IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/ext
 import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 
 contract VotingEscrowTest is BaseTest {
-    event DelegateChanged(address indexed delegator, uint256 indexed fromDelegate, uint256 indexed toDelegate);
-    event LockPermanent(address indexed _owner, uint256 indexed _tokenId, uint256 amount, uint256 _ts);
-    event UnlockPermanent(address indexed _owner, uint256 indexed _tokenId, uint256 amount, uint256 _ts);
+    event DelegateChanged(
+        address indexed delegator,
+        uint256 indexed fromDelegate,
+        uint256 indexed toDelegate
+    );
+    event LockPermanent(
+        address indexed _owner,
+        uint256 indexed _tokenId,
+        uint256 amount,
+        uint256 _ts
+    );
+    event UnlockPermanent(
+        address indexed _owner,
+        uint256 indexed _tokenId,
+        uint256 amount,
+        uint256 _ts
+    );
     event BatchMetadataUpdate(uint256 _fromTokenId, uint256 _toTokenId);
     event Merge(
         address indexed _sender,
@@ -21,7 +35,12 @@ contract VotingEscrowTest is BaseTest {
         uint256 _ts
     );
     event MetadataUpdate(uint256 _tokenId);
-    event NotifyReward(address indexed from, address indexed reward, uint256 indexed epoch, uint256 amount);
+    event NotifyReward(
+        address indexed from,
+        address indexed reward,
+        uint256 indexed epoch,
+        uint256 amount
+    );
     event Split(
         uint256 indexed _from,
         uint256 indexed _tokenId1,
@@ -55,7 +74,10 @@ contract VotingEscrowTest is BaseTest {
         uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
 
         voter.depositManaged(tokenId, mTokenId);
-        assertEq(uint256(escrow.escrowType(tokenId)), uint256(IVotingEscrow.EscrowType.LOCKED));
+        assertEq(
+            uint256(escrow.escrowType(tokenId)),
+            uint256(IVotingEscrow.EscrowType.LOCKED)
+        );
 
         vm.expectRevert(IVotingEscrow.NotManagedOrNormalNFT.selector);
         escrow.depositFor(tokenId, TOKEN_1);
@@ -76,8 +98,13 @@ contract VotingEscrowTest is BaseTest {
         skipAndRoll(1 hours);
         uint256 reward = TOKEN_1;
         uint256 mTokenId = escrow.createManagedLockFor(address(owner2));
-        LockedManagedReward lockedManagedReward = LockedManagedReward(escrow.managedToLocked(mTokenId));
-        assertEq(BTC.allowance(address(escrow), address(lockedManagedReward)), 0);
+        LockedManagedReward lockedManagedReward = LockedManagedReward(
+            escrow.managedToLocked(mTokenId)
+        );
+        assertEq(
+            BTC.allowance(address(escrow), address(lockedManagedReward)),
+            0
+        );
 
         BTC.approve(address(escrow), TOKEN_1);
         uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
@@ -95,10 +122,20 @@ contract VotingEscrowTest is BaseTest {
         uint256 post = BTC.balanceOf(address(lockedManagedReward));
         IVotingEscrow.LockedBalance memory postLocked = escrow.locked(mTokenId);
 
-        assertEq(uint256(uint128(postLocked.end)), uint256(uint128(preLocked.end)));
-        assertEq(uint256(uint128(postLocked.amount)) - uint256(uint128(preLocked.amount)), reward);
+        assertEq(
+            uint256(uint128(postLocked.end)),
+            uint256(uint128(preLocked.end))
+        );
+        assertEq(
+            uint256(uint128(postLocked.amount)) -
+                uint256(uint128(preLocked.amount)),
+            reward
+        );
         assertEq(post - pre, reward);
-        assertEq(BTC.allowance(address(escrow), address(lockedManagedReward)), 0);
+        assertEq(
+            BTC.allowance(address(escrow), address(lockedManagedReward)),
+            0
+        );
     }
 
     function testDepositFor() public {
@@ -112,8 +149,15 @@ contract VotingEscrowTest is BaseTest {
         escrow.depositFor(tokenId, TOKEN_1);
         IVotingEscrow.LockedBalance memory postLocked = escrow.locked(tokenId);
 
-        assertEq(uint256(uint128(postLocked.end)), uint256(uint128(preLocked.end)));
-        assertEq(uint256(uint128(postLocked.amount)) - uint256(uint128(preLocked.amount)), TOKEN_1);
+        assertEq(
+            uint256(uint128(postLocked.end)),
+            uint256(uint128(preLocked.end))
+        );
+        assertEq(
+            uint256(uint128(postLocked.amount)) -
+                uint256(uint128(preLocked.amount)),
+            TOKEN_1
+        );
     }
 
     function testIncreaseAmount() public {
@@ -127,8 +171,15 @@ contract VotingEscrowTest is BaseTest {
         escrow.increaseAmount(tokenId, TOKEN_1);
         IVotingEscrow.LockedBalance memory postLocked = escrow.locked(tokenId);
 
-        assertEq(uint256(uint128(postLocked.end)), uint256(uint128(preLocked.end)));
-        assertEq(uint256(uint128(postLocked.amount)) - uint256(uint128(preLocked.amount)), TOKEN_1);
+        assertEq(
+            uint256(uint128(postLocked.end)),
+            uint256(uint128(preLocked.end))
+        );
+        assertEq(
+            uint256(uint128(postLocked.amount)) -
+                uint256(uint128(preLocked.amount)),
+            TOKEN_1
+        );
     }
 
     function testIncreaseUnlockTime() public {
@@ -145,7 +196,10 @@ contract VotingEscrowTest is BaseTest {
 
         uint256 expectedLockTime = ((block.timestamp + MAXTIME) / WEEK) * WEEK;
         assertEq(uint256(uint128(postLocked.end)), expectedLockTime);
-        assertEq(uint256(uint128(postLocked.amount)), uint256(uint128(preLocked.amount)));
+        assertEq(
+            uint256(uint128(postLocked.amount)),
+            uint256(uint128(preLocked.amount))
+        );
     }
 
     function testCreateLock() public {
@@ -157,14 +211,20 @@ contract VotingEscrowTest is BaseTest {
         escrow.createLock(1e25, lockDuration);
         assertEq(escrow.ownerOf(1), address(owner));
         assertEq(escrow.balanceOf(address(owner)), 1);
-        assertEq(uint256(escrow.escrowType(1)), uint256(IVotingEscrow.EscrowType.NORMAL));
+        assertEq(
+            uint256(escrow.escrowType(1)),
+            uint256(IVotingEscrow.EscrowType.NORMAL)
+        );
         assertEq(escrow.numCheckpoints(1), 1);
         IVotingEscrow.Checkpoint memory checkpoint = escrow.checkpoints(1, 0);
         assertEq(checkpoint.fromTimestamp, 604801);
         assertEq(checkpoint.owner, address(owner));
         assertEq(checkpoint.delegatedBalance, 0);
         assertEq(checkpoint.delegatee, 0);
-        assertEq(escrow.getPastVotes(address(owner), 1, block.timestamp), 47945126204972095225334);
+        assertEq(
+            escrow.getPastVotes(address(owner), 1, block.timestamp),
+            47945126204972095225334
+        );
         assertEq(escrow.balanceOfNFT(1), 47945126204972095225334);
     }
 
@@ -191,7 +251,10 @@ contract VotingEscrowTest is BaseTest {
 
         // check user point updates correctly
         assertEq(escrow.userPointEpoch(tokenId), 2);
-        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(tokenId, 2);
+        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(
+            tokenId,
+            2
+        );
         assertEq(convert(userPoint.bias), 1994520516124422418); // (TOKEN_1 * 2 / MAXTIME) * (126403200 - 604802)
         assertEq(convert(userPoint.slope), 15854895991); // TOKEN_1 * 2 / MAXTIME
         assertEq(userPoint.ts, 604802);
@@ -228,7 +291,10 @@ contract VotingEscrowTest is BaseTest {
 
         // check user point updates correctly
         assertEq(escrow.userPointEpoch(tokenId), 2);
-        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(tokenId, 2);
+        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(
+            tokenId,
+            2
+        );
         assertEq(convert(userPoint.bias), 0);
         assertEq(convert(userPoint.slope), 0);
         assertEq(userPoint.ts, 604802);
@@ -247,12 +313,18 @@ contract VotingEscrowTest is BaseTest {
 
         // no delegation checkpoint created
         assertEq(escrow.numCheckpoints(tokenId), 1);
-        IVotingEscrow.Checkpoint memory checkpoint = escrow.checkpoints(tokenId, 0);
+        IVotingEscrow.Checkpoint memory checkpoint = escrow.checkpoints(
+            tokenId,
+            0
+        );
         assertEq(checkpoint.fromTimestamp, 604801);
         assertEq(checkpoint.owner, address(owner));
         assertEq(checkpoint.delegatedBalance, 0);
         assertEq(checkpoint.delegatee, 0);
-        assertEq(escrow.getPastVotes(address(owner), tokenId, 604802), TOKEN_1 * 2);
+        assertEq(
+            escrow.getPastVotes(address(owner), tokenId, 604802),
+            TOKEN_1 * 2
+        );
         assertEq(escrow.balanceOfNFT(tokenId), TOKEN_1 * 2);
         assertEq(escrow.totalSupply(), TOKEN_1 * 2);
     }
@@ -272,7 +344,10 @@ contract VotingEscrowTest is BaseTest {
         // check delegation checkpoint created for delegator
         assertEq(escrow.delegates(tokenId), tokenId2);
         assertEq(escrow.numCheckpoints(tokenId), 2);
-        IVotingEscrow.Checkpoint memory checkpoint = escrow.checkpoints(tokenId, 1);
+        IVotingEscrow.Checkpoint memory checkpoint = escrow.checkpoints(
+            tokenId,
+            1
+        );
         assertEq(checkpoint.fromTimestamp, 604802);
         assertEq(checkpoint.owner, address(owner));
         assertEq(checkpoint.delegatedBalance, 0);
@@ -292,7 +367,10 @@ contract VotingEscrowTest is BaseTest {
 
         // check user point updates correctly
         assertEq(escrow.userPointEpoch(tokenId), 2);
-        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(tokenId, 2);
+        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(
+            tokenId,
+            2
+        );
         assertEq(convert(userPoint.bias), 0);
         assertEq(convert(userPoint.slope), 0);
         assertEq(userPoint.ts, 604803);
@@ -326,7 +404,10 @@ contract VotingEscrowTest is BaseTest {
         assertEq(checkpoint.owner, address(owner2));
         assertEq(checkpoint.delegatedBalance, TOKEN_1 * 2);
         assertEq(checkpoint.delegatee, 0);
-        assertEq(escrow.getPastVotes(address(owner2), tokenId2, 604803), TOKEN_1 * 2 + 997260250071864015);
+        assertEq(
+            escrow.getPastVotes(address(owner2), tokenId2, 604803),
+            TOKEN_1 * 2 + 997260250071864015
+        );
         assertEq(escrow.balanceOfNFT(tokenId2), 997260250071864015);
         assertEq(escrow.totalSupply(), TOKEN_1 * 2 + 997260250071864015);
         assertEq(escrow.supply(), TOKEN_1 * 3);
@@ -497,7 +578,9 @@ contract VotingEscrowTest is BaseTest {
         assertTrue(escrow.supportsInterface(ERC721_METADATA_INTERFACE_ID));
     }
 
-    function testCheckSupportsInterfaceHandlesUnsupportedInterfacesCorrectly() public {
+    function testCheckSupportsInterfaceHandlesUnsupportedInterfacesCorrectly()
+        public
+    {
         bytes4 ERC721_FAKE = 0x780e9d61;
         assertFalse(escrow.supportsInterface(ERC721_FAKE));
     }
@@ -571,7 +654,16 @@ contract VotingEscrowTest is BaseTest {
         skip(1);
 
         vm.expectEmit(true, true, true, true, address(escrow));
-        emit Merge(address(owner), tokenId, tokenId2, TOKEN_1, TOKEN_1, TOKEN_1 * 2, expectedLockTime, 604802);
+        emit Merge(
+            address(owner),
+            tokenId,
+            tokenId2,
+            TOKEN_1,
+            TOKEN_1,
+            TOKEN_1 * 2,
+            expectedLockTime,
+            604802
+        );
         vm.expectEmit(false, false, false, true, address(escrow));
         emit MetadataUpdate(tokenId2);
         escrow.merge(tokenId, tokenId2);
@@ -591,7 +683,10 @@ contract VotingEscrowTest is BaseTest {
         assertEq(lockedFrom.amount, 0);
         assertEq(lockedFrom.end, 0);
 
-        IVotingEscrow.UserPoint memory pt2 = escrow.userPointHistory(tokenId2, 2);
+        IVotingEscrow.UserPoint memory pt2 = escrow.userPointHistory(
+            tokenId2,
+            2
+        );
         uint256 slope = (TOKEN_1 * 2) / MAXTIME;
         uint256 bias = slope * (expectedLockTime - block.timestamp);
         assertEq(uint256(int256(pt2.bias)), bias);
@@ -619,7 +714,16 @@ contract VotingEscrowTest is BaseTest {
         skip(1);
 
         vm.expectEmit(true, true, true, true, address(escrow));
-        emit Merge(address(owner), tokenId2, tokenId, TOKEN_1, TOKEN_1, TOKEN_1 * 2, expectedLockTime, 604802);
+        emit Merge(
+            address(owner),
+            tokenId2,
+            tokenId,
+            TOKEN_1,
+            TOKEN_1,
+            TOKEN_1 * 2,
+            expectedLockTime,
+            604802
+        );
         vm.expectEmit(false, false, false, true, address(escrow));
         emit MetadataUpdate(tokenId);
         escrow.merge(tokenId2, tokenId);
@@ -629,7 +733,10 @@ contract VotingEscrowTest is BaseTest {
         assertEq(escrow.ownerOf(tokenId2), address(0));
         assertEq(escrow.supply(), btcSupply);
 
-        IVotingEscrow.UserPoint memory pt2 = escrow.userPointHistory(tokenId2, 2);
+        IVotingEscrow.UserPoint memory pt2 = escrow.userPointHistory(
+            tokenId2,
+            2
+        );
         assertEq(uint256(int256(pt2.bias)), 0);
         assertEq(uint256(int256(pt2.slope)), 0);
         assertEq(pt2.ts, 604802);
@@ -674,7 +781,10 @@ contract VotingEscrowTest is BaseTest {
         assertEq(locked.isPermanent, false);
 
         assertEq(escrow.userPointEpoch(tokenId), 2);
-        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(tokenId, 2);
+        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(
+            tokenId,
+            2
+        );
         assertEq(convert(userPoint.bias), 0);
         assertEq(convert(userPoint.slope), 0);
         assertEq(userPoint.ts, 604802);
@@ -730,7 +840,10 @@ contract VotingEscrowTest is BaseTest {
         assertEq(locked.isPermanent, false);
 
         assertEq(escrow.userPointEpoch(tokenId), 2);
-        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(tokenId, 2);
+        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(
+            tokenId,
+            2
+        );
         assertEq(convert(userPoint.bias), 0);
         assertEq(convert(userPoint.slope), 0);
         assertEq(userPoint.ts, 604802);
@@ -762,7 +875,10 @@ contract VotingEscrowTest is BaseTest {
         // from delegate checkpoint created
         assertEq(escrow.delegates(tokenId), 0);
         assertEq(escrow.numCheckpoints(tokenId), 2);
-        IVotingEscrow.Checkpoint memory checkpoints = escrow.checkpoints(tokenId, 1);
+        IVotingEscrow.Checkpoint memory checkpoints = escrow.checkpoints(
+            tokenId,
+            1
+        );
         assertEq(checkpoints.fromTimestamp, 604802);
         assertEq(checkpoints.owner, address(0));
         assertEq(checkpoints.delegatedBalance, 0);
@@ -789,7 +905,10 @@ contract VotingEscrowTest is BaseTest {
         assertEq(checkpoints.owner, address(owner2));
         assertEq(checkpoints.delegatedBalance, TOKEN_1 * 3);
         assertEq(checkpoints.delegatee, 0);
-        assertEq(escrow.getPastVotes(address(owner2), tokenId3, 604802), TOKEN_1 * 3 + 997260257999312010);
+        assertEq(
+            escrow.getPastVotes(address(owner2), tokenId3, 604802),
+            TOKEN_1 * 3 + 997260257999312010
+        );
         assertEq(escrow.balanceOfNFT(tokenId3), 997260257999312010);
     }
 
@@ -823,7 +942,16 @@ contract VotingEscrowTest is BaseTest {
         assertLt(lock, block.timestamp); // check expired
 
         vm.expectEmit(true, true, true, true, address(escrow));
-        emit Merge(address(owner), tokenId2, tokenId, TOKEN_1, TOKEN_1, TOKEN_1 * 2, expectedLockTime, 3024001);
+        emit Merge(
+            address(owner),
+            tokenId2,
+            tokenId,
+            TOKEN_1,
+            TOKEN_1,
+            TOKEN_1 * 2,
+            expectedLockTime,
+            3024001
+        );
         vm.expectEmit(false, false, false, true, address(escrow));
         emit MetadataUpdate(tokenId);
         escrow.merge(tokenId2, tokenId);
@@ -832,7 +960,10 @@ contract VotingEscrowTest is BaseTest {
         assertEq(escrow.ownerOf(tokenId), address(owner));
         assertEq(escrow.ownerOf(tokenId2), address(0));
 
-        IVotingEscrow.UserPoint memory pt2 = escrow.userPointHistory(tokenId2, 2);
+        IVotingEscrow.UserPoint memory pt2 = escrow.userPointHistory(
+            tokenId2,
+            2
+        );
         assertEq(uint256(int256(pt2.bias)), 0);
         assertEq(uint256(int256(pt2.slope)), 0);
         assertEq(pt2.ts, 3024001);
@@ -964,7 +1095,9 @@ contract VotingEscrowTest is BaseTest {
         uint256 tokenId2 = escrow.createLock(1e6, MAXTIME);
         // Creates the create overflow amount
         uint256 escrowBalance = BTC.balanceOf(address(escrow));
-        uint256 overflowAmount = uint256(int256(int128(-(int256(escrowBalance)))));
+        uint256 overflowAmount = uint256(
+            int256(int128(-(int256(escrowBalance))))
+        );
         assertGt(overflowAmount, uint256(uint128(type(int128).max)));
 
         vm.expectRevert(SafeCastLibrary.SafeCastOverflow.selector);
@@ -1142,8 +1275,20 @@ contract VotingEscrowTest is BaseTest {
         escrow.createLock(TOKEN_1, MAXTIME);
 
         vm.expectEmit(true, true, true, true, address(escrow));
-        emit Split(1, 2, 3, address(owner), (TOKEN_1 * 3) / 4, TOKEN_1 / 4, 127008000, 907201);
-        (uint256 splitTokenId1, uint256 splitTokenId2) = escrow.split(1, TOKEN_1 / 4);
+        emit Split(
+            1,
+            2,
+            3,
+            address(owner),
+            (TOKEN_1 * 3) / 4,
+            TOKEN_1 / 4,
+            127008000,
+            907201
+        );
+        (uint256 splitTokenId1, uint256 splitTokenId2) = escrow.split(
+            1,
+            TOKEN_1 / 4
+        );
         assertEq(escrow.ownerOf(splitTokenId1), address(owner));
         assertEq(escrow.ownerOf(splitTokenId2), address(owner));
         assertEq(escrow.ownerOf(1), address(0));
@@ -1159,8 +1304,20 @@ contract VotingEscrowTest is BaseTest {
 
         vm.prank(address(owner2));
         vm.expectEmit(true, true, true, true, address(escrow));
-        emit Split(1, 2, 3, address(owner2), (TOKEN_1 * 3) / 4, TOKEN_1 / 4, 127008000, 907201);
-        (uint256 splitTokenId1, uint256 splitTokenId2) = escrow.split(1, TOKEN_1 / 4);
+        emit Split(
+            1,
+            2,
+            3,
+            address(owner2),
+            (TOKEN_1 * 3) / 4,
+            TOKEN_1 / 4,
+            127008000,
+            907201
+        );
+        (uint256 splitTokenId1, uint256 splitTokenId2) = escrow.split(
+            1,
+            TOKEN_1 / 4
+        );
         assertEq(escrow.ownerOf(splitTokenId1), address(owner));
         assertEq(escrow.ownerOf(splitTokenId2), address(owner));
         assertEq(escrow.ownerOf(1), address(0));
@@ -1184,7 +1341,10 @@ contract VotingEscrowTest is BaseTest {
         assertEq(locked.isPermanent, false);
 
         assertEq(escrow.userPointEpoch(1), 2);
-        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(1, 2);
+        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(
+            1,
+            2
+        );
         assertEq(convert(userPoint.bias), 0);
         assertEq(convert(userPoint.slope), 0);
         assertEq(userPoint.ts, 907202);
@@ -1257,7 +1417,10 @@ contract VotingEscrowTest is BaseTest {
         assertEq(locked.isPermanent, false);
 
         assertEq(escrow.userPointEpoch(1), 2);
-        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(1, 2);
+        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(
+            1,
+            2
+        );
         assertEq(convert(userPoint.bias), 0);
         assertEq(convert(userPoint.slope), 0);
         assertEq(userPoint.ts, 907202);
@@ -1355,19 +1518,35 @@ contract VotingEscrowTest is BaseTest {
         uint256 btcSupply = escrow.supply();
 
         vm.expectEmit(true, true, true, true, address(escrow));
-        emit Split(1, 4, 5, address(owner), (TOKEN_1 * 3) / 4, TOKEN_1 / 4, 127008000, 907201);
-        (uint256 splitTokenId1, uint256 splitTokenId2) = escrow.split(1, TOKEN_1 / 4);
+        emit Split(
+            1,
+            4,
+            5,
+            address(owner),
+            (TOKEN_1 * 3) / 4,
+            TOKEN_1 / 4,
+            127008000,
+            907201
+        );
+        (uint256 splitTokenId1, uint256 splitTokenId2) = escrow.split(
+            1,
+            TOKEN_1 / 4
+        );
         assertEq(splitTokenId1, 4);
         assertEq(splitTokenId2, 5);
         assertEq(escrow.supply(), btcSupply);
 
         // check new veNFTs have correct amount and locktime
-        IVotingEscrow.LockedBalance memory lockedOld = escrow.locked(splitTokenId1);
+        IVotingEscrow.LockedBalance memory lockedOld = escrow.locked(
+            splitTokenId1
+        );
         assertEq(uint256(uint128(lockedOld.amount)), (TOKEN_1 * 3) / 4);
         assertEq(lockedOld.end, expectedLockTime);
         assertEq(escrow.ownerOf(splitTokenId1), address(owner));
 
-        IVotingEscrow.LockedBalance memory lockedNew = escrow.locked(splitTokenId2);
+        IVotingEscrow.LockedBalance memory lockedNew = escrow.locked(
+            splitTokenId2
+        );
         assertEq(uint256(uint128(lockedNew.amount)), TOKEN_1 / 4);
         assertEq(lockedNew.end, expectedLockTime);
         assertEq(escrow.ownerOf(splitTokenId2), address(owner));
@@ -1381,7 +1560,10 @@ contract VotingEscrowTest is BaseTest {
         assertEq(locked.amount, 0);
         assertEq(locked.end, 0);
         uint256 lastEpochStored = escrow.userPointEpoch(1);
-        IVotingEscrow.UserPoint memory point = escrow.userPointHistory(1, lastEpochStored);
+        IVotingEscrow.UserPoint memory point = escrow.userPointHistory(
+            1,
+            lastEpochStored
+        );
         assertEq(point.bias, 0);
         assertEq(point.slope, 0);
         assertEq(point.ts, 907201);
@@ -1390,9 +1572,15 @@ contract VotingEscrowTest is BaseTest {
 
         // compare point history of first split veNFT and 2
         lastEpochStored = escrow.userPointEpoch(splitTokenId1);
-        IVotingEscrow.UserPoint memory origPoint = escrow.userPointHistory(splitTokenId1, lastEpochStored);
+        IVotingEscrow.UserPoint memory origPoint = escrow.userPointHistory(
+            splitTokenId1,
+            lastEpochStored
+        );
         lastEpochStored = escrow.userPointEpoch(2);
-        IVotingEscrow.UserPoint memory cmpPoint = escrow.userPointHistory(2, lastEpochStored);
+        IVotingEscrow.UserPoint memory cmpPoint = escrow.userPointHistory(
+            2,
+            lastEpochStored
+        );
         assertEq(origPoint.bias, cmpPoint.bias);
         assertEq(origPoint.slope, cmpPoint.slope);
         assertEq(origPoint.ts, cmpPoint.ts);
@@ -1400,7 +1588,10 @@ contract VotingEscrowTest is BaseTest {
 
         // compare point history of second split veNFT and 3
         lastEpochStored = escrow.userPointEpoch(splitTokenId2);
-        IVotingEscrow.UserPoint memory splitPoint = escrow.userPointHistory(splitTokenId2, lastEpochStored);
+        IVotingEscrow.UserPoint memory splitPoint = escrow.userPointHistory(
+            splitTokenId2,
+            lastEpochStored
+        );
         lastEpochStored = escrow.userPointEpoch(3);
         cmpPoint = escrow.userPointHistory(3, lastEpochStored);
         assertEq(splitPoint.bias, cmpPoint.bias);
@@ -1424,19 +1615,35 @@ contract VotingEscrowTest is BaseTest {
         uint256 btcSupply = escrow.supply();
 
         vm.expectEmit(true, true, true, true, address(escrow));
-        emit Split(1, 4, 5, address(owner), (TOKEN_1 * 3) / 4, TOKEN_1 / 4, 127008000, 907201);
-        (uint256 splitTokenId1, uint256 splitTokenId2) = escrow.split(1, TOKEN_1 / 4);
+        emit Split(
+            1,
+            4,
+            5,
+            address(owner),
+            (TOKEN_1 * 3) / 4,
+            TOKEN_1 / 4,
+            127008000,
+            907201
+        );
+        (uint256 splitTokenId1, uint256 splitTokenId2) = escrow.split(
+            1,
+            TOKEN_1 / 4
+        );
         assertEq(splitTokenId1, 4);
         assertEq(splitTokenId2, 5);
         assertEq(escrow.supply(), btcSupply);
 
         // check new veNFTs have correct amount and locktime
-        IVotingEscrow.LockedBalance memory lockedOld = escrow.locked(splitTokenId1);
+        IVotingEscrow.LockedBalance memory lockedOld = escrow.locked(
+            splitTokenId1
+        );
         assertEq(uint256(uint128(lockedOld.amount)), (TOKEN_1 * 3) / 4);
         assertEq(lockedOld.end, expectedLockTime);
         assertEq(escrow.ownerOf(splitTokenId1), address(owner));
 
-        IVotingEscrow.LockedBalance memory lockedNew = escrow.locked(splitTokenId2);
+        IVotingEscrow.LockedBalance memory lockedNew = escrow.locked(
+            splitTokenId2
+        );
         assertEq(uint256(uint128(lockedNew.amount)), TOKEN_1 / 4);
         assertEq(lockedNew.end, expectedLockTime);
         assertEq(escrow.ownerOf(splitTokenId2), address(owner));
@@ -1450,7 +1657,10 @@ contract VotingEscrowTest is BaseTest {
         assertEq(locked.amount, 0);
         assertEq(locked.end, 0);
         uint256 lastEpochStored = escrow.userPointEpoch(1);
-        IVotingEscrow.UserPoint memory point = escrow.userPointHistory(1, lastEpochStored);
+        IVotingEscrow.UserPoint memory point = escrow.userPointHistory(
+            1,
+            lastEpochStored
+        );
         assertEq(point.bias, 0);
         assertEq(point.slope, 0);
         assertEq(point.ts, 907201);
@@ -1459,9 +1669,15 @@ contract VotingEscrowTest is BaseTest {
 
         // compare point history of first split veNFT and 2
         lastEpochStored = escrow.userPointEpoch(splitTokenId1);
-        IVotingEscrow.UserPoint memory origPoint = escrow.userPointHistory(splitTokenId1, lastEpochStored);
+        IVotingEscrow.UserPoint memory origPoint = escrow.userPointHistory(
+            splitTokenId1,
+            lastEpochStored
+        );
         lastEpochStored = escrow.userPointEpoch(2);
-        IVotingEscrow.UserPoint memory cmpPoint = escrow.userPointHistory(2, lastEpochStored);
+        IVotingEscrow.UserPoint memory cmpPoint = escrow.userPointHistory(
+            2,
+            lastEpochStored
+        );
         assertEq(origPoint.bias, cmpPoint.bias);
         assertEq(origPoint.slope, cmpPoint.slope);
         assertEq(origPoint.ts, cmpPoint.ts);
@@ -1469,7 +1685,10 @@ contract VotingEscrowTest is BaseTest {
 
         // compare point history of second split veNFT and 3
         lastEpochStored = escrow.userPointEpoch(splitTokenId2);
-        IVotingEscrow.UserPoint memory splitPoint = escrow.userPointHistory(splitTokenId2, lastEpochStored);
+        IVotingEscrow.UserPoint memory splitPoint = escrow.userPointHistory(
+            splitTokenId2,
+            lastEpochStored
+        );
         lastEpochStored = escrow.userPointEpoch(3);
         cmpPoint = escrow.userPointHistory(3, lastEpochStored);
         assertEq(splitPoint.bias, cmpPoint.bias);
@@ -1554,7 +1773,10 @@ contract VotingEscrowTest is BaseTest {
 
         // check user point updates correctly
         assertEq(escrow.userPointEpoch(tokenId), 2);
-        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(tokenId, 2);
+        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(
+            tokenId,
+            2
+        );
         assertEq(convert(userPoint.bias), 0);
         assertEq(convert(userPoint.slope), 0);
         assertEq(userPoint.ts, 604802);
@@ -1658,7 +1880,10 @@ contract VotingEscrowTest is BaseTest {
 
         // check user point updates correctly
         assertEq(escrow.userPointEpoch(tokenId), 3);
-        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(tokenId, 3);
+        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(
+            tokenId,
+            3
+        );
         assertEq(convert(userPoint.bias), 997260250071864015); // (TOKEN_1 / MAXTIME) * (126403200 - 604803)
         assertEq(convert(userPoint.slope), 7927447995); // TOKEN_1 / MAXTIME
         assertEq(userPoint.ts, 604803);
@@ -1707,7 +1932,10 @@ contract VotingEscrowTest is BaseTest {
 
         // check user point updates correctly
         assertEq(escrow.userPointEpoch(tokenId), 3);
-        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(tokenId, 3);
+        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(
+            tokenId,
+            3
+        );
         assertEq(convert(userPoint.bias), 997260250071864015); // (TOKEN_1 / MAXTIME) * (126403200 - 604803)
         assertEq(convert(userPoint.slope), 7927447995); // TOKEN_1 / MAXTIME
         assertEq(userPoint.ts, 604803);
@@ -1729,7 +1957,10 @@ contract VotingEscrowTest is BaseTest {
         // check tokenId dedelegates from tokenId2
         assertEq(escrow.delegates(tokenId), 0);
         assertEq(escrow.numCheckpoints(tokenId), 3);
-        IVotingEscrow.Checkpoint memory checkpoint = escrow.checkpoints(tokenId, 2);
+        IVotingEscrow.Checkpoint memory checkpoint = escrow.checkpoints(
+            tokenId,
+            2
+        );
         assertEq(checkpoint.fromTimestamp, 604803);
         assertEq(checkpoint.owner, address(owner));
         assertEq(checkpoint.delegatedBalance, 0);
@@ -1869,7 +2100,10 @@ contract VotingEscrowTest is BaseTest {
         assertEq(checkpoint.owner, address(owner2));
         assertEq(checkpoint.delegatedBalance, TOKEN_1);
         assertEq(checkpoint.delegatee, 0);
-        assertEq(escrow.getPastVotes(address(owner2), 2, 604802), TOKEN_1 + 997260257999312010);
+        assertEq(
+            escrow.getPastVotes(address(owner2), 2, 604802),
+            TOKEN_1 + 997260257999312010
+        );
         assertEq(escrow.balanceOfNFT(2), 997260257999312010);
         skipAndRoll(1);
 
@@ -1909,7 +2143,10 @@ contract VotingEscrowTest is BaseTest {
         assertEq(checkpoint.owner, address(owner2));
         assertEq(checkpoint.delegatedBalance, 0);
         assertEq(checkpoint.delegatee, 0);
-        assertEq(escrow.getPastVotes(address(owner2), 2, 604803), 997260250071864015);
+        assertEq(
+            escrow.getPastVotes(address(owner2), 2, 604803),
+            997260250071864015
+        );
         assertEq(escrow.balanceOfNFT(2), 997260250071864015);
 
         // check prior and new checkpoint for tokenId 3
@@ -1926,7 +2163,10 @@ contract VotingEscrowTest is BaseTest {
         assertEq(checkpoint.owner, address(owner3));
         assertEq(checkpoint.delegatedBalance, TOKEN_1);
         assertEq(checkpoint.delegatee, 0);
-        assertEq(escrow.getPastVotes(address(owner3), 3, 604803), TOKEN_1 + 997260250071864015);
+        assertEq(
+            escrow.getPastVotes(address(owner3), 3, 604803),
+            TOKEN_1 + 997260250071864015
+        );
         assertEq(escrow.balanceOfNFT(3), 997260250071864015);
         skipAndRoll(1);
 
@@ -1960,7 +2200,10 @@ contract VotingEscrowTest is BaseTest {
         assertEq(checkpoint.owner, address(owner2));
         assertEq(checkpoint.delegatedBalance, 0);
         assertEq(checkpoint.delegatee, 0);
-        assertEq(escrow.getPastVotes(address(owner2), 2, 604804), 997260242144416020);
+        assertEq(
+            escrow.getPastVotes(address(owner2), 2, 604804),
+            997260242144416020
+        );
         assertEq(escrow.balanceOfNFT(2), 997260242144416020);
 
         // check prior and new checkpoint for tokenId 3
@@ -1977,7 +2220,10 @@ contract VotingEscrowTest is BaseTest {
         assertEq(checkpoint.owner, address(owner3));
         assertEq(checkpoint.delegatedBalance, 0);
         assertEq(checkpoint.delegatee, 0);
-        assertEq(escrow.getPastVotes(address(owner3), 3, 604804), 997260242144416020);
+        assertEq(
+            escrow.getPastVotes(address(owner3), 3, 604804),
+            997260242144416020
+        );
         assertEq(escrow.balanceOfNFT(3), 997260242144416020);
 
         skipAndRoll(1);
@@ -1990,20 +2236,44 @@ contract VotingEscrowTest is BaseTest {
 
         // yet to delegate
         assertEq(escrow.getPastVotes(address(owner), 1, 604801), TOKEN_1);
-        assertEq(escrow.getPastVotes(address(owner2), 2, 604801), 997260265926760005);
-        assertEq(escrow.getPastVotes(address(owner3), 3, 604801), 997260265926760005);
+        assertEq(
+            escrow.getPastVotes(address(owner2), 2, 604801),
+            997260265926760005
+        );
+        assertEq(
+            escrow.getPastVotes(address(owner3), 3, 604801),
+            997260265926760005
+        );
         // 1 => 2
         assertEq(escrow.getPastVotes(address(owner), 1, 604802), 0);
-        assertEq(escrow.getPastVotes(address(owner2), 2, 604802), 997260257999312010 + TOKEN_1);
-        assertEq(escrow.getPastVotes(address(owner3), 3, 604802), 997260257999312010);
+        assertEq(
+            escrow.getPastVotes(address(owner2), 2, 604802),
+            997260257999312010 + TOKEN_1
+        );
+        assertEq(
+            escrow.getPastVotes(address(owner3), 3, 604802),
+            997260257999312010
+        );
         // 1 => 3
         assertEq(escrow.getPastVotes(address(owner), 1, 604803), 0);
-        assertEq(escrow.getPastVotes(address(owner2), 2, 604803), 997260250071864015);
-        assertEq(escrow.getPastVotes(address(owner3), 3, 604803), 997260250071864015 + TOKEN_1);
+        assertEq(
+            escrow.getPastVotes(address(owner2), 2, 604803),
+            997260250071864015
+        );
+        assertEq(
+            escrow.getPastVotes(address(owner3), 3, 604803),
+            997260250071864015 + TOKEN_1
+        );
         // 1 => 1 / 0
         assertEq(escrow.getPastVotes(address(owner), 1, 604804), TOKEN_1);
-        assertEq(escrow.getPastVotes(address(owner2), 2, 604804), 997260242144416020);
-        assertEq(escrow.getPastVotes(address(owner3), 3, 604804), 997260242144416020);
+        assertEq(
+            escrow.getPastVotes(address(owner2), 2, 604804),
+            997260242144416020
+        );
+        assertEq(
+            escrow.getPastVotes(address(owner3), 3, 604804),
+            997260242144416020
+        );
     }
 
     function testCannotDelegateBySigWithInvalidNonce() public {
@@ -2184,7 +2454,9 @@ contract VotingEscrowTest is BaseTest {
         assertEq(escrow.getPastTotalSupply(1600000000), TOKEN_1);
     }
 
-    function testBalanceAndSupplyInvariantsWithPermanentLocks(uint256 timestamp) public {
+    function testBalanceAndSupplyInvariantsWithPermanentLocks(
+        uint256 timestamp
+    ) public {
         vm.warp(1600000000);
         timestamp = bound(timestamp, 1600000000, 1600000000 + (52 weeks) * 100);
 
@@ -2195,9 +2467,13 @@ contract VotingEscrowTest is BaseTest {
         escrow.lockPermanent(tokenId);
         vm.warp(timestamp);
 
-        assertEq(escrow.balanceOfNFT(tokenId) + escrow.balanceOfNFT(tokenId2), escrow.totalSupply());
         assertEq(
-            escrow.balanceOfNFTAt(tokenId, timestamp) + escrow.balanceOfNFTAt(tokenId2, timestamp),
+            escrow.balanceOfNFT(tokenId) + escrow.balanceOfNFT(tokenId2),
+            escrow.totalSupply()
+        );
+        assertEq(
+            escrow.balanceOfNFTAt(tokenId, timestamp) +
+                escrow.balanceOfNFTAt(tokenId2, timestamp),
             escrow.getPastTotalSupply(timestamp)
         );
     }

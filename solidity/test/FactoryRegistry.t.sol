@@ -38,14 +38,17 @@ contract FactoryRegistryTest is BaseTest {
 
         // create a new pool with new factory to test gauge creation against
         factory2.createPool(address(wtBTC), address(LIMPETH), true);
-        newPool2 = Pool(factory2.getPool(address(wtBTC), address(LIMPETH), true));
-
+        newPool2 = Pool(
+            factory2.getPool(address(wtBTC), address(LIMPETH), true)
+        );
     }
 
     function testCannotSetManagedRewardsFactoryIfNotOwner() public {
         vm.expectRevert("Ownable: caller is not the owner");
         vm.prank(address(owner2));
-        factoryRegistry.setManagedRewardsFactory(address(managedRewardsFactory2));
+        factoryRegistry.setManagedRewardsFactory(
+            address(managedRewardsFactory2)
+        );
     }
 
     function testCannotSetManagedRewardsFactoryToZeroAddress() public {
@@ -55,28 +58,48 @@ contract FactoryRegistryTest is BaseTest {
 
     function testCannotSetManagedRewardsFactoryToSameAddress() public {
         vm.expectRevert(IFactoryRegistry.SameAddress.selector);
-        factoryRegistry.setManagedRewardsFactory(address(managedRewardsFactory));
+        factoryRegistry.setManagedRewardsFactory(
+            address(managedRewardsFactory)
+        );
     }
 
     function testInitialState() public {
         assertTrue(factoryRegistry.isPoolFactoryApproved(address(factory)));
-        (address vrf, address gf) = factoryRegistry.factoriesToPoolFactory(address(factory));
+        (address vrf, address gf) = factoryRegistry.factoriesToPoolFactory(
+            address(factory)
+        );
         assertEq(vrf, address(votingRewardsFactory));
         assertEq(gf, address(gaugeFactory));
     }
 
     function testSetManagedRewardsFactory() public {
-        assertEq(factoryRegistry.managedRewardsFactory(), address(managedRewardsFactory));
-        factoryRegistry.setManagedRewardsFactory(address(managedRewardsFactory2));
-        assertEq(factoryRegistry.managedRewardsFactory(), address(managedRewardsFactory2));
+        assertEq(
+            factoryRegistry.managedRewardsFactory(),
+            address(managedRewardsFactory)
+        );
+        factoryRegistry.setManagedRewardsFactory(
+            address(managedRewardsFactory2)
+        );
+        assertEq(
+            factoryRegistry.managedRewardsFactory(),
+            address(managedRewardsFactory2)
+        );
     }
 
     function testCannotApproveAlreadyApprovedPath() external {
-        factoryRegistry.approve(address(factory2), address(votingRewardsFactory), address(gaugeFactory));
+        factoryRegistry.approve(
+            address(factory2),
+            address(votingRewardsFactory),
+            address(gaugeFactory)
+        );
         assertTrue(factoryRegistry.isPoolFactoryApproved(address(factory2)));
 
         vm.expectRevert(IFactoryRegistry.PathAlreadyApproved.selector);
-        factoryRegistry.approve(address(factory2), address(votingRewardsFactory), address(gaugeFactory));
+        factoryRegistry.approve(
+            address(factory2),
+            address(votingRewardsFactory),
+            address(gaugeFactory)
+        );
     }
 
     function testCannotUnapproveNonExistentPath() external {
@@ -91,16 +114,30 @@ contract FactoryRegistryTest is BaseTest {
 
     function testCannotApproveZeroAddressFactory() public {
         vm.expectRevert(IFactoryRegistry.ZeroAddress.selector);
-        factoryRegistry.approve(address(factory2), address(votingRewardsFactory), address(0));
+        factoryRegistry.approve(
+            address(factory2),
+            address(votingRewardsFactory),
+            address(0)
+        );
 
         vm.expectRevert(IFactoryRegistry.ZeroAddress.selector);
-        factoryRegistry.approve(address(factory2), address(0), address(gaugeFactory));
+        factoryRegistry.approve(
+            address(factory2),
+            address(0),
+            address(gaugeFactory)
+        );
 
         vm.expectRevert(IFactoryRegistry.ZeroAddress.selector);
-        factoryRegistry.approve(address(0), address(votingRewardsFactory), address(gaugeFactory));
+        factoryRegistry.approve(
+            address(0),
+            address(votingRewardsFactory),
+            address(gaugeFactory)
+        );
     }
 
-    function testCannotApproveSamePoolFactoryWithNewPathAfterUnapproval() public {
+    function testCannotApproveSamePoolFactoryWithNewPathAfterUnapproval()
+        public
+    {
         factoryRegistry.approve(
             address(factory2), // new factory
             address(votingRewardsFactory),
@@ -108,21 +145,27 @@ contract FactoryRegistryTest is BaseTest {
         );
         factoryRegistry.unapprove(address(factory2));
 
-        vm.expectRevert(IFactoryRegistry.InvalidFactoriesToPoolFactory.selector);
+        vm.expectRevert(
+            IFactoryRegistry.InvalidFactoriesToPoolFactory.selector
+        );
         factoryRegistry.approve(
             address(factory2),
             address(votingRewardsFactory2), // new factory
             address(gaugeFactory)
         );
 
-        vm.expectRevert(IFactoryRegistry.InvalidFactoriesToPoolFactory.selector);
+        vm.expectRevert(
+            IFactoryRegistry.InvalidFactoriesToPoolFactory.selector
+        );
         factoryRegistry.approve(
             address(factory2),
             address(votingRewardsFactory),
             address(gaugeFactory2) // new factory
         );
 
-        vm.expectRevert(IFactoryRegistry.InvalidFactoriesToPoolFactory.selector);
+        vm.expectRevert(
+            IFactoryRegistry.InvalidFactoriesToPoolFactory.selector
+        );
         factoryRegistry.approve(
             address(factory2),
             address(votingRewardsFactory2), // new factory
@@ -139,9 +182,15 @@ contract FactoryRegistryTest is BaseTest {
 
         factoryRegistry.unapprove(address(factory2));
 
-        factoryRegistry.approve(address(factory2), address(votingRewardsFactory), address(gaugeFactory));
+        factoryRegistry.approve(
+            address(factory2),
+            address(votingRewardsFactory),
+            address(gaugeFactory)
+        );
 
-        (address vrf, address gf) = factoryRegistry.factoriesToPoolFactory(address(factory2));
+        (address vrf, address gf) = factoryRegistry.factoriesToPoolFactory(
+            address(factory2)
+        );
         assertEq(vrf, address(votingRewardsFactory));
         assertEq(gf, address(gaugeFactory));
     }
@@ -164,7 +213,11 @@ contract FactoryRegistryTest is BaseTest {
         assertEq(poolFactories[0], address(factory));
 
         // approving a poolFactory
-        factoryRegistry.approve(address(factory2), address(votingRewardsFactory), address(gaugeFactory));
+        factoryRegistry.approve(
+            address(factory2),
+            address(votingRewardsFactory),
+            address(gaugeFactory)
+        );
         assertEq(factoryRegistry.poolFactoriesLength(), 2);
         poolFactories = factoryRegistry.poolFactories();
         assertEq(poolFactories[0], address(factory));
@@ -179,7 +232,9 @@ contract FactoryRegistryTest is BaseTest {
 
     function testApprove() external {
         assertFalse(factoryRegistry.isPoolFactoryApproved(address(factory2)));
-        (address vrf, address gf) = factoryRegistry.factoriesToPoolFactory(address(factory2));
+        (address vrf, address gf) = factoryRegistry.factoriesToPoolFactory(
+            address(factory2)
+        );
         assertEq(vrf, address(0));
         assertEq(gf, address(0));
 
@@ -209,7 +264,9 @@ contract FactoryRegistryTest is BaseTest {
         assertFalse(factoryRegistry.isPoolFactoryApproved(address(factory2)));
 
         // poolFactory paths remain
-        (address vrf, address gf) = factoryRegistry.factoriesToPoolFactory(address(factory2));
+        (address vrf, address gf) = factoryRegistry.factoriesToPoolFactory(
+            address(factory2)
+        );
         assertEq(vrf, address(votingRewardsFactory));
         assertEq(gf, address(gaugeFactory));
     }
@@ -265,7 +322,10 @@ contract FactoryRegistryTest is BaseTest {
             address(gaugeFactory)
         );
 
-        address newGauge = voter.createGauge(address(factory2), address(newPool2));
+        address newGauge = voter.createGauge(
+            address(factory2),
+            address(newPool2)
+        );
         address newFeesVotingReward = voter.gaugeToFees(newGauge);
         address newBribeVotingReward = voter.gaugeToBribe(newGauge);
 
@@ -304,7 +364,10 @@ contract FactoryRegistryTest is BaseTest {
             address(gaugeFactory2) // new factory
         );
 
-        address newGauge = voter.createGauge(address(factory2), address(newPool2));
+        address newGauge = voter.createGauge(
+            address(factory2),
+            address(newPool2)
+        );
         address newFeesVotingReward = voter.gaugeToFees(newGauge);
         address newBribeVotingReward = voter.gaugeToBribe(newGauge);
 

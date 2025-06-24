@@ -3,7 +3,12 @@ pragma solidity 0.8.24;
 import "./BaseTest.sol";
 
 contract BribeVotingRewardTest is BaseTest {
-    event NotifyReward(address indexed from, address indexed reward, uint256 indexed epoch, uint256 amount);
+    event NotifyReward(
+        address indexed from,
+        address indexed reward,
+        uint256 indexed epoch,
+        uint256 amount
+    );
 
     function _setUp() public override {
         // ve
@@ -148,7 +153,9 @@ contract BribeVotingRewardTest is BaseTest {
         assertEq(post_post - pre, TOKEN_1 / 2);
     }
 
-    function testCannotGetRewardMoreThanOncePerEpochWithMultipleRewards() public {
+    function testCannotGetRewardMoreThanOncePerEpochWithMultipleRewards()
+        public
+    {
         skip(1 weeks / 2);
 
         // create a bribe
@@ -738,7 +745,10 @@ contract BribeVotingRewardTest is BaseTest {
         // create bribe with amount reward3 in epoch 2
         LR.approve(address(bribeVotingReward), reward3);
         bribeVotingReward.notifyRewardAmount(address(LR), reward3);
-        assertEq(LR.balanceOf(address(bribeVotingReward)), reward + reward2 + reward3);
+        assertEq(
+            LR.balanceOf(address(bribeVotingReward)),
+            reward + reward2 + reward3
+        );
         skip(1 hours);
 
         // poked into voting for same pool
@@ -1385,7 +1395,9 @@ contract BribeVotingRewardTest is BaseTest {
         // check single user and supply checkpoint created
         numSupply = bribeVotingReward.supplyNumCheckpoints();
         assertEq(numSupply, 1);
-        (uint256 sTs, uint256 sBalance) = bribeVotingReward.supplyCheckpoints(0);
+        (uint256 sTs, uint256 sBalance) = bribeVotingReward.supplyCheckpoints(
+            0
+        );
         assertEq(sTs, expectedTs);
         assertEq(sBalance, expectedBal);
 
@@ -1413,7 +1425,9 @@ contract BribeVotingRewardTest is BaseTest {
         assertEq(sBalance, 0);
     }
 
-    function testDepositAndWithdrawWithinSameEpochOverwritesCheckpoints() public {
+    function testDepositAndWithdrawWithinSameEpochOverwritesCheckpoints()
+        public
+    {
         skip(1 weeks / 2);
 
         // test vote and poke overwrites checkpoints
@@ -1432,7 +1446,9 @@ contract BribeVotingRewardTest is BaseTest {
         uint256 numSupply = bribeVotingReward.supplyNumCheckpoints();
         assertEq(numSupply, 1);
 
-        (uint256 sTs, uint256 sBalance) = bribeVotingReward.supplyCheckpoints(0);
+        (uint256 sTs, uint256 sBalance) = bribeVotingReward.supplyCheckpoints(
+            0
+        );
         assertEq(sTs, expectedTs);
         assertEq(sBalance, expectedBal);
 
@@ -1504,7 +1520,9 @@ contract BribeVotingRewardTest is BaseTest {
         assertEq(sBalance, 0);
     }
 
-    function testDepositFromManyUsersInSameTimestampOverwritesSupplyCheckpoint() public {
+    function testDepositFromManyUsersInSameTimestampOverwritesSupplyCheckpoint()
+        public
+    {
         skip(1 weeks / 2);
 
         // deposit by voting
@@ -1523,7 +1541,9 @@ contract BribeVotingRewardTest is BaseTest {
         // check single user and supply checkpoint created
         uint256 numSupply = bribeVotingReward.supplyNumCheckpoints();
         assertEq(numSupply, 1);
-        (uint256 sTs, uint256 sBalance) = bribeVotingReward.supplyCheckpoints(0);
+        (uint256 sTs, uint256 sBalance) = bribeVotingReward.supplyCheckpoints(
+            0
+        );
         assertEq(sTs, block.timestamp);
         assertEq(sBalance, ownerBal);
 
@@ -1621,7 +1641,10 @@ contract BribeVotingRewardTest is BaseTest {
         uint256 post = LR.balanceOf(address(owner));
 
         assertEq(bribeVotingReward.isReward(address(LR)), true);
-        assertEq(bribeVotingReward.tokenRewardsPerEpoch(address(LR), 604800), TOKEN_1);
+        assertEq(
+            bribeVotingReward.tokenRewardsPerEpoch(address(LR), 604800),
+            TOKEN_1
+        );
         assertEq(pre - post, TOKEN_1);
         assertEq(LR.balanceOf(address(bribeVotingReward)), TOKEN_1);
 
@@ -1634,7 +1657,10 @@ contract BribeVotingRewardTest is BaseTest {
         bribeVotingReward.notifyRewardAmount(address(LR), TOKEN_1 * 2);
         post = LR.balanceOf(address(owner));
 
-        assertEq(bribeVotingReward.tokenRewardsPerEpoch(address(LR), 604800), TOKEN_1 * 3);
+        assertEq(
+            bribeVotingReward.tokenRewardsPerEpoch(address(LR), 604800),
+            TOKEN_1 * 3
+        );
         assertEq(pre - post, TOKEN_1 * 2);
         assertEq(LR.balanceOf(address(bribeVotingReward)), TOKEN_1 * 3);
     }

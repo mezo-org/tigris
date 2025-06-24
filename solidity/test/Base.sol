@@ -67,7 +67,8 @@ abstract contract Base is Script, Test {
     address public allowedManager;
 
     /// @dev Dummy address of the proxy admin
-    address public constant proxyAdmin = 0x1234567890123456789012345678901234567890;
+    address public constant proxyAdmin =
+        0x1234567890123456789012345678901234567890;
 
     /// @dev Dummy address of the router deployer
     address public routerDeployer = 0x21ebdAC67b1F9e9e9f2739bE30C407dc97C71D2C;
@@ -93,7 +94,11 @@ abstract contract Base is Script, Test {
 
         // Setup voter and distributor
         distributor = new RewardsDistributor(address(escrow));
-        voter = new Voter(address(forwarder), address(escrow), address(factoryRegistry));
+        voter = new Voter(
+            address(forwarder),
+            address(escrow),
+            address(factoryRegistry)
+        );
 
         escrow.setVoterAndDistributor(address(voter), address(distributor));
         escrow.setAllowedManager(allowedManager);
@@ -106,7 +111,11 @@ abstract contract Base is Script, Test {
         );
 
         // Setup fee splitter
-        chainFeeSplitter = new ChainFeeSplitter(address(voter), address(escrow), address(distributor));
+        chainFeeSplitter = new ChainFeeSplitter(
+            address(voter),
+            address(escrow),
+            address(distributor)
+        );
         distributor.setDepositor(address(chainFeeSplitter));
 
         /// @dev tokens are already set in the respective setupBefore()

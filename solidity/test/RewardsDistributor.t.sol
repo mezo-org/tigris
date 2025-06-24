@@ -3,7 +3,12 @@ pragma solidity 0.8.24;
 import "./BaseTest.sol";
 
 contract RewardsDistributorTest is BaseTest {
-    event Claimed(uint256 indexed tokenId, uint256 indexed epochStart, uint256 indexed epochEnd, uint256 amount);
+    event Claimed(
+        uint256 indexed tokenId,
+        uint256 indexed epochStart,
+        uint256 indexed epochEnd,
+        uint256 amount
+    );
 
     function _setUp() public override {
         // timestamp: 604801
@@ -41,7 +46,10 @@ contract RewardsDistributorTest is BaseTest {
         assertEq(locked.isPermanent, false);
 
         assertEq(escrow.userPointEpoch(tokenId), 1);
-        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(tokenId, 1);
+        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(
+            tokenId,
+            1
+        );
         assertEq(convert(userPoint.slope), TOKEN_1M / MAXTIME); // TOKEN_1M / MAXTIME
         assertEq(convert(userPoint.bias), 996575342465753345952000); // (TOKEN_1M / MAXTIME) * (127008000 - 1296000)
         assertEq(userPoint.ts, 1296000);
@@ -115,7 +123,10 @@ contract RewardsDistributorTest is BaseTest {
         assertEq(locked.isPermanent, true);
 
         assertEq(escrow.userPointEpoch(tokenId), 1);
-        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(tokenId, 1);
+        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(
+            tokenId,
+            1
+        );
         assertEq(convert(userPoint.slope), 0);
         assertEq(convert(userPoint.bias), 0);
         assertEq(userPoint.ts, 1296000);
@@ -362,11 +373,17 @@ contract RewardsDistributorTest is BaseTest {
         uint256 post = BTC.balanceOf(address(owner));
 
         locked = escrow.locked(tokenId); // update locked value post claim
-        IVotingEscrow.LockedBalance memory postLocked2 = escrow.locked(tokenId2);
+        IVotingEscrow.LockedBalance memory postLocked2 = escrow.locked(
+            tokenId2
+        );
 
         assertEq(post - pre, rebase); // expired rebase distributed as unlocked BTC
         assertEq(uint256(uint128(locked.amount)), TOKEN_1M); // expired nft locked balance unchanged
-        assertEq(uint256(uint128(postLocked2.amount)) - uint256(uint128(locked.amount)), rebase2); // rebase accrued to normal nft
+        assertEq(
+            uint256(uint128(postLocked2.amount)) -
+                uint256(uint128(locked.amount)),
+            rebase2
+        ); // rebase accrued to normal nft
     }
 
     function testClaimRebaseWithManagedLocks() public {

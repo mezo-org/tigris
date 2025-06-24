@@ -110,7 +110,11 @@ abstract contract BaseTest is Base, TestOwner {
     function _testSetupAfter() public {
         // Setup governors
         governor = new MezoGovernor(escrow);
-        epochGovernor = new EpochGovernor(address(forwarder), escrow, address(chainFeeSplitter));
+        epochGovernor = new EpochGovernor(
+            address(forwarder),
+            escrow,
+            address(chainFeeSplitter)
+        );
         voter.setEpochGovernor(address(epochGovernor));
         voter.setGovernor(address(governor));
 
@@ -124,22 +128,36 @@ abstract contract BaseTest is Base, TestOwner {
         // BTC - mUSD unstable
         gauge = Gauge(voter.createGauge(address(factory), address(pool)));
         feesVotingReward = FeesVotingReward(voter.gaugeToFees(address(gauge)));
-        bribeVotingReward = BribeVotingReward(voter.gaugeToBribe(address(gauge)));
+        bribeVotingReward = BribeVotingReward(
+            voter.gaugeToBribe(address(gauge))
+        );
 
         // mUSD - LIMPETH unstable
         gauge2 = Gauge(voter.createGauge(address(factory), address(pool2)));
-        feesVotingReward2 = FeesVotingReward(voter.gaugeToFees(address(gauge2)));
-        bribeVotingReward2 = BribeVotingReward(voter.gaugeToBribe(address(gauge2)));
+        feesVotingReward2 = FeesVotingReward(
+            voter.gaugeToFees(address(gauge2))
+        );
+        bribeVotingReward2 = BribeVotingReward(
+            voter.gaugeToBribe(address(gauge2))
+        );
 
         // mUSD - wtBTC unstable
         gauge3 = Gauge(voter.createGauge(address(factory), address(pool3)));
-        feesVotingReward3 = FeesVotingReward(voter.gaugeToFees(address(gauge3)));
-        bribeVotingReward3 = BribeVotingReward(voter.gaugeToBribe(address(gauge3)));
+        feesVotingReward3 = FeesVotingReward(
+            voter.gaugeToFees(address(gauge3))
+        );
+        bribeVotingReward3 = BribeVotingReward(
+            voter.gaugeToBribe(address(gauge3))
+        );
 
         // BTC - mUSD stable
         gauge4 = Gauge(voter.createGauge(address(factory), address(pool4)));
-        feesVotingReward4 = FeesVotingReward(voter.gaugeToFees(address(gauge4)));
-        bribeVotingReward4 = BribeVotingReward(voter.gaugeToBribe(address(gauge4)));
+        feesVotingReward4 = FeesVotingReward(
+            voter.gaugeToFees(address(gauge4))
+        );
+        bribeVotingReward4 = BribeVotingReward(
+            voter.gaugeToBribe(address(gauge4))
+        );
 
         bytes32 domainSeparator = keccak256(
             abi.encode(
@@ -222,13 +240,20 @@ abstract contract BaseTest is Base, TestOwner {
         }
     }
 
-    function mintToken(address _token, address[] memory _accounts, uint256[] memory _amounts) public {
+    function mintToken(
+        address _token,
+        address[] memory _accounts,
+        uint256[] memory _amounts
+    ) public {
         for (uint256 i = 0; i < _amounts.length; i++) {
             deal(address(_token), _accounts[i], _amounts[i], true);
         }
     }
 
-    function dealETH(address[] memory _accounts, uint256[] memory _amounts) public {
+    function dealETH(
+        address[] memory _accounts,
+        uint256[] memory _amounts
+    ) public {
         for (uint256 i = 0; i < _accounts.length; i++) {
             vm.deal(_accounts[i], _amounts[i]);
         }
@@ -237,10 +262,42 @@ abstract contract BaseTest is Base, TestOwner {
     function deployPoolWithOwner(address _owner) public {
         uint256 initialBTCBalance = BTC.balanceOf(_owner);
 
-        _addLiquidityToPool(_owner, address(router), address(BTC), address(mUSD), false, TOKEN_1, mUSD_1);
-        _addLiquidityToPool(_owner, address(router), address(mUSD), address(LIMPETH), false, mUSD_1, TOKEN_1);
-        _addLiquidityToPool(_owner, address(router), address(mUSD), address(wtBTC), false, mUSD_1, TOKEN_1);
-        _addLiquidityToPool(_owner, address(router), address(BTC), address(mUSD), true, TOKEN_1, mUSD_1);
+        _addLiquidityToPool(
+            _owner,
+            address(router),
+            address(BTC),
+            address(mUSD),
+            false,
+            TOKEN_1,
+            mUSD_1
+        );
+        _addLiquidityToPool(
+            _owner,
+            address(router),
+            address(mUSD),
+            address(LIMPETH),
+            false,
+            mUSD_1,
+            TOKEN_1
+        );
+        _addLiquidityToPool(
+            _owner,
+            address(router),
+            address(mUSD),
+            address(wtBTC),
+            false,
+            mUSD_1,
+            TOKEN_1
+        );
+        _addLiquidityToPool(
+            _owner,
+            address(router),
+            address(BTC),
+            address(mUSD),
+            true,
+            TOKEN_1,
+            mUSD_1
+        );
         assertEq(factory.allPoolsLength(), 4);
 
         // Mint BTC tokens for the owner again to replenish the tokens used
@@ -248,12 +305,25 @@ abstract contract BaseTest is Base, TestOwner {
         deal(address(BTC), _owner, initialBTCBalance, true);
 
         // last arg default as these are all v2 pools
-        address create2address = router.poolFor(address(BTC), address(mUSD), false, address(0));
+        address create2address = router.poolFor(
+            address(BTC),
+            address(mUSD),
+            false,
+            address(0)
+        );
         address address1 = factory.getPool(address(BTC), address(mUSD), false);
         pool = Pool(address1);
-        address address2 = factory.getPool(address(mUSD), address(LIMPETH), false);
+        address address2 = factory.getPool(
+            address(mUSD),
+            address(LIMPETH),
+            false
+        );
         pool2 = Pool(address2);
-        address address3 = factory.getPool(address(mUSD), address(wtBTC), false);
+        address address3 = factory.getPool(
+            address(mUSD),
+            address(wtBTC),
+            false
+        );
         pool3 = Pool(address3);
         address address4 = factory.getPool(address(BTC), address(mUSD), true);
         pool4 = Pool(address4);
@@ -276,12 +346,18 @@ abstract contract BaseTest is Base, TestOwner {
     }
 
     /// @dev Helper utility to get start of epoch based on timestamp
-    function _getEpochStart(uint256 _timestamp) internal pure returns (uint256) {
+    function _getEpochStart(
+        uint256 _timestamp
+    ) internal pure returns (uint256) {
         return _timestamp - (_timestamp % (7 days));
     }
 
     /// @dev Helper function to add rewards to gauge from voter
-    function _addRewardToGauge(address _voter, address _gauge, uint256 _amount) internal {
+    function _addRewardToGauge(
+        address _voter,
+        address _gauge,
+        uint256 _amount
+    ) internal {
         deal(address(BTC), _voter, _amount);
         vm.startPrank(_voter);
         // do not overwrite approvals if already set

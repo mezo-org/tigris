@@ -46,7 +46,6 @@ contract ZapTest is BaseTest {
             mUSD_100K * 10
         );
 
-
         // Current State:
         // 1.25m mUSD, 763 wtBTC
         // Pool has slightly more mUSD than wtBTC
@@ -83,9 +82,18 @@ contract ZapTest is BaseTest {
         uint256 btcOwnerPreBal = BTC.balanceOf(address(owner2));
         assertEq(sPool.balanceOf(address(owner2)), 0);
 
-        uint256 ratio = _router.quoteStableLiquidityRatio(address(BTC), address(mUSD), address(factory));
+        uint256 ratio = _router.quoteStableLiquidityRatio(
+            address(BTC),
+            address(mUSD),
+            address(factory)
+        );
         IRouter.Route[] memory routesA = new IRouter.Route[](1);
-        routesA[0] = IRouter.Route(address(mUSD), address(BTC), true, address(factory));
+        routesA[0] = IRouter.Route(
+            address(mUSD),
+            address(BTC),
+            true,
+            address(factory)
+        );
         IRouter.Route[] memory routesB = new IRouter.Route[](0);
         IRouter.Zap memory zapInPool = _createZapInParams(
             address(BTC),
@@ -115,7 +123,10 @@ contract ZapTest is BaseTest {
 
         assertApproxEqAbs(mUSDPoolPostBal - mUSDPoolPreBal, mUSD_10K, mUSD_2_5);
         assertApproxEqAbs(mUSDOwnerPreBal - mUSDOwnerPostBal, mUSD_10K, mUSD_1);
-        assertLt(btcOwnerPostBal - btcOwnerPreBal, (TOKEN_100K * 150) / MAX_BPS);
+        assertLt(
+            btcOwnerPostBal - btcOwnerPreBal,
+            (TOKEN_100K * 150) / MAX_BPS
+        );
         assertGt(sPool.balanceOf(address(owner2)), 0);
         assertEq(mUSD.balanceOf(address(_router)), 0);
         assertEq(BTC.balanceOf(address(_router)), 0);
@@ -133,9 +144,18 @@ contract ZapTest is BaseTest {
         assertEq(sPool.balanceOf(address(sGauge)), 0);
         assertEq(sGauge.balanceOf(address(owner2)), 0);
 
-        uint256 ratio = _router.quoteStableLiquidityRatio(address(BTC), address(mUSD), address(factory));
+        uint256 ratio = _router.quoteStableLiquidityRatio(
+            address(BTC),
+            address(mUSD),
+            address(factory)
+        );
         IRouter.Route[] memory routesA = new IRouter.Route[](1);
-        routesA[0] = IRouter.Route(address(mUSD), address(BTC), true, address(factory));
+        routesA[0] = IRouter.Route(
+            address(mUSD),
+            address(BTC),
+            true,
+            address(factory)
+        );
         IRouter.Route[] memory routesB = new IRouter.Route[](0);
         IRouter.Zap memory zapInPool = _createZapInParams(
             address(BTC),
@@ -165,7 +185,10 @@ contract ZapTest is BaseTest {
 
         assertApproxEqAbs(mUSDPoolPostBal - mUSDPoolPreBal, mUSD_10K, mUSD_2_5);
         assertApproxEqAbs(mUSDOwnerPreBal - mUSDOwnerPostBal, mUSD_10K, mUSD_1);
-        assertLt(btcOwnerPostBal - btcOwnerPreBal, (TOKEN_100K * 150) / MAX_BPS);
+        assertLt(
+            btcOwnerPostBal - btcOwnerPreBal,
+            (TOKEN_100K * 150) / MAX_BPS
+        );
         assertEq(sPool.balanceOf(address(owner2)), 0);
         assertGt(sPool.balanceOf(address(sGauge)), 0);
         assertGt(sGauge.balanceOf(address(owner2)), 0);
@@ -185,7 +208,12 @@ contract ZapTest is BaseTest {
         assertEq(vPool.balanceOf(address(owner3)), 0);
 
         IRouter.Route[] memory routesA = new IRouter.Route[](1);
-        routesA[0] = IRouter.Route(address(mUSD), address(wtBTC), false, address(factory));
+        routesA[0] = IRouter.Route(
+            address(mUSD),
+            address(wtBTC),
+            false,
+            address(factory)
+        );
         IRouter.Route[] memory routesB = new IRouter.Route[](0);
         IRouter.Zap memory zapInPool = _createZapInParams(
             address(wtBTC),
@@ -198,11 +226,23 @@ contract ZapTest is BaseTest {
             routesB
         );
 
-        _router.zapIn(address(mUSD), mUSD_10K / 2, mUSD_10K / 2, zapInPool, routesA, routesB, address(owner3), false);
+        _router.zapIn(
+            address(mUSD),
+            mUSD_10K / 2,
+            mUSD_10K / 2,
+            zapInPool,
+            routesA,
+            routesB,
+            address(owner3),
+            false
+        );
 
         uint256 fee = ((mUSD_10K / 2) * feeRate) / MAX_BPS;
 
-        assertEq(mUSD.balanceOf(address(vPool)) - mUSDPoolPreBal, mUSD_10K - fee);
+        assertEq(
+            mUSD.balanceOf(address(vPool)) - mUSDPoolPreBal,
+            mUSD_10K - fee
+        );
         assertEq(mUSDOwnerPreBal - mUSD.balanceOf(address(owner2)), mUSD_10K);
         assertEq(vPool.balanceOf(address(owner2)), 0);
         assertGt(vPool.balanceOf(address(owner3)), 0);
@@ -223,7 +263,12 @@ contract ZapTest is BaseTest {
         assertEq(vGauge.balanceOf(address(owner2)), 0);
 
         IRouter.Route[] memory routesA = new IRouter.Route[](1);
-        routesA[0] = IRouter.Route(address(mUSD), address(wtBTC), false, address(factory));
+        routesA[0] = IRouter.Route(
+            address(mUSD),
+            address(wtBTC),
+            false,
+            address(factory)
+        );
         IRouter.Route[] memory routesB = new IRouter.Route[](0);
         IRouter.Zap memory zapInPool = _createZapInParams(
             address(wtBTC),
@@ -236,11 +281,23 @@ contract ZapTest is BaseTest {
             routesB
         );
 
-        _router.zapIn(address(mUSD), mUSD_10K / 2, mUSD_10K / 2, zapInPool, routesA, routesB, address(owner2), true);
+        _router.zapIn(
+            address(mUSD),
+            mUSD_10K / 2,
+            mUSD_10K / 2,
+            zapInPool,
+            routesA,
+            routesB,
+            address(owner2),
+            true
+        );
 
         uint256 fee = ((mUSD_10K / 2) * feeRate) / MAX_BPS;
 
-        assertEq(mUSD.balanceOf(address(vPool)) - mUSDPoolPreBal, mUSD_10K - fee);
+        assertEq(
+            mUSD.balanceOf(address(vPool)) - mUSDPoolPreBal,
+            mUSD_10K - fee
+        );
         assertEq(mUSDOwnerPreBal - mUSD.balanceOf(address(owner2)), mUSD_10K);
         assertEq(vPool.balanceOf(address(owner2)), 0);
         assertGt(vPool.balanceOf(address(vGauge)), 0);
@@ -258,7 +315,12 @@ contract ZapTest is BaseTest {
 
         IRouter.Route[] memory routesA = new IRouter.Route[](0);
         IRouter.Route[] memory routesB = new IRouter.Route[](1);
-        routesB[0] = IRouter.Route(address(mUSD), address(wtBTC), false, address(factory));
+        routesB[0] = IRouter.Route(
+            address(mUSD),
+            address(wtBTC),
+            false,
+            address(factory)
+        );
         IRouter.Zap memory zap = _createZapInParams(
             address(mUSD),
             address(wtBTC),
@@ -270,7 +332,16 @@ contract ZapTest is BaseTest {
             routesB
         );
 
-        _router.zapIn(address(mUSD), mUSD_10K / 2, mUSD_10K / 2, zap, routesA, routesB, address(owner2), false);
+        _router.zapIn(
+            address(mUSD),
+            mUSD_10K / 2,
+            mUSD_10K / 2,
+            zap,
+            routesA,
+            routesB,
+            address(owner2),
+            false
+        );
         uint256 liquidity = vPool.balanceOf(address(owner2));
         assertGt(liquidity, 0);
 
@@ -278,12 +349,28 @@ contract ZapTest is BaseTest {
         uint256 wtBTCPoolPreBal = wtBTC.balanceOf(address(vPool));
         uint256 wtBTCOwnerPreBal = wtBTC.balanceOf(address(owner2));
 
-        routesB[0] = IRouter.Route(address(wtBTC), address(mUSD), false, address(factory));
-        zap = _createZapOutParams(address(mUSD), address(wtBTC), false, address(factory), liquidity, routesA, routesB);
+        routesB[0] = IRouter.Route(
+            address(wtBTC),
+            address(mUSD),
+            false,
+            address(factory)
+        );
+        zap = _createZapOutParams(
+            address(mUSD),
+            address(wtBTC),
+            false,
+            address(factory),
+            liquidity,
+            routesA,
+            routesB
+        );
         vPool.approve(address(_router), type(uint256).max);
         _router.zapOut(address(mUSD), amount, zap, routesA, routesB);
 
-        assertLt(wtBTCPoolPreBal - wtBTC.balanceOf(address(vPool)), TOKEN_1 / 100);
+        assertLt(
+            wtBTCPoolPreBal - wtBTC.balanceOf(address(vPool)),
+            TOKEN_1 / 100
+        );
         assertEq(wtBTC.balanceOf(address(owner2)), wtBTCOwnerPreBal);
         assertEq(vPool.balanceOf(address(owner2)), 0);
         assertEq(mUSD.balanceOf(address(_router)), 0);
@@ -303,12 +390,35 @@ contract ZapTest is BaseTest {
     ) internal view returns (IRouter.Zap memory zap) {
         // use 300 bps slippage for the smaller stable pool
         uint256 slippage = (stable == true) ? 300 : 50;
-        (uint256 amountOutMinA, uint256 amountOutMinB, uint256 amountAMin, uint256 amountBMin) = _router
-            .generateZapInParams(tokenA, tokenB, stable, _factory, amountInA, amountInB, routesA, routesB);
+        (
+            uint256 amountOutMinA,
+            uint256 amountOutMinB,
+            uint256 amountAMin,
+            uint256 amountBMin
+        ) = _router.generateZapInParams(
+                tokenA,
+                tokenB,
+                stable,
+                _factory,
+                amountInA,
+                amountInB,
+                routesA,
+                routesB
+            );
 
         amountAMin = (amountAMin * (MAX_BPS - slippage)) / MAX_BPS;
         amountBMin = (amountBMin * (MAX_BPS - slippage)) / MAX_BPS;
-        return IRouter.Zap(tokenA, tokenB, stable, _factory, amountOutMinA, amountOutMinB, amountAMin, amountBMin);
+        return
+            IRouter.Zap(
+                tokenA,
+                tokenB,
+                stable,
+                _factory,
+                amountOutMinA,
+                amountOutMinB,
+                amountAMin,
+                amountBMin
+            );
     }
 
     function _createZapOutParams(
@@ -322,10 +432,32 @@ contract ZapTest is BaseTest {
     ) internal view returns (IRouter.Zap memory zap) {
         // use 300 bps slippage for the smaller stable pool
         uint256 slippage = (stable == true) ? 300 : 50;
-        (uint256 amountOutMinA, uint256 amountOutMinB, uint256 amountAMin, uint256 amountBMin) = _router
-            .generateZapOutParams(tokenA, tokenB, stable, _factory, liquidity, routesA, routesB);
+        (
+            uint256 amountOutMinA,
+            uint256 amountOutMinB,
+            uint256 amountAMin,
+            uint256 amountBMin
+        ) = _router.generateZapOutParams(
+                tokenA,
+                tokenB,
+                stable,
+                _factory,
+                liquidity,
+                routesA,
+                routesB
+            );
         amountOutMinA = (amountOutMinA * (MAX_BPS - slippage)) / MAX_BPS;
         amountOutMinB = (amountOutMinB * (MAX_BPS - slippage)) / MAX_BPS;
-        return IRouter.Zap(tokenA, tokenB, stable, _factory, amountOutMinA, amountOutMinB, amountAMin, amountBMin);
+        return
+            IRouter.Zap(
+                tokenA,
+                tokenB,
+                stable,
+                _factory,
+                amountOutMinA,
+                amountOutMinB,
+                amountAMin,
+                amountBMin
+            );
     }
 }

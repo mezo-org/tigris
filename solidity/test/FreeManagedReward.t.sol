@@ -3,7 +3,12 @@ pragma solidity 0.8.24;
 import "./BaseTest.sol";
 
 contract FreeManagedRewardTest is BaseTest {
-    event NotifyReward(address indexed from, address indexed reward, uint256 indexed epoch, uint256 amount);
+    event NotifyReward(
+        address indexed from,
+        address indexed reward,
+        uint256 indexed epoch,
+        uint256 amount
+    );
 
     FreeManagedReward freeManagedReward;
     uint256 mTokenId;
@@ -50,7 +55,10 @@ contract FreeManagedRewardTest is BaseTest {
         uint256 post = LR.balanceOf(address(owner));
 
         assertEq(freeManagedReward.isReward(address(LR)), true);
-        assertEq(freeManagedReward.tokenRewardsPerEpoch(address(LR), 604800), TOKEN_1);
+        assertEq(
+            freeManagedReward.tokenRewardsPerEpoch(address(LR), 604800),
+            TOKEN_1
+        );
         assertEq(pre - post, TOKEN_1);
         assertEq(LR.balanceOf(address(freeManagedReward)), TOKEN_1);
 
@@ -63,7 +71,10 @@ contract FreeManagedRewardTest is BaseTest {
         freeManagedReward.notifyRewardAmount(address(LR), TOKEN_1 * 2);
         post = LR.balanceOf(address(owner));
 
-        assertEq(freeManagedReward.tokenRewardsPerEpoch(address(LR), 604800), TOKEN_1 * 3);
+        assertEq(
+            freeManagedReward.tokenRewardsPerEpoch(address(LR), 604800),
+            TOKEN_1 * 3
+        );
         assertEq(pre - post, TOKEN_1 * 2);
         assertEq(LR.balanceOf(address(freeManagedReward)), TOKEN_1 * 3);
     }

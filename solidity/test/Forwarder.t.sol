@@ -8,7 +8,8 @@ contract ForwarderTest is BaseTest {
 
     // first public/private key provided by anvil
     address sender = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
-    uint256 senderPrivateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+    uint256 senderPrivateKey =
+        0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
 
     ERC2771Helper erc2771Helper;
 
@@ -25,7 +26,11 @@ contract ForwarderTest is BaseTest {
     }
 
     function testForwarderCreateLock() public {
-        bytes memory payload = abi.encodeWithSelector(escrow.createLock.selector, TOKEN_1, MAXTIME);
+        bytes memory payload = abi.encodeWithSelector(
+            escrow.createLock.selector,
+            TOKEN_1,
+            MAXTIME
+        );
         bytes32 requestType = erc2771Helper.registerRequestType(
             forwarder,
             "createLock",
@@ -45,7 +50,12 @@ contract ForwarderTest is BaseTest {
         weights[0] = 10000;
 
         // build request
-        bytes memory payload = abi.encodeWithSelector(voter.vote.selector, 1, pools, weights);
+        bytes memory payload = abi.encodeWithSelector(
+            voter.vote.selector,
+            1,
+            pools,
+            weights
+        );
         bytes32 requestType = erc2771Helper.registerRequestType(
             forwarder,
             "vote",
@@ -56,7 +66,11 @@ contract ForwarderTest is BaseTest {
         assertTrue(escrow.voted(1));
     }
 
-    function handleRequest(address _to, bytes memory payload, bytes32 requestType) internal {
+    function handleRequest(
+        address _to,
+        bytes memory payload,
+        bytes32 requestType
+    ) internal {
         IForwarder.ForwardRequest memory request = IForwarder.ForwardRequest({
             from: sender,
             to: _to,
@@ -79,7 +93,9 @@ contract ForwarderTest is BaseTest {
             abi.encodePacked(
                 "\x19\x01",
                 domainSeparator,
-                keccak256(forwarder._getEncoded(request, requestType, suffixData))
+                keccak256(
+                    forwarder._getEncoded(request, requestType, suffixData)
+                )
             )
         );
 
@@ -87,8 +103,17 @@ contract ForwarderTest is BaseTest {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(senderPrivateKey, digest);
         bytes memory signature = abi.encodePacked(r, s, v);
 
-        require(digest.recover(signature) == request.from, "FWD: signature mismatch");
+        require(
+            digest.recover(signature) == request.from,
+            "FWD: signature mismatch"
+        );
 
-        forwarder.execute(request, domainSeparator, requestType, suffixData, signature);
+        forwarder.execute(
+            request,
+            domainSeparator,
+            requestType,
+            suffixData,
+            signature
+        );
     }
 }

@@ -8,7 +8,8 @@ contract SigUtils {
     }
 
     // keccak256("Delegation(uint256 delegator,uint256 delegatee,uint256 nonce,uint256 expiry)");
-    bytes32 public constant DELEGATION_TYPEHASH = 0x9947d5709c1682eaa3946b2d84115c9c0d1c946b149d76e69b457458b42ea29e;
+    bytes32 public constant DELEGATION_TYPEHASH =
+        0x9947d5709c1682eaa3946b2d84115c9c0d1c946b149d76e69b457458b42ea29e;
 
     struct Delegation {
         uint256 delegator;
@@ -18,7 +19,9 @@ contract SigUtils {
     }
 
     /// @dev Computes the hash of a permit
-    function getStructHash(Delegation memory _delegation) internal pure returns (bytes32) {
+    function getStructHash(
+        Delegation memory _delegation
+    ) internal pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
@@ -33,7 +36,16 @@ contract SigUtils {
 
     /// @dev Computes the hash of the fully encoded EIP-712 message for the domain,
     ///      which can be used to recover the signer
-    function getTypedDataHash(Delegation memory _delegation) public view returns (bytes32) {
-        return keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, getStructHash(_delegation)));
+    function getTypedDataHash(
+        Delegation memory _delegation
+    ) public view returns (bytes32) {
+        return
+            keccak256(
+                abi.encodePacked(
+                    "\x19\x01",
+                    DOMAIN_SEPARATOR,
+                    getStructHash(_delegation)
+                )
+            );
     }
 }

@@ -6,7 +6,6 @@ import {ISplitter} from "../contracts/interfaces/ISplitter.sol";
 import {MockEpochGovernor} from "./utils/MockEpochGovernor.sol";
 
 contract SplitterTest is BaseTest {
-
     uint256 private constant TICK = 1;
     uint256 private constant MAXIMUM_GAUGE_SCALE = 100;
     uint256 private constant MINIMUM_GAUGE_SCALE = 1;
@@ -42,43 +41,59 @@ contract SplitterTest is BaseTest {
     function testNudgeSuccessfulProposal() public {
         // Simulate a successful proposal in the mocked Governor
         mockEpochGovernor.simulateSuccessfulProposal();
-        
+
         uint256 previousNeedle = splitter.needle();
         vm.prank(address(mockEpochGovernor));
         splitter.nudge();
-        assertEq(splitter.needle(), previousNeedle + TICK, "Needle should increase by 1 if proposal succeeds");
+        assertEq(
+            splitter.needle(),
+            previousNeedle + TICK,
+            "Needle should increase by 1 if proposal succeeds"
+        );
     }
 
     function testNudgeMaxNeedle() public {
         // Simulate a successful proposal in the mocked Governor
         mockEpochGovernor.simulateSuccessfulProposal();
         splitter.setNeedle(MAXIMUM_GAUGE_SCALE);
-        
+
         uint256 previousNeedle = splitter.needle();
         vm.prank(address(mockEpochGovernor));
         splitter.nudge();
-        assertEq(splitter.needle(), MAXIMUM_GAUGE_SCALE, "Needle should stay at MAXIMUM_GAUGE_SCALE if it is already at max");
+        assertEq(
+            splitter.needle(),
+            MAXIMUM_GAUGE_SCALE,
+            "Needle should stay at MAXIMUM_GAUGE_SCALE if it is already at max"
+        );
     }
 
     function testNudgeDefeatedProposal() public {
         // Simulate a defeated proposal in the mocked Governor
         mockEpochGovernor.simulateDefeatedProposal();
-        
+
         uint256 previousNeedle = splitter.needle();
         vm.prank(address(mockEpochGovernor));
         splitter.nudge();
-        assertEq(splitter.needle(), previousNeedle - TICK, "Needle should decrease by 1 if proposal fails");
+        assertEq(
+            splitter.needle(),
+            previousNeedle - TICK,
+            "Needle should decrease by 1 if proposal fails"
+        );
     }
 
     function testNudgeMinNeedle() public {
         // Simulate a defeated proposal in the mocked Governor
         mockEpochGovernor.simulateDefeatedProposal();
         splitter.setNeedle(MINIMUM_GAUGE_SCALE);
-        
+
         uint256 previousNeedle = splitter.needle();
         vm.prank(address(mockEpochGovernor));
         splitter.nudge();
-        assertEq(splitter.needle(), MINIMUM_GAUGE_SCALE, "Needle should stay at MINIMUM_GAUGE_SCALE if it is already at min");
+        assertEq(
+            splitter.needle(),
+            MINIMUM_GAUGE_SCALE,
+            "Needle should stay at MINIMUM_GAUGE_SCALE if it is already at min"
+        );
     }
 
     function testNudgeRevertsIfNotEpochGovernor() public {
@@ -122,11 +137,21 @@ contract SplitterTest is BaseTest {
         uint256 newActivePeriod = splitter.activePeriod();
         assertGt(newActivePeriod, prevActivePeriod, "Period should be updated");
 
-        uint256 expectedFirstRecipientAmount = (currentBalance * splitter.needle()) / MAXIMUM_GAUGE_SCALE;
-        uint256 expectedSecondRecipientAmount = currentBalance - expectedFirstRecipientAmount;
+        uint256 expectedFirstRecipientAmount = (currentBalance *
+            splitter.needle()) / MAXIMUM_GAUGE_SCALE;
+        uint256 expectedSecondRecipientAmount = currentBalance -
+            expectedFirstRecipientAmount;
 
-        assertEq(token.balanceOf(firstRecipient), expectedFirstRecipientAmount, "Incorrect first recipient amount");
-        assertEq(token.balanceOf(secondRecipient), expectedSecondRecipientAmount, "Incorrect second recipient amount");
+        assertEq(
+            token.balanceOf(firstRecipient),
+            expectedFirstRecipientAmount,
+            "Incorrect first recipient amount"
+        );
+        assertEq(
+            token.balanceOf(secondRecipient),
+            expectedSecondRecipientAmount,
+            "Incorrect second recipient amount"
+        );
     }
 
     function testNoDistributionIfNoBalance() public {
@@ -140,8 +165,16 @@ contract SplitterTest is BaseTest {
 
         splitter.updatePeriod();
 
-        assertEq(token.balanceOf(firstRecipient), prevFirstRecipientBalance, "First recipient balance should not change");
-        assertEq(token.balanceOf(secondRecipient), prevSecondRecipientBalance, "Second recipient balance should not change");
+        assertEq(
+            token.balanceOf(firstRecipient),
+            prevFirstRecipientBalance,
+            "First recipient balance should not change"
+        );
+        assertEq(
+            token.balanceOf(secondRecipient),
+            prevSecondRecipientBalance,
+            "Second recipient balance should not change"
+        );
     }
 
     function testPeriodUpdatedEventEmitted() public {
@@ -149,8 +182,10 @@ contract SplitterTest is BaseTest {
         vm.warp(block.timestamp + 1 weeks);
 
         uint256 currentBalance = token.balanceOf(address(splitter));
-        uint256 expectedFirstRecipientAmount = (currentBalance * splitter.needle()) / splitter.MAXIMUM_GAUGE_SCALE();
-        uint256 expectedSecondRecipientAmount = currentBalance - expectedFirstRecipientAmount;
+        uint256 expectedFirstRecipientAmount = (currentBalance *
+            splitter.needle()) / splitter.MAXIMUM_GAUGE_SCALE();
+        uint256 expectedSecondRecipientAmount = currentBalance -
+            expectedFirstRecipientAmount;
 
         vm.expectEmit(true, true, true, true);
         emit PeriodUpdated(
@@ -174,7 +209,15 @@ contract SplitterTest is BaseTest {
 
         splitter.updatePeriod();
 
-        assertEq(token.balanceOf(firstRecipient), prevFirstRecipientBalance, "First recipient balance should not change");
-        assertEq(token.balanceOf(secondRecipient), prevSecondRecipientBalance, "Second recipient balance should not change");
+        assertEq(
+            token.balanceOf(firstRecipient),
+            prevFirstRecipientBalance,
+            "First recipient balance should not change"
+        );
+        assertEq(
+            token.balanceOf(secondRecipient),
+            prevSecondRecipientBalance,
+            "Second recipient balance should not change"
+        );
     }
 }

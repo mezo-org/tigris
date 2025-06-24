@@ -3,7 +3,12 @@ pragma solidity 0.8.24;
 import "./BaseTest.sol";
 
 contract LockedManagedRewardTest is BaseTest {
-    event NotifyReward(address indexed from, address indexed reward, uint256 indexed epoch, uint256 amount);
+    event NotifyReward(
+        address indexed from,
+        address indexed reward,
+        uint256 indexed epoch,
+        uint256 amount
+    );
 
     LockedManagedReward lockedManagedReward;
     uint256 mTokenId;
@@ -23,7 +28,9 @@ contract LockedManagedRewardTest is BaseTest {
 
         vm.prank(address(governor));
         mTokenId = escrow.createManagedLockFor(address(owner4));
-        lockedManagedReward = LockedManagedReward(escrow.managedToLocked(mTokenId));
+        lockedManagedReward = LockedManagedReward(
+            escrow.managedToLocked(mTokenId)
+        );
         skip(1);
     }
 
@@ -61,7 +68,10 @@ contract LockedManagedRewardTest is BaseTest {
         uint256 post = BTC.balanceOf(address(escrow));
 
         assertEq(lockedManagedReward.isReward(address(BTC)), true);
-        assertEq(lockedManagedReward.tokenRewardsPerEpoch(address(BTC), 604800), TOKEN_1);
+        assertEq(
+            lockedManagedReward.tokenRewardsPerEpoch(address(BTC), 604800),
+            TOKEN_1
+        );
         assertEq(pre - post, TOKEN_1);
         assertEq(BTC.balanceOf(address(lockedManagedReward)), TOKEN_1);
 
@@ -76,7 +86,10 @@ contract LockedManagedRewardTest is BaseTest {
         lockedManagedReward.notifyRewardAmount(address(BTC), TOKEN_1 * 2);
         post = BTC.balanceOf(address(escrow));
 
-        assertEq(lockedManagedReward.tokenRewardsPerEpoch(address(BTC), 604800), TOKEN_1 * 3);
+        assertEq(
+            lockedManagedReward.tokenRewardsPerEpoch(address(BTC), 604800),
+            TOKEN_1 * 3
+        );
         assertEq(pre - post, TOKEN_1 * 2);
         assertEq(BTC.balanceOf(address(lockedManagedReward)), TOKEN_1 * 3);
     }

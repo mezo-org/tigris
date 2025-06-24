@@ -72,30 +72,59 @@ abstract contract BaseSystemTest is Script, Test {
         poolImplementation = getDeploymentAddress("Pool");
         poolFactory = PoolFactory(getDeploymentAddress("PoolFactory"));
         gaugeFactory = GaugeFactory(getDeploymentAddress("GaugeFactory"));
-        votingRewardsFactory = VotingRewardsFactory(getDeploymentAddress("VotingRewardsFactory"));
-        managedRewardsFactory = ManagedRewardsFactory(getDeploymentAddress("ManagedRewardsFactory"));
-        factoryRegistry = FactoryRegistry(getDeploymentAddress("FactoryRegistry"));
-        forwarder = MezoForwarder(payable(getDeploymentAddress("MezoForwarder")));
+        votingRewardsFactory = VotingRewardsFactory(
+            getDeploymentAddress("VotingRewardsFactory")
+        );
+        managedRewardsFactory = ManagedRewardsFactory(
+            getDeploymentAddress("ManagedRewardsFactory")
+        );
+        factoryRegistry = FactoryRegistry(
+            getDeploymentAddress("FactoryRegistry")
+        );
+        forwarder = MezoForwarder(
+            payable(getDeploymentAddress("MezoForwarder"))
+        );
         veBTC = VeBTC(getDeploymentAddress("VeBTC"));
         veBTCVoter = Voter(getDeploymentAddress("VeBTCVoter"));
-        veBTCRewardsDistributor = RewardsDistributor(getDeploymentAddress("VeBTCRewardsDistributor"));
-        chainFeeSplitter = ChainFeeSplitter(getDeploymentAddress("ChainFeeSplitter"));
-        veBTCEpochGovernor = EpochGovernor(payable(getDeploymentAddress("VeBTCEpochGovernor")));
+        veBTCRewardsDistributor = RewardsDistributor(
+            getDeploymentAddress("VeBTCRewardsDistributor")
+        );
+        chainFeeSplitter = ChainFeeSplitter(
+            getDeploymentAddress("ChainFeeSplitter")
+        );
+        veBTCEpochGovernor = EpochGovernor(
+            payable(getDeploymentAddress("VeBTCEpochGovernor"))
+        );
         router = Router(getDeploymentAddress("Router"));
 
         pool_BTC_mUSD = createPoolWithGauge(address(BTC), address(mUSD), false);
-        pool_mUSD_LIMPETH = createPoolWithGauge(address(mUSD), address(LIMPETH), false);
-        pool_mUSD_wtBTC = createPoolWithGauge(address(mUSD), address(wtBTC), false);
+        pool_mUSD_LIMPETH = createPoolWithGauge(
+            address(mUSD),
+            address(LIMPETH),
+            false
+        );
+        pool_mUSD_wtBTC = createPoolWithGauge(
+            address(mUSD),
+            address(wtBTC),
+            false
+        );
 
         mUSD.transferOwnership(governance);
         LIMPETH.transferOwnership(governance);
         wtBTC.transferOwnership(governance);
     }
 
-    function getDeploymentAddress(string memory deploymentName) internal view returns (address) {
+    function getDeploymentAddress(
+        string memory deploymentName
+    ) internal view returns (address) {
         string memory root = vm.projectRoot();
         string memory basePath = string.concat(root, "/", deploymentArtifacts);
-        string memory path = string.concat(basePath, "/", deploymentName, ".json");
+        string memory path = string.concat(
+            basePath,
+            "/",
+            deploymentName,
+            ".json"
+        );
         string memory deployment = vm.readFile(path);
         return abi.decode(deployment.parseRaw(".address"), (address));
     }
@@ -109,7 +138,9 @@ abstract contract BaseSystemTest is Script, Test {
         }
     }
 
-    function withTokenPrecision18(uint256 value) internal pure returns (uint256) {
+    function withTokenPrecision18(
+        uint256 value
+    ) internal pure returns (uint256) {
         return value * 1e18;
     }
 
@@ -120,15 +151,20 @@ abstract contract BaseSystemTest is Script, Test {
         vm.roll(block.number + 1);
     }
 
-    function createPoolWithGauge(address token1, address token2, bool stable) internal returns (address pool) {
+    function createPoolWithGauge(
+        address token1,
+        address token2,
+        bool stable
+    ) internal returns (address pool) {
         vm.startPrank(governance);
         pool = poolFactory.createPool(token1, token2, stable);
-        veBTCVoter.createGauge(
-            address(poolFactory),
-            pool
-        );
+        veBTCVoter.createGauge(address(poolFactory), pool);
         vm.stopPrank();
 
-        assertEq(router.poolFor(token1, token2, stable, address(poolFactory)), pool, "unexpected pool");
+        assertEq(
+            router.poolFor(token1, token2, stable, address(poolFactory)),
+            pool,
+            "unexpected pool"
+        );
     }
 }

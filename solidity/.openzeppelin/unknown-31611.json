@@ -88,11 +88,7 @@
           },
           "t_enum(EscrowType)24733": {
             "label": "enum IVotingEscrow.EscrowType",
-            "members": [
-              "NORMAL",
-              "LOCKED",
-              "MANAGED"
-            ],
+            "members": ["NORMAL", "LOCKED", "MANAGED"],
             "numberOfBytes": "1"
           },
           "t_int128": {
@@ -618,11 +614,7 @@
           },
           "t_enum(EscrowType)30552": {
             "label": "enum IVotingEscrow.EscrowType",
-            "members": [
-              "NORMAL",
-              "LOCKED",
-              "MANAGED"
-            ],
+            "members": ["NORMAL", "LOCKED", "MANAGED"],
             "numberOfBytes": "1"
           },
           "t_int128": {

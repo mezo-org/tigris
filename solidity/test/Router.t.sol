@@ -17,7 +17,15 @@ contract RouterTest is BaseTest {
         amounts[3] = 1e25;
         amounts[4] = 1e25;
 
-        _addLiquidityToPool(address(owner), address(router), address(BTC), address(mUSD), false, TOKEN_1, mUSD_1);
+        _addLiquidityToPool(
+            address(owner),
+            address(router),
+            address(BTC),
+            address(mUSD),
+            false,
+            TOKEN_1,
+            mUSD_1
+        );
         _pool = Pool(factory.getPool(address(BTC), address(mUSD), false));
 
         erc20Fee = new MockERC20WithTransferFee("Mock Token", "FEE", 18);
@@ -41,7 +49,9 @@ contract RouterTest is BaseTest {
             block.timestamp
         );
 
-        poolFee = Pool(factory.getPool(address(erc20Fee), address(mUSD), false));
+        poolFee = Pool(
+            factory.getPool(address(erc20Fee), address(mUSD), false)
+        );
     }
 
     function testInitializeVoter() public {
@@ -142,7 +152,9 @@ contract RouterTest is BaseTest {
         assertEq(mUSD.balanceOf(address(_pool)), poolInitial_mUSD);
     }
 
-    function testRouterPoolGetAmountsOutAndSwapExactTokensForTokens_mUSD_BTC() public {
+    function testRouterPoolGetAmountsOutAndSwapExactTokensForTokens_mUSD_BTC()
+        public
+    {
         // Set up a route for swapping mUSD for BTC.
         IRouter.Route[] memory routes = new IRouter.Route[](1);
         routes[0] = IRouter.Route({
@@ -171,7 +183,9 @@ contract RouterTest is BaseTest {
         );
     }
 
-    function testRouterPoolGetAmountsOutAndSwapExactTokensForTokens_BTC_mUSD() public {
+    function testRouterPoolGetAmountsOutAndSwapExactTokensForTokens_BTC_mUSD()
+        public
+    {
         // Set up a route for swapping BTC for mUSD.
         IRouter.Route[] memory routes = new IRouter.Route[](1);
         routes[0] = IRouter.Route({
@@ -202,7 +216,9 @@ contract RouterTest is BaseTest {
 
     // TESTS FOR FEE-ON-TRANSFER TOKENS
 
-    function testRouterSwapExactTokensForTokensSupportingFeeOnTransferTokens() external {
+    function testRouterSwapExactTokensForTokensSupportingFeeOnTransferTokens()
+        external
+    {
         // Set up a route for swapping mUSD for erc20Fee.
         IRouter.Route[] memory routes = new IRouter.Route[](1);
         routes[0] = IRouter.Route({
@@ -231,7 +247,9 @@ contract RouterTest is BaseTest {
         assertEq(erc20Fee.balanceOf(address(owner)), actualExpectedOutput);
     }
 
-    function testRouterSwapExactTokensForTokensSupportingFeeOnTransferTokens_Erc20FeeToMUSD() external {
+    function testRouterSwapExactTokensForTokensSupportingFeeOnTransferTokens_Erc20FeeToMUSD()
+        external
+    {
         // First add the token balance to user to swap.
         erc20Fee.mint(address(owner), TOKEN_1);
 
@@ -245,10 +263,16 @@ contract RouterTest is BaseTest {
         });
 
         uint256 expectedOutput = router.getAmountsOut(TOKEN_1, routes)[1];
-        assertEq(poolFee.getAmountOut(TOKEN_1, address(erc20Fee)), expectedOutput);
+        assertEq(
+            poolFee.getAmountOut(TOKEN_1, address(erc20Fee)),
+            expectedOutput
+        );
 
         uint256 mUSDBalanceBefore = mUSD.balanceOf(address(owner));
-        uint256 actualExpectedOutput = router.getAmountsOut(TOKEN_1 - erc20Fee.fee(), routes)[1];
+        uint256 actualExpectedOutput = router.getAmountsOut(
+            TOKEN_1 - erc20Fee.fee(),
+            routes
+        )[1];
 
         // Swap erc20Fee for mUSD.
         erc20Fee.approve(address(router), TOKEN_1);
@@ -261,6 +285,9 @@ contract RouterTest is BaseTest {
         );
 
         // Verify mUSD tokens were received.
-        assertEq(mUSD.balanceOf(address(owner)) - mUSDBalanceBefore, actualExpectedOutput);
+        assertEq(
+            mUSD.balanceOf(address(owner)) - mUSDBalanceBefore,
+            actualExpectedOutput
+        );
     }
 }

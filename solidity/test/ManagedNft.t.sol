@@ -34,7 +34,10 @@ contract ManagedNftTest is BaseTest {
     function testCreateManagedLockFor() public {
         uint256 mTokenId = escrow.createManagedLockFor(address(owner));
 
-        assertEq(uint256(escrow.escrowType(mTokenId)), uint256(IVotingEscrow.EscrowType.MANAGED));
+        assertEq(
+            uint256(escrow.escrowType(mTokenId)),
+            uint256(IVotingEscrow.EscrowType.MANAGED)
+        );
         assertEq(escrow.tokenId(), 1);
         assertEq(escrow.ownerOf(1), address(owner));
         assertEq(escrow.balanceOf(address(owner)), 1);
@@ -47,7 +50,10 @@ contract ManagedNftTest is BaseTest {
 
         // check user point updates correctly
         assertEq(escrow.userPointEpoch(mTokenId), 1);
-        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(mTokenId, 1);
+        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(
+            mTokenId,
+            1
+        );
         assertEq(convert(userPoint.bias), 0);
         assertEq(convert(userPoint.slope), 0);
         assertEq(userPoint.ts, 604801);
@@ -65,7 +71,10 @@ contract ManagedNftTest is BaseTest {
 
         // check voting checkpoints
         assertEq(escrow.numCheckpoints(mTokenId), 1);
-        IVotingEscrow.Checkpoint memory checkpoint = escrow.checkpoints(mTokenId, 0);
+        IVotingEscrow.Checkpoint memory checkpoint = escrow.checkpoints(
+            mTokenId,
+            0
+        );
         assertEq(checkpoint.fromTimestamp, 604801);
         assertEq(checkpoint.owner, address(owner));
         assertEq(checkpoint.delegatedBalance, 0);
@@ -125,7 +134,13 @@ contract ManagedNftTest is BaseTest {
 
         skipToNextEpoch(1 hours + 1);
         vm.expectEmit(true, true, true, true, address(escrow));
-        emit DepositManaged(address(owner), tokenId, mTokenId, TOKEN_1, 1213201);
+        emit DepositManaged(
+            address(owner),
+            tokenId,
+            mTokenId,
+            TOKEN_1,
+            1213201
+        );
         vm.expectEmit(false, false, false, true, address(escrow));
         emit MetadataUpdate(tokenId);
         voter.depositManaged(tokenId, mTokenId);
@@ -134,7 +149,10 @@ contract ManagedNftTest is BaseTest {
         assertEq(voter.lastVoted(tokenId), 1213201);
         assertEq(escrow.idToManaged(tokenId), mTokenId);
         assertEq(escrow.weights(tokenId, mTokenId), TOKEN_1);
-        assertEq(uint256(escrow.escrowType(tokenId)), uint256(IVotingEscrow.EscrowType.LOCKED));
+        assertEq(
+            uint256(escrow.escrowType(tokenId)),
+            uint256(IVotingEscrow.EscrowType.LOCKED)
+        );
 
         IVotingEscrow.LockedBalance memory locked;
 
@@ -146,7 +164,10 @@ contract ManagedNftTest is BaseTest {
 
         // check depositing user point updates correctly
         assertEq(escrow.userPointEpoch(tokenId), 2);
-        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(tokenId, 2);
+        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(
+            tokenId,
+            2
+        );
         assertEq(convert(userPoint.bias), 0);
         assertEq(convert(userPoint.slope), 0);
         assertEq(userPoint.ts, 1213201);
@@ -179,7 +200,10 @@ contract ManagedNftTest is BaseTest {
 
         // check voting checkpoints
         assertEq(escrow.numCheckpoints(mTokenId), 1);
-        IVotingEscrow.Checkpoint memory checkpoint = escrow.checkpoints(mTokenId, 0);
+        IVotingEscrow.Checkpoint memory checkpoint = escrow.checkpoints(
+            mTokenId,
+            0
+        );
         assertEq(checkpoint.fromTimestamp, 604801);
         assertEq(checkpoint.owner, address(owner2));
         assertEq(checkpoint.delegatedBalance, 0);
@@ -193,7 +217,9 @@ contract ManagedNftTest is BaseTest {
         assertEq(escrow.totalSupply(), TOKEN_1);
 
         // check deposit represented in locked / free managed rewards
-        lockedManagedReward = LockedManagedReward(escrow.managedToLocked(mTokenId));
+        lockedManagedReward = LockedManagedReward(
+            escrow.managedToLocked(mTokenId)
+        );
         assertEq(lockedManagedReward.balanceOf(tokenId), TOKEN_1);
         assertEq(lockedManagedReward.totalSupply(), TOKEN_1);
         freeManagedReward = FreeManagedReward(escrow.managedToFree(mTokenId));
@@ -215,14 +241,23 @@ contract ManagedNftTest is BaseTest {
 
         skipToNextEpoch(1 hours + 1);
         vm.expectEmit(true, false, false, false, address(escrow));
-        emit DepositManaged(address(owner), tokenId, mTokenId, TOKEN_1, 1213201);
+        emit DepositManaged(
+            address(owner),
+            tokenId,
+            mTokenId,
+            TOKEN_1,
+            1213201
+        );
         voter.depositManaged(tokenId, mTokenId);
 
         // updates balance of managed nft
         assertEq(voter.lastVoted(tokenId), 1213201);
         assertEq(escrow.idToManaged(tokenId), mTokenId);
         assertEq(escrow.weights(tokenId, mTokenId), TOKEN_1);
-        assertEq(uint256(escrow.escrowType(tokenId)), uint256(IVotingEscrow.EscrowType.LOCKED));
+        assertEq(
+            uint256(escrow.escrowType(tokenId)),
+            uint256(IVotingEscrow.EscrowType.LOCKED)
+        );
 
         IVotingEscrow.LockedBalance memory locked;
 
@@ -234,7 +269,10 @@ contract ManagedNftTest is BaseTest {
 
         // check depositing user point updates correctly
         assertEq(escrow.userPointEpoch(tokenId), 2);
-        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(tokenId, 2);
+        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(
+            tokenId,
+            2
+        );
         assertEq(convert(userPoint.bias), 0);
         assertEq(convert(userPoint.slope), 0);
         assertEq(userPoint.ts, 1213201);
@@ -267,7 +305,10 @@ contract ManagedNftTest is BaseTest {
 
         // check voting checkpoints of managed nft
         assertEq(escrow.numCheckpoints(mTokenId), 1);
-        IVotingEscrow.Checkpoint memory checkpoint = escrow.checkpoints(mTokenId, 0);
+        IVotingEscrow.Checkpoint memory checkpoint = escrow.checkpoints(
+            mTokenId,
+            0
+        );
         assertEq(checkpoint.fromTimestamp, 604801);
         assertEq(checkpoint.owner, address(owner2));
         assertEq(checkpoint.delegatedBalance, 0);
@@ -287,11 +328,16 @@ contract ManagedNftTest is BaseTest {
         assertEq(escrow.ownerOf(tokenId), address(owner));
         assertEq(escrow.supply(), supply);
         assertEq(escrow.totalSupply(), TOKEN_1 + 992437206566602005);
-        assertEq(escrow.getPastVotes(address(owner), tokenId2, 1213201), TOKEN_1 + 992437206566602005);
+        assertEq(
+            escrow.getPastVotes(address(owner), tokenId2, 1213201),
+            TOKEN_1 + 992437206566602005
+        );
         assertEq(escrow.getPastVotes(address(owner2), mTokenId, 1213201), 0);
 
         // check deposit represented in locked / free managed rewards
-        lockedManagedReward = LockedManagedReward(escrow.managedToLocked(mTokenId));
+        lockedManagedReward = LockedManagedReward(
+            escrow.managedToLocked(mTokenId)
+        );
         assertEq(lockedManagedReward.balanceOf(tokenId), TOKEN_1);
         assertEq(lockedManagedReward.totalSupply(), TOKEN_1);
         freeManagedReward = FreeManagedReward(escrow.managedToFree(mTokenId));
@@ -314,14 +360,23 @@ contract ManagedNftTest is BaseTest {
 
         skipToNextEpoch(1 hours + 1);
         vm.expectEmit(true, false, false, false, address(escrow));
-        emit DepositManaged(address(owner), tokenId, mTokenId, TOKEN_1, 1213201);
+        emit DepositManaged(
+            address(owner),
+            tokenId,
+            mTokenId,
+            TOKEN_1,
+            1213201
+        );
         voter.depositManaged(tokenId, mTokenId);
 
         // updates balance of managed nft
         assertEq(voter.lastVoted(tokenId), 1213201);
         assertEq(escrow.idToManaged(tokenId), mTokenId);
         assertEq(escrow.weights(tokenId, mTokenId), TOKEN_1);
-        assertEq(uint256(escrow.escrowType(tokenId)), uint256(IVotingEscrow.EscrowType.LOCKED));
+        assertEq(
+            uint256(escrow.escrowType(tokenId)),
+            uint256(IVotingEscrow.EscrowType.LOCKED)
+        );
 
         IVotingEscrow.LockedBalance memory locked;
         IVotingEscrow.UserPoint memory userPoint;
@@ -373,7 +428,9 @@ contract ManagedNftTest is BaseTest {
         assertEq(escrow.totalSupply(), TOKEN_1);
 
         // check deposit represented in locked / free managed rewards
-        lockedManagedReward = LockedManagedReward(escrow.managedToLocked(mTokenId));
+        lockedManagedReward = LockedManagedReward(
+            escrow.managedToLocked(mTokenId)
+        );
         assertEq(lockedManagedReward.balanceOf(tokenId), TOKEN_1);
         assertEq(lockedManagedReward.totalSupply(), TOKEN_1);
         freeManagedReward = FreeManagedReward(escrow.managedToFree(mTokenId));
@@ -400,14 +457,23 @@ contract ManagedNftTest is BaseTest {
 
         skipToNextEpoch(1 hours + 1);
         vm.expectEmit(true, false, false, false, address(escrow));
-        emit DepositManaged(address(owner), tokenId, mTokenId, TOKEN_1, 1213201);
+        emit DepositManaged(
+            address(owner),
+            tokenId,
+            mTokenId,
+            TOKEN_1,
+            1213201
+        );
         voter.depositManaged(tokenId, mTokenId);
 
         // updates balance of managed nft
         assertEq(voter.lastVoted(tokenId), 1213201);
         assertEq(escrow.idToManaged(tokenId), mTokenId);
         assertEq(escrow.weights(tokenId, mTokenId), TOKEN_1);
-        assertEq(uint256(escrow.escrowType(tokenId)), uint256(IVotingEscrow.EscrowType.LOCKED));
+        assertEq(
+            uint256(escrow.escrowType(tokenId)),
+            uint256(IVotingEscrow.EscrowType.LOCKED)
+        );
 
         IVotingEscrow.LockedBalance memory locked;
         IVotingEscrow.UserPoint memory userPoint;
@@ -460,7 +526,9 @@ contract ManagedNftTest is BaseTest {
         assertEq(escrow.totalSupply(), TOKEN_1 + 992437206566602005);
 
         // check deposit represented in locked / free managed rewards
-        lockedManagedReward = LockedManagedReward(escrow.managedToLocked(mTokenId));
+        lockedManagedReward = LockedManagedReward(
+            escrow.managedToLocked(mTokenId)
+        );
         assertEq(lockedManagedReward.balanceOf(tokenId), TOKEN_1);
         assertEq(lockedManagedReward.totalSupply(), TOKEN_1);
         freeManagedReward = FreeManagedReward(escrow.managedToFree(mTokenId));
@@ -470,7 +538,10 @@ contract ManagedNftTest is BaseTest {
         // check depositor delegation reset
         assertEq(escrow.numCheckpoints(tokenId), 3);
         assertEq(escrow.delegates(tokenId), 0);
-        IVotingEscrow.Checkpoint memory checkpoint = escrow.checkpoints(tokenId, 2);
+        IVotingEscrow.Checkpoint memory checkpoint = escrow.checkpoints(
+            tokenId,
+            2
+        );
         assertEq(checkpoint.fromTimestamp, 1213201);
         assertEq(checkpoint.owner, address(owner));
         assertEq(checkpoint.delegatedBalance, 0);
@@ -735,7 +806,13 @@ contract ManagedNftTest is BaseTest {
 
         skipAndRoll(2 weeks);
         vm.expectEmit(true, true, true, true, address(escrow));
-        emit WithdrawManaged(address(owner), tokenId, mTokenId, TOKEN_1, 1818001);
+        emit WithdrawManaged(
+            address(owner),
+            tokenId,
+            mTokenId,
+            TOKEN_1,
+            1818001
+        );
         vm.expectEmit(false, false, false, true, address(escrow));
         emit MetadataUpdate(tokenId);
         voter.withdrawManaged(tokenId);
@@ -753,7 +830,10 @@ contract ManagedNftTest is BaseTest {
 
         // check withdrawing user point updates correctly
         assertEq(escrow.userPointEpoch(tokenId), 2);
-        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(tokenId, 2);
+        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(
+            tokenId,
+            2
+        );
         assertEq(convert(userPoint.bias), 997231727113978005); // (TOKEN_1 / MAXTIME) * (127612800 - 1818001)
         assertEq(convert(userPoint.slope), 7927447995); // TOKEN_1 / MAXTIME
         assertEq(userPoint.ts, 1818001);
@@ -785,7 +865,10 @@ contract ManagedNftTest is BaseTest {
 
         // check voting checkpoints
         assertEq(escrow.numCheckpoints(mTokenId), 1);
-        IVotingEscrow.Checkpoint memory checkpoint = escrow.checkpoints(mTokenId, 0);
+        IVotingEscrow.Checkpoint memory checkpoint = escrow.checkpoints(
+            mTokenId,
+            0
+        );
         assertEq(checkpoint.fromTimestamp, 608401);
         assertEq(checkpoint.owner, address(owner2));
         assertEq(checkpoint.delegatedBalance, 0);
@@ -797,10 +880,15 @@ contract ManagedNftTest is BaseTest {
         assertEq(escrow.weights(tokenId, mTokenId), 0);
         assertEq(escrow.supply(), supply);
         assertEq(escrow.totalSupply(), 997231727113978005);
-        assertEq(uint256(escrow.escrowType(tokenId)), uint256(IVotingEscrow.EscrowType.NORMAL));
+        assertEq(
+            uint256(escrow.escrowType(tokenId)),
+            uint256(IVotingEscrow.EscrowType.NORMAL)
+        );
 
         // check withdrawal represented in locked / free managed rewards
-        lockedManagedReward = LockedManagedReward(escrow.managedToLocked(mTokenId));
+        lockedManagedReward = LockedManagedReward(
+            escrow.managedToLocked(mTokenId)
+        );
         assertEq(lockedManagedReward.balanceOf(tokenId), 0);
         assertEq(lockedManagedReward.totalSupply(), 0);
         freeManagedReward = FreeManagedReward(escrow.managedToFree(mTokenId));
@@ -816,7 +904,9 @@ contract ManagedNftTest is BaseTest {
         voter.depositManaged(tokenId, mTokenId);
 
         // locked rewards initially empty
-        lockedManagedReward = LockedManagedReward(escrow.managedToLocked(mTokenId));
+        lockedManagedReward = LockedManagedReward(
+            escrow.managedToLocked(mTokenId)
+        );
         assertEq(BTC.balanceOf(address(lockedManagedReward)), 0);
         freeManagedReward = FreeManagedReward(escrow.managedToFree(mTokenId));
         assertEq(BTC.balanceOf(address(freeManagedReward)), 0);
@@ -829,7 +919,10 @@ contract ManagedNftTest is BaseTest {
 
         // check user point updates correctly on increaseAmount
         assertEq(escrow.userPointEpoch(mTokenId), 1);
-        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(mTokenId, 1);
+        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(
+            mTokenId,
+            1
+        );
         assertEq(convert(userPoint.bias), 0);
         assertEq(convert(userPoint.slope), 0);
         assertEq(userPoint.ts, 608401);
@@ -848,11 +941,20 @@ contract ManagedNftTest is BaseTest {
 
         assertEq(escrow.supply(), TOKEN_1 * 2);
         assertEq(BTC.balanceOf(address(lockedManagedReward)), TOKEN_1);
-        assertEq(lockedManagedReward.tokenRewardsPerEpoch(address(BTC), 604800), TOKEN_1);
+        assertEq(
+            lockedManagedReward.tokenRewardsPerEpoch(address(BTC), 604800),
+            TOKEN_1
+        );
 
         skipAndRoll(2 weeks);
         vm.expectEmit(true, true, true, true, address(escrow));
-        emit WithdrawManaged(address(owner), tokenId, mTokenId, TOKEN_1 * 2, 1818001);
+        emit WithdrawManaged(
+            address(owner),
+            tokenId,
+            mTokenId,
+            TOKEN_1 * 2,
+            1818001
+        );
         vm.expectEmit(false, false, false, true, address(escrow));
         emit MetadataUpdate(tokenId);
         voter.withdrawManaged(tokenId);
@@ -902,7 +1004,10 @@ contract ManagedNftTest is BaseTest {
 
         // check voting checkpoints
         assertEq(escrow.numCheckpoints(mTokenId), 1);
-        IVotingEscrow.Checkpoint memory checkpoint = escrow.checkpoints(mTokenId, 0);
+        IVotingEscrow.Checkpoint memory checkpoint = escrow.checkpoints(
+            mTokenId,
+            0
+        );
         assertEq(checkpoint.fromTimestamp, 608401);
         assertEq(checkpoint.owner, address(owner2));
         assertEq(checkpoint.delegatedBalance, 0);
@@ -914,7 +1019,10 @@ contract ManagedNftTest is BaseTest {
         assertEq(escrow.weights(tokenId, mTokenId), 0);
         assertEq(escrow.supply(), TOKEN_1 * 2);
         assertEq(escrow.totalSupply(), 1994463454353750809);
-        assertEq(uint256(escrow.escrowType(tokenId)), uint256(IVotingEscrow.EscrowType.NORMAL));
+        assertEq(
+            uint256(escrow.escrowType(tokenId)),
+            uint256(IVotingEscrow.EscrowType.NORMAL)
+        );
 
         // check withdrawal represented in locked managed rewards
         assertEq(lockedManagedReward.balanceOf(tokenId), 0);
@@ -935,7 +1043,9 @@ contract ManagedNftTest is BaseTest {
         uint256 supply = escrow.supply();
 
         // locked rewards initially empty
-        lockedManagedReward = LockedManagedReward(escrow.managedToLocked(mTokenId));
+        lockedManagedReward = LockedManagedReward(
+            escrow.managedToLocked(mTokenId)
+        );
         assertEq(BTC.balanceOf(address(lockedManagedReward)), 0);
         freeManagedReward = FreeManagedReward(escrow.managedToFree(mTokenId));
         assertEq(BTC.balanceOf(address(freeManagedReward)), 0);
@@ -946,11 +1056,20 @@ contract ManagedNftTest is BaseTest {
 
         assertEq(escrow.supply(), supply);
         assertEq(BTC.balanceOf(address(freeManagedReward)), TOKEN_1);
-        assertEq(freeManagedReward.tokenRewardsPerEpoch(address(BTC), 604800), TOKEN_1);
+        assertEq(
+            freeManagedReward.tokenRewardsPerEpoch(address(BTC), 604800),
+            TOKEN_1
+        );
 
         skipAndRoll(2 weeks);
         vm.expectEmit(true, true, true, true, address(escrow));
-        emit WithdrawManaged(address(owner), tokenId, mTokenId, TOKEN_1, 1818001);
+        emit WithdrawManaged(
+            address(owner),
+            tokenId,
+            mTokenId,
+            TOKEN_1,
+            1818001
+        );
         vm.expectEmit(false, false, false, true, address(escrow));
         emit MetadataUpdate(tokenId);
         voter.withdrawManaged(tokenId);
@@ -969,7 +1088,10 @@ contract ManagedNftTest is BaseTest {
         // check withdrawing user point updates correctly
         // create lock and deposit at same ts, withdraw in different ts
         assertEq(escrow.userPointEpoch(tokenId), 2);
-        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(tokenId, 2);
+        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(
+            tokenId,
+            2
+        );
         assertEq(convert(userPoint.bias), 997231727113978005); // (TOKEN_1 / MAXTIME) * (127612800 - 1818001)
         assertEq(convert(userPoint.slope), 7927447995); // TOKEN_1 / MAXTIME
         assertEq(userPoint.ts, 1818001);
@@ -1001,7 +1123,10 @@ contract ManagedNftTest is BaseTest {
 
         // check voting checkpoints
         assertEq(escrow.numCheckpoints(mTokenId), 1);
-        IVotingEscrow.Checkpoint memory checkpoint = escrow.checkpoints(mTokenId, 0);
+        IVotingEscrow.Checkpoint memory checkpoint = escrow.checkpoints(
+            mTokenId,
+            0
+        );
         assertEq(checkpoint.fromTimestamp, 608401);
         assertEq(checkpoint.owner, address(owner2));
         assertEq(checkpoint.delegatedBalance, 0);
@@ -1013,7 +1138,10 @@ contract ManagedNftTest is BaseTest {
         assertEq(escrow.weights(tokenId, mTokenId), 0);
         assertEq(escrow.supply(), supply);
         assertEq(escrow.totalSupply(), 997231727113978005);
-        assertEq(uint256(escrow.escrowType(tokenId)), uint256(IVotingEscrow.EscrowType.NORMAL));
+        assertEq(
+            uint256(escrow.escrowType(tokenId)),
+            uint256(IVotingEscrow.EscrowType.NORMAL)
+        );
         // check withdrawal represented in locked managed rewards
         assertEq(lockedManagedReward.balanceOf(tokenId), 0);
         assertEq(lockedManagedReward.totalSupply(), 0);
@@ -1033,7 +1161,9 @@ contract ManagedNftTest is BaseTest {
         assertEq(post - pre, TOKEN_1);
     }
 
-    function testWithdrawManagedWithLockedRewardWithDelegatingManagedNFT() public {
+    function testWithdrawManagedWithLockedRewardWithDelegatingManagedNFT()
+        public
+    {
         skip(1 hours);
         uint256 mTokenId = escrow.createManagedLockFor(address(owner2));
         BTC.approve(address(escrow), type(uint256).max);
@@ -1044,7 +1174,9 @@ contract ManagedNftTest is BaseTest {
         voter.depositManaged(tokenId, mTokenId);
 
         // locked rewards initially empty
-        lockedManagedReward = LockedManagedReward(escrow.managedToLocked(mTokenId));
+        lockedManagedReward = LockedManagedReward(
+            escrow.managedToLocked(mTokenId)
+        );
         assertEq(BTC.balanceOf(address(lockedManagedReward)), 0);
         freeManagedReward = FreeManagedReward(escrow.managedToFree(mTokenId));
         assertEq(BTC.balanceOf(address(freeManagedReward)), 0);
@@ -1057,7 +1189,10 @@ contract ManagedNftTest is BaseTest {
 
         // check user point updates correctly on increaseAmount
         assertEq(escrow.userPointEpoch(mTokenId), 1);
-        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(mTokenId, 1);
+        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(
+            mTokenId,
+            1
+        );
         assertEq(convert(userPoint.bias), 0);
         assertEq(convert(userPoint.slope), 0);
         assertEq(userPoint.ts, 608401);
@@ -1076,11 +1211,20 @@ contract ManagedNftTest is BaseTest {
 
         assertEq(escrow.supply(), TOKEN_1 * 3);
         assertEq(BTC.balanceOf(address(lockedManagedReward)), TOKEN_1);
-        assertEq(lockedManagedReward.tokenRewardsPerEpoch(address(BTC), 604800), TOKEN_1);
+        assertEq(
+            lockedManagedReward.tokenRewardsPerEpoch(address(BTC), 604800),
+            TOKEN_1
+        );
 
         skipAndRoll(2 weeks);
         vm.expectEmit(true, false, false, false, address(escrow));
-        emit WithdrawManaged(address(owner), tokenId, mTokenId, TOKEN_1, 1818001);
+        emit WithdrawManaged(
+            address(owner),
+            tokenId,
+            mTokenId,
+            TOKEN_1,
+            1818001
+        );
         voter.withdrawManaged(tokenId);
 
         IVotingEscrow.LockedBalance memory locked;
@@ -1128,7 +1272,10 @@ contract ManagedNftTest is BaseTest {
 
         // check voting checkpoints
         assertEq(escrow.numCheckpoints(mTokenId), 1);
-        IVotingEscrow.Checkpoint memory checkpoint = escrow.checkpoints(mTokenId, 0);
+        IVotingEscrow.Checkpoint memory checkpoint = escrow.checkpoints(
+            mTokenId,
+            0
+        );
         assertEq(checkpoint.fromTimestamp, 608401);
         assertEq(checkpoint.owner, address(owner2));
         assertEq(checkpoint.delegatedBalance, 0);
@@ -1141,9 +1288,15 @@ contract ManagedNftTest is BaseTest {
         assertEq(checkpoint.owner, address(owner));
         assertEq(checkpoint.delegatedBalance, 0);
         assertEq(checkpoint.delegatee, 0);
-        assertEq(escrow.getPastVotes(address(owner), tokenId2, 1818001), 987642686019226005);
+        assertEq(
+            escrow.getPastVotes(address(owner), tokenId2, 1818001),
+            987642686019226005
+        );
         assertEq(escrow.balanceOfNFTAt(tokenId2, 1818000), 987642693946674000);
-        assertEq(escrow.getPastVotes(address(owner), tokenId2, 1818000), TOKEN_1 * 2 + 987642693946674000);
+        assertEq(
+            escrow.getPastVotes(address(owner), tokenId2, 1818000),
+            TOKEN_1 * 2 + 987642693946674000
+        );
 
         assertEq(escrow.balanceOfNFT(mTokenId), 0);
         assertEq(escrow.balanceOfNFT(tokenId), 1994463454353750809);
@@ -1151,7 +1304,10 @@ contract ManagedNftTest is BaseTest {
         assertEq(escrow.weights(tokenId, mTokenId), 0);
         assertEq(escrow.supply(), TOKEN_1 * 3);
         assertEq(escrow.totalSupply(), 2982106140372976814);
-        assertEq(uint256(escrow.escrowType(tokenId)), uint256(IVotingEscrow.EscrowType.NORMAL));
+        assertEq(
+            uint256(escrow.escrowType(tokenId)),
+            uint256(IVotingEscrow.EscrowType.NORMAL)
+        );
 
         // check withdrawal represented in locked managed rewards
         assertEq(lockedManagedReward.balanceOf(tokenId), 0);

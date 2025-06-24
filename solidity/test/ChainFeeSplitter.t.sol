@@ -14,7 +14,10 @@ contract ChainFeeSplitterTest is BaseTest {
 
     function testInitialSetup() public {
         assertEq(chainFeeSplitter.needle(), 33);
-        assertEq(chainFeeSplitter.activePeriod(), ((block.timestamp) / WEEK) * WEEK);
+        assertEq(
+            chainFeeSplitter.activePeriod(),
+            ((block.timestamp) / WEEK) * WEEK
+        );
         assertEq(address(chainFeeSplitter.token()), address(BTC));
     }
 
@@ -27,16 +30,26 @@ contract ChainFeeSplitterTest is BaseTest {
         skip(1 weeks);
 
         uint256 currentBalance = token.balanceOf(address(chainFeeSplitter));
-        
+
         chainFeeSplitter.updatePeriod();
 
         uint256 newActivePeriod = chainFeeSplitter.activePeriod();
         assertGt(newActivePeriod, prevActivePeriod, "Period should be updated");
 
-        uint256 expectedDistributorAmount = (currentBalance * chainFeeSplitter.needle()) / MAXIMUM_GAUGE_SCALE;
-        uint256 expectedVoterAmount = currentBalance - expectedDistributorAmount;
+        uint256 expectedDistributorAmount = (currentBalance *
+            chainFeeSplitter.needle()) / MAXIMUM_GAUGE_SCALE;
+        uint256 expectedVoterAmount = currentBalance -
+            expectedDistributorAmount;
 
-        assertEq(token.balanceOf(address(distributor)), expectedDistributorAmount, "Incorrect distributor amount");
-        assertEq(token.balanceOf(address(voter)), expectedVoterAmount, "Incorrect voter amount");
+        assertEq(
+            token.balanceOf(address(distributor)),
+            expectedDistributorAmount,
+            "Incorrect distributor amount"
+        );
+        assertEq(
+            token.balanceOf(address(voter)),
+            expectedVoterAmount,
+            "Incorrect voter amount"
+        );
     }
 }
