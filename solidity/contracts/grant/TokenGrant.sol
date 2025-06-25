@@ -16,6 +16,7 @@ contract TokenGrant is VestingWalletUpgradeable {
 
     IERC20 public token;
     IVotingEscrow public votingEscrow;
+    address public grantManager;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -39,27 +40,15 @@ contract TokenGrant is VestingWalletUpgradeable {
         }
         // TODO: check if not revoked, withdrawn, or not already converted
 
-        // Any token transferred to this contract will follow the vesting
-        // schedule as if they were locked from the beginning so we just take
-        // the entire available amount.
         uint256 amount = token.balanceOf(address(this));
-        // The time remaining for the grant to fully vest. The rounding happens
-        // inside the veNFT logic.
-        uint256 duration = end() - block.timestamp;
-
-        _convert(beneficiary(), amount, duration);
-    }
-
-    function _convert(
-        address beneficiary,
-        uint256 amount,
-        uint256 duration
-    ) internal {
-        // TODO: Here we may need to insert some logic that will expose grant
-        // details to the ve NFT, as necessary.
 
         token.forceApprove(address(votingEscrow), amount);
-        votingEscrow.createLockFor(amount, duration, beneficiary);
+        votingEscrow.createGrantLockFor(
+            amount,
+            beneficiary(),
+            grantManager,
+            end()
+        );
     }
 
     function end() public view returns (uint256) {

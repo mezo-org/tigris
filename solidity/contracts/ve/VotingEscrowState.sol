@@ -110,6 +110,15 @@ library VotingEscrowState {
 
         /// @dev Information on whether a tokenId has already voted
         mapping(uint256 => bool) voted;
+        /*///////////////////////////////////////////////////////////////
+                                TOKEN GRANT
+        //////////////////////////////////////////////////////////////*/
+        /// @dev Mapping from tokenId to grant manager. The grant manager can
+        ///      revoke a grant converted to veNFT.
+        mapping(uint256 => address) grantManager;
+        /// @dev Mapping from tokenId to the end date of the grant vesting
+        ///      schedule. The end date is a UNIX timestamp.
+        mapping(uint256 => uint256) vestingEnd;
         // Reserved storage space in case we need to add more variables.
         // The convention from OpenZeppelin suggests the storage space should
         // add up to 50 slots. Here we want to have more slots as there are
