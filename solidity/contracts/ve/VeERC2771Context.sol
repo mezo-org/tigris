@@ -20,7 +20,7 @@ library VeERC2771Context {
     function _msgSender(
         VotingEscrowState.Storage storage self
     ) internal view returns (address sender) {
-        if (isTrustedForwarder(self, msg.sender)) {
+        if (msg.data.length >= 20 && isTrustedForwarder(self, msg.sender)) {
             // The assembly code is more direct than the Solidity version using `abi.decode`.
             /// @solidity memory-safe-assembly
             assembly {
