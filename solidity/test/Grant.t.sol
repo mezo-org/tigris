@@ -22,6 +22,16 @@ contract GrantTest is BaseTest {
         uint256 _locktime,
         uint256 _ts
     );
+    event Split(
+        uint256 indexed _from,
+        uint256 indexed _tokenId1,
+        uint256 indexed _tokenId2,
+        address _sender,
+        uint256 _splitAmount1,
+        uint256 _splitAmount2,
+        uint256 _locktime,
+        uint256 _ts
+    );
 
     function testCreateGrantLockFor() public {
         uint256 vestingEnd = block.timestamp + GRANT_DURATION;
@@ -120,7 +130,6 @@ contract GrantTest is BaseTest {
         );
         
         escrow.lockPermanent(tokenId2);
-
         skip(GRANT_DURATION);
 
         vm.expectEmit(address(escrow));
@@ -135,5 +144,39 @@ contract GrantTest is BaseTest {
             1468801
         );
         escrow.merge(tokenId1, tokenId2);
+    }
+
+    function testCannotSplitUnvestedGrantNFT() public {
+        uint256 vestingEnd = block.timestamp + GRANT_DURATION;
+        address grantee = address(owner);
+
+        BTC.approve(address(escrow), TOKEN_1);
+        uint256 tokenId = escrow.createGrantLockFor(
+            TOKEN_1, grantee, grantManager, vestingEnd
+        );
+
+        escrow.toggleSplit(grantee, true);   
+        escrow.lockPermanent(tokenId);
+
+        vm.expectRevert(IVotingEscrow.UnvestedGrantNFT.selector);
+        escrow.split(1, TOKEN_1 / 2);
+    }
+
+    function testCanSplitVestedGrantNFT() public {
+        uint256 vestingEnd = block.timestamp + GRANT_DURATION;
+        address grantee = address(owner);
+
+        BTC.approve(address(escrow), TOKEN_1);
+        uint256 tokenId = escrow.createGrantLockFor(
+            TOKEN_1, grantee, grantManager, vestingEnd
+        );
+
+        escrow.toggleSplit(grantee, true);   
+        escrow.lockPermanent(tokenId);
+        skip(GRANT_DURATION);
+
+        vm.expectEmit(address(escrow));
+        emit Split(1, 2, 3, grantee, TOKEN_1 / 2, TOKEN_1 / 2, 0, 1468801);
+        escrow.split(1, TOKEN_1 / 2);
     }
 }

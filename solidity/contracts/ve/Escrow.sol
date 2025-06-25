@@ -552,7 +552,9 @@ library Escrow {
         if (_splitAmount == 0) revert IVotingEscrow.ZeroAmount();
         if (newLocked.amount <= _splitAmount)
             revert IVotingEscrow.AmountTooBig();
-        // TODO: block splitting if unvested NFT
+        if (self.vestingEnd[_from] > block.timestamp) {
+            revert IVotingEscrow.UnvestedGrantNFT();
+        }
 
         // Zero out and burn old veNFT
         self._burn(_from);
