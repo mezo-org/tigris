@@ -94,6 +94,7 @@ interface IVotingEscrow is IVotes, IERC4906, IERC6372, IERC721Metadata {
     error ZeroAmount();
     error ZeroBalance();
     error NotGrantManager();
+    error UnvestedGrantNFT();
 
     event Deposit(
         address indexed provider,
@@ -457,6 +458,8 @@ interface IVotingEscrow is IVotes, IERC4906, IERC6372, IERC721Metadata {
     /// @notice Merges `_from` into `_to`.
     /// @dev Cannot merge `_from` locks that are permanent or have already voted this epoch.
     ///      Cannot merge `_to` locks that have already expired.
+    ///      Cannot merge if either `_from` or `_to` is veNFT created for
+    ///      a grant that has not fully vested yet.
     ///      This will burn the veNFT. Any rebases or rewards that are unclaimed
     ///      will no longer be claimable. Claim all rebases and rewards prior to calling this.
     /// @param _from VeNFT to merge from.
