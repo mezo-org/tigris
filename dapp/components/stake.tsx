@@ -92,7 +92,7 @@ const StakeInterface = () => {
             <ul className="text-sm text-gray-600 space-y-1">
               <li className="flex items-center gap-2">
                 <div className="w-1 h-1 bg-blue-500 rounded-full" />
-                Voting power in Mezodrome governance
+                Voting power in Tigris governance
               </li>
               <li className="flex items-center gap-2">
                 <div className="w-1 h-1 bg-blue-500 rounded-full" />
