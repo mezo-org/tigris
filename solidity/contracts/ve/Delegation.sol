@@ -27,7 +27,7 @@ library Delegation {
     /// @notice The EIP-712 typehash for the contract's domain
     bytes32 public constant DOMAIN_TYPEHASH =
         keccak256(
-            "EIP712Domain(string name,uint256 chainId,address verifyingContract)"
+            "EIP712Domain(string name,string contractVersion,uint256 chainId,address verifyingContract)"
         );
 
     /// @notice The EIP-712 typehash for the delegation struct used by the contract
