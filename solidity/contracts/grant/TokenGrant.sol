@@ -18,6 +18,11 @@ contract TokenGrant is VestingWalletUpgradeable {
     IVotingEscrow public votingEscrow;
     address public grantManager;
 
+    /// @notice Assets has already been released from the grant.
+    ///         This error is thrown then trying to convert the grant which already
+    ///         released any amount of assets.
+    error AlreadyReleased();
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -34,11 +39,17 @@ contract TokenGrant is VestingWalletUpgradeable {
     /// @notice Converts TokenGrant to ve NFT with lock time equal to the
     ///         remaining vesting schedule duration rounded down to the nearest
     ///         week. The operation is irreversible.
+    /// @dev The grant cannot be converted if any asset has been released.
     function convert() external {
         if (msg.sender != beneficiary()) {
             revert NotBeneficiary();
         }
-        // TODO: check if not revoked, withdrawn, or not already converted
+        // TODO: check if not revoked, or not already converted
+
+        // If any asset has been released, the grant cannot be converted.
+        if (released() > 0 || released(token) > 0) {
+            revert AlreadyReleased();
+        }
 
         uint256 amount = token.balanceOf(address(this));
 
