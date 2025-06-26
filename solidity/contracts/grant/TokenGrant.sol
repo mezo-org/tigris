@@ -7,9 +7,9 @@ pragma solidity 0.8.24;
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {VestingWalletUpgradeable} from "@openzeppelin/contracts-upgradeable/finance/VestingWalletUpgradeable.sol";
+import {VestingWalletCliffUpgradeable} from "./VestingWalletCliffUpgradeable.sol";
 
-contract TokenGrant is VestingWalletUpgradeable {
+contract TokenGrant is VestingWalletCliffUpgradeable {
     using SafeERC20 for IERC20;
 
     error NotBeneficiary();
@@ -25,9 +25,11 @@ contract TokenGrant is VestingWalletUpgradeable {
     function initialize(
         address beneficiary,
         uint64 startTimestamp,
-        uint64 durationSeconds
-    ) external initializer {
+        uint64 durationSeconds,
+        uint64 cliffSeconds
+    ) public override initializer {
         __VestingWallet_init(beneficiary, startTimestamp, durationSeconds);
+        __VestingWalletCliff_init(cliffSeconds);
     }
 
     /// @notice Converts TokenGrant to ve NFT with lock time equal to the
@@ -60,9 +62,5 @@ contract TokenGrant is VestingWalletUpgradeable {
 
         token.forceApprove(address(votingEscrow), amount);
         votingEscrow.createLockFor(amount, duration, beneficiary);
-    }
-
-    function end() public view returns (uint256) {
-        return start() + duration();
     }
 }
