@@ -24,7 +24,7 @@ export const mezoChain: Chain = {
 }
 
 export const config = getDefaultConfig({
-  appName: "Mezodrome",
+  appName: "Tigris",
   projectId: "YOUR_PROJECT_ID",
   chains: [mezoChain],
   ssr: true, // If your dApp uses server side rendering (SSR)
