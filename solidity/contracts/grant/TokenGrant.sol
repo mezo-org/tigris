@@ -49,7 +49,7 @@ contract TokenGrant is VestingWalletCliffUpgradeable {
         // TODO: check if not revoked, or not already converted
 
         // If any asset has been released, the grant cannot be converted.
-        if (released() > 0 || released(token) > 0) {
+        if (released() > 0 || released(address(token)) > 0) {
             revert AlreadyReleased();
         }
 
