@@ -99,6 +99,7 @@ abstract contract BaseTest is Base, TestOwner {
         amounts[3] = TOKEN_10M;
         amounts[4] = TOKEN_10M;
         mintToken(address(BTC), owners, amounts);
+        mintToken(address(MEZO), owners, amounts);
         mintToken(address(LR), owners, amounts);
 
         tokens.push(address(mUSD));
@@ -215,6 +216,7 @@ abstract contract BaseTest is Base, TestOwner {
         LIMPETH = IERC20(new MockERC20("LIMPETH", "LIMPETH", 18));
         wtBTC = new MockERC20("wtBTC", "wtBTC", 18);
         BTC = new MockERC20("BTC", "BTC", 18);
+        MEZO = IERC20(new MockERC20("MEZO", "MEZO", 18));
         LR = new MockERC20("LR", "LR", 18);
     }
 

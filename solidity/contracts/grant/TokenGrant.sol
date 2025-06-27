@@ -13,6 +13,7 @@ contract TokenGrant is VestingWalletUpgradeable {
     using SafeERC20 for IERC20;
 
     error NotBeneficiary();
+    error EmptyGrant();
 
     IERC20 public token;
     IVotingEscrow public votingEscrow;
@@ -24,31 +25,48 @@ contract TokenGrant is VestingWalletUpgradeable {
     }
 
     function initialize(
-        address beneficiary,
-        uint64 startTimestamp,
-        uint64 durationSeconds
+        address _token,
+        address _votingEscrow,
+        address _grantManager,
+        address _beneficiary,
+        uint64 _startTimestamp,
+        uint64 _durationSeconds
     ) external initializer {
-        __VestingWallet_init(beneficiary, startTimestamp, durationSeconds);
+        __VestingWallet_init(_beneficiary, _startTimestamp, _durationSeconds);
+
+        token = IERC20(_token);
+        votingEscrow = IVotingEscrow(_votingEscrow);
+        grantManager = _grantManager;
     }
 
-    /// @notice Converts TokenGrant to ve NFT with lock time equal to the
+    /// @notice Converts token grant to a veNFT with lock time equal to the
     ///         remaining vesting schedule duration rounded down to the nearest
-    ///         week. The operation is irreversible.
-    function convert() external {
+    ///         week. The operation is irreversible and takes the entire token
+    ///         balance of TokenGrant. The function fails if the token balance
+    ///         is zero. Only grant beneficiary can perform the conversion.
+    ///         The function can be called more than one time if the TokenGrant
+    ///         token balance increased after the previous conversion. For each
+    ///         convert() call, a new veNFT is created. The veNFT will use the
+    ///         same vesting schedule end, no matter when it is called.
+    /// @return tokenId The token ID of the created veNFT
+    function convert() external returns (uint256 tokenID) {
         if (msg.sender != beneficiary()) {
             revert NotBeneficiary();
         }
-        // TODO: check if not revoked, withdrawn, or not already converted
 
         uint256 amount = token.balanceOf(address(this));
+        if (amount == 0) {
+            revert EmptyGrant();
+        }
 
         token.forceApprove(address(votingEscrow), amount);
-        votingEscrow.createGrantLockFor(
-            amount,
-            beneficiary(),
-            grantManager,
-            end()
-        );
+        return
+            votingEscrow.createGrantLockFor(
+                amount,
+                beneficiary(),
+                grantManager,
+                end()
+            );
     }
 
     function end() public view returns (uint256) {
