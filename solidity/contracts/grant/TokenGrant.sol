@@ -14,6 +14,9 @@ contract TokenGrant is VestingWalletUpgradeable {
 
     error NotBeneficiary();
     error EmptyGrant();
+    error MaxDurationExceeded();
+
+    uint256 internal constant MAX_DURATION = 4 * 365 days;
 
     IERC20 public token;
     IVotingEscrow public votingEscrow;
@@ -32,6 +35,10 @@ contract TokenGrant is VestingWalletUpgradeable {
         uint64 _startTimestamp,
         uint64 _durationSeconds
     ) external initializer {
+        if (_durationSeconds > MAX_DURATION) {
+            revert MaxDurationExceeded();
+        }
+
         __VestingWallet_init(_beneficiary, _startTimestamp, _durationSeconds);
 
         token = IERC20(_token);
@@ -49,11 +56,14 @@ contract TokenGrant is VestingWalletUpgradeable {
     ///         convert() call, a new veNFT is created. The veNFT will use the
     ///         same vesting schedule end, no matter when it is called.
     /// @return tokenId The token ID of the created veNFT
-    function convert() external returns (uint256 tokenID) {
+    function convert() external returns (uint256 tokenId) {
         if (msg.sender != beneficiary()) {
             revert NotBeneficiary();
         }
 
+        // Note we take the current balance of TokenGrant so nothing stops the
+        // grantee for converting at any moment, even after they withdrawn
+        // some portion of tokens from TokenGrant. This is fine.
         uint256 amount = token.balanceOf(address(this));
         if (amount == 0) {
             revert EmptyGrant();

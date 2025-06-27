@@ -10,6 +10,7 @@ import "./BaseTest.sol";
 contract TokenGrantTest is BaseTest {
 
     uint64 GRANT_DURATION = 3 * 365 days;
+    uint64 MAX_DURATION = 4 * 365 days;
 
     function newTokenGrant(
         address beneficiary,
@@ -106,5 +107,48 @@ contract TokenGrantTest is BaseTest {
         uint256 _vestingEnd2 = mezoEscrow.vestingEnd(tokenId2);
         assertEq(_vestingEnd1, vestingEnd);
         assertEq(_vestingEnd2, vestingEnd);
+    }
+
+    function cannotInitWithMaxDurationExceeded() public {
+                TokenGrant implementation = new TokenGrant();
+        ProxyAdmin proxyAdmin = new ProxyAdmin();
+
+        // Fails for max duration exceeded
+        vm.expectRevert(TokenGrant.MaxDurationExceeded.selector);
+        new TransparentUpgradeableProxy(
+            address(implementation),
+            address(proxyAdmin),
+            abi.encodeWithSelector(
+            TokenGrant.initialize.selector, 
+            address(MEZO),
+            address(mezoEscrow),
+            address(owner),
+            address(owner), 
+            block.timestamp, 
+            MAX_DURATION + 1
+        )
+        );
+    }
+
+    function testCanInitWithMaxDuration() public {
+        TokenGrant implementation = new TokenGrant();
+        ProxyAdmin proxyAdmin = new ProxyAdmin();
+
+        TokenGrant grant = TokenGrant(payable(new TransparentUpgradeableProxy(
+            address(implementation),
+            address(proxyAdmin),
+            abi.encodeWithSelector(
+            TokenGrant.initialize.selector, 
+            address(MEZO),
+            address(mezoEscrow),
+            address(owner),
+            address(owner), 
+            block.timestamp, 
+            MAX_DURATION
+            )
+        )));
+        // Sanity check conversion works as well for max duration
+        MEZO.transfer(address(grant), TOKEN_100K);
+        grant.convert();
     }
 } 
