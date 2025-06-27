@@ -33,7 +33,7 @@ contract TokenGrant is VestingWalletCliffUpgradeable {
         uint64 startTimestamp,
         uint64 durationSeconds,
         uint64 cliffSeconds
-    ) public override initializer {
+    ) public initializer {
         __VestingWallet_init(beneficiary, startTimestamp, durationSeconds);
         __VestingWalletCliff_init(cliffSeconds);
     }
