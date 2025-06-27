@@ -27,7 +27,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const escrowDeployment = await deploy("Escrow", deployOptions)
   const managedNFTDeployment = await deploy("ManagedNFT", deployOptions)
   const nftDeployment = await deploy("NFT", deployOptions)
-  const grantDeployment = await deploy("Grant", deployOptions)
+  const grantDeployment = await deploy("Grant", {
+    libraries: {
+      Escrow: escrowDeployment.address,
+    },
+    ...deployOptions,
+  })
 
   const VeBTC = await deployments.getOrNull("VeBTC")
 
