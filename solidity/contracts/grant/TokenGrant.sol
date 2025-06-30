@@ -7,9 +7,9 @@ pragma solidity 0.8.24;
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {VestingWalletUpgradeable} from "@openzeppelin/contracts-upgradeable/finance/VestingWalletUpgradeable.sol";
+import {VestingWalletCliffUpgradeable} from "./VestingWalletCliffUpgradeable.sol";
 
-contract TokenGrant is VestingWalletUpgradeable {
+contract TokenGrant is VestingWalletCliffUpgradeable {
     using SafeERC20 for IERC20;
 
     error NotBeneficiary();
@@ -33,13 +33,15 @@ contract TokenGrant is VestingWalletUpgradeable {
         address _grantManager,
         address _beneficiary,
         uint64 _startTimestamp,
-        uint64 _durationSeconds
+        uint64 _durationSeconds,
+        uint64 _cliffSeconds
     ) external initializer {
         if (_durationSeconds > MAX_DURATION) {
             revert MaxDurationExceeded();
         }
 
         __VestingWallet_init(_beneficiary, _startTimestamp, _durationSeconds);
+        __VestingWalletCliff_init(_cliffSeconds);
 
         token = IERC20(_token);
         votingEscrow = IVotingEscrow(_votingEscrow);
@@ -77,9 +79,5 @@ contract TokenGrant is VestingWalletUpgradeable {
                 grantManager,
                 end()
             );
-    }
-
-    function end() public view returns (uint256) {
-        return start() + duration();
     }
 }
