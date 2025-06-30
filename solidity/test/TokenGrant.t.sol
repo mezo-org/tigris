@@ -8,26 +8,28 @@ import {TokenGrant} from "contracts/grant/TokenGrant.sol";
 import "./BaseTest.sol";
 
 contract TokenGrantTest is BaseTest {
-
     uint64 GRANT_DURATION = 3 * 365 days;
     uint64 MAX_DURATION = 4 * 365 days;
+    uint64 CLIFF_SECONDS = 2 * 365 days;
 
     function newTokenGrant(
         address beneficiary,
         uint64 startTimestamp,
-        uint64 durationSeconds
+        uint64 durationSeconds,
+        uint64 cliffSeconds
     ) internal returns (TokenGrant) {
         TokenGrant implementation = new TokenGrant();
         ProxyAdmin proxyAdmin = new ProxyAdmin();
 
         bytes memory initData = abi.encodeWithSelector(
-            TokenGrant.initialize.selector, 
+            TokenGrant.initialize.selector,
             address(MEZO),
             address(mezoEscrow),
             grantManager,
-            beneficiary, 
-            startTimestamp, 
-            durationSeconds
+            beneficiary,
+            startTimestamp,
+            durationSeconds,
+            cliffSeconds
         );
 
         TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
@@ -40,15 +42,25 @@ contract TokenGrantTest is BaseTest {
     }
 
     function testCannotConvertIfNotBeneficiary() public {
-        TokenGrant grant = newTokenGrant(address(owner5), uint64(block.timestamp), GRANT_DURATION);
-    
+        TokenGrant grant = newTokenGrant(
+            address(owner5),
+            uint64(block.timestamp),
+            GRANT_DURATION,
+            CLIFF_SECONDS
+        );
+
         vm.prank(address(owner2));
         vm.expectRevert(TokenGrant.NotBeneficiary.selector);
         grant.convert();
     }
 
     function testCannotConvertIfNoTokens() public {
-        TokenGrant grant = newTokenGrant(address(owner5), uint64(block.timestamp), GRANT_DURATION);
+        TokenGrant grant = newTokenGrant(
+            address(owner5),
+            uint64(block.timestamp),
+            GRANT_DURATION,
+            CLIFF_SECONDS
+        );
 
         vm.prank(address(owner5));
         vm.expectRevert(TokenGrant.EmptyGrant.selector);
@@ -56,7 +68,12 @@ contract TokenGrantTest is BaseTest {
     }
 
     function testConvert() public {
-        TokenGrant grant = newTokenGrant(address(owner5), uint64(block.timestamp), GRANT_DURATION);
+        TokenGrant grant = newTokenGrant(
+            address(owner5),
+            uint64(block.timestamp),
+            GRANT_DURATION,
+            CLIFF_SECONDS
+        );
         MEZO.transfer(address(grant), TOKEN_100K);
 
         vm.prank(address(owner5));
@@ -74,7 +91,12 @@ contract TokenGrantTest is BaseTest {
     }
 
     function testCannotConvertTwiceIfNoTokens() public {
-        TokenGrant grant = newTokenGrant(address(owner5), uint64(block.timestamp), GRANT_DURATION);
+        TokenGrant grant = newTokenGrant(
+            address(owner5),
+            uint64(block.timestamp),
+            GRANT_DURATION,
+            CLIFF_SECONDS
+        );
         MEZO.transfer(address(grant), TOKEN_100K);
 
         vm.startPrank(address(owner5));
@@ -87,7 +109,12 @@ contract TokenGrantTest is BaseTest {
     }
 
     function testConvertTwiceIfToppedUp() public {
-        TokenGrant grant = newTokenGrant(address(owner5), uint64(block.timestamp), GRANT_DURATION);
+        TokenGrant grant = newTokenGrant(
+            address(owner5),
+            uint64(block.timestamp),
+            GRANT_DURATION,
+            CLIFF_SECONDS
+        );
         MEZO.transfer(address(grant), TOKEN_100K);
 
         vm.startPrank(address(owner5));
@@ -110,7 +137,7 @@ contract TokenGrantTest is BaseTest {
     }
 
     function cannotInitWithMaxDurationExceeded() public {
-                TokenGrant implementation = new TokenGrant();
+        TokenGrant implementation = new TokenGrant();
         ProxyAdmin proxyAdmin = new ProxyAdmin();
 
         // Fails for max duration exceeded
@@ -119,14 +146,15 @@ contract TokenGrantTest is BaseTest {
             address(implementation),
             address(proxyAdmin),
             abi.encodeWithSelector(
-            TokenGrant.initialize.selector, 
-            address(MEZO),
-            address(mezoEscrow),
-            address(owner),
-            address(owner), 
-            block.timestamp, 
-            MAX_DURATION + 1
-        )
+                TokenGrant.initialize.selector,
+                address(MEZO),
+                address(mezoEscrow),
+                address(owner),
+                address(owner),
+                block.timestamp,
+                MAX_DURATION + 1,
+                CLIFF_SECONDS
+            )
         );
     }
 
@@ -134,21 +162,26 @@ contract TokenGrantTest is BaseTest {
         TokenGrant implementation = new TokenGrant();
         ProxyAdmin proxyAdmin = new ProxyAdmin();
 
-        TokenGrant grant = TokenGrant(payable(new TransparentUpgradeableProxy(
-            address(implementation),
-            address(proxyAdmin),
-            abi.encodeWithSelector(
-            TokenGrant.initialize.selector, 
-            address(MEZO),
-            address(mezoEscrow),
-            address(owner),
-            address(owner), 
-            block.timestamp, 
-            MAX_DURATION
+        TokenGrant grant = TokenGrant(
+            payable(
+                new TransparentUpgradeableProxy(
+                    address(implementation),
+                    address(proxyAdmin),
+                    abi.encodeWithSelector(
+                        TokenGrant.initialize.selector,
+                        address(MEZO),
+                        address(mezoEscrow),
+                        address(owner),
+                        address(owner),
+                        block.timestamp,
+                        MAX_DURATION,
+                        CLIFF_SECONDS
+                    )
+                )
             )
-        )));
+        );
         // Sanity check conversion works as well for max duration
         MEZO.transfer(address(grant), TOKEN_100K);
         grant.convert();
     }
-} 
+}
