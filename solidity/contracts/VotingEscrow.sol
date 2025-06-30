@@ -12,6 +12,7 @@ import {Escrow} from "./ve/Escrow.sol";
 import {Delegation} from "./ve/Delegation.sol";
 import {Balance} from "./ve/Balance.sol";
 import {VeERC2771Context} from "./ve/VeERC2771Context.sol";
+import {Grant} from "./ve/Grant.sol";
 
 /// @title Voting Escrow
 /// @notice veNFT implementation that escrows ERC-20 tokens in the form of an ERC-721 NFT
@@ -32,6 +33,7 @@ abstract contract VotingEscrow is
     using Delegation for VotingEscrowState.Storage;
     using Balance for VotingEscrowState.Storage;
     using VeERC2771Context for VotingEscrowState.Storage;
+    using Grant for VotingEscrowState.Storage;
 
     VotingEscrowState.Storage internal self;
 
@@ -445,6 +447,34 @@ abstract contract VotingEscrow is
         return "mode=timestamp";
     }
 
+    /*///////////////////////////////////////////////////////////////
+                                TOKEN GRANT
+    //////////////////////////////////////////////////////////////*/
+
+    /// @inheritdoc IVotingEscrow
+    function createGrantLockFor(
+        uint256 _value,
+        address _grantee,
+        address _grantManager,
+        uint256 _vestingEnd
+    ) external nonReentrant returns (uint256) {
+        return
+            self._createGrantLockFor(
+                _value,
+                _grantee,
+                _grantManager,
+                _vestingEnd
+            );
+    }
+
+    /// @inheritdoc IVotingEscrow
+    function setGrantManager(
+        uint256 _tokenId,
+        address _newGrantManager
+    ) external {
+        return self._setGrantManager(_tokenId, _newGrantManager);
+    }
+
     /*//////////////////////////////////////////////////////////////
                               GETTERS
     //////////////////////////////////////////////////////////////*/
@@ -575,6 +605,16 @@ abstract contract VotingEscrow is
         uint256 _managedTokenId
     ) external view returns (uint256) {
         return self.weights[_tokenId][_managedTokenId];
+    }
+
+    /// @inheritdoc IVotingEscrow
+    function grantManager(uint256 _tokenId) external view returns (address) {
+        return self.grantManager[_tokenId];
+    }
+
+    /// @inheritdoc IVotingEscrow
+    function vestingEnd(uint256 _tokenId) external view returns (uint256) {
+        return self.vestingEnd[_tokenId];
     }
 
     /// @notice The EIP-712 typehash for the contract's domain
