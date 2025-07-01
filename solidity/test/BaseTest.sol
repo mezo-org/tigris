@@ -109,7 +109,7 @@ abstract contract BaseTest is Base, TestOwner {
         tokens.push(address(LR));
 
         allowedManager = address(owner);
-        grantManager = address(owner5);
+        grantManager = makeAddr("grantManager");
     }
 
     function _testSetupAfter() public {
