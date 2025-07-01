@@ -14,8 +14,14 @@ contract TokenGrantTest is BaseTest {
     uint64 MAX_DURATION = 4 * 365 days;
     uint64 CLIFF_SECONDS = 2 * 365 days;
 
+    address beneficiary;
+
+    function _setUp() public override {
+        beneficiary = address(owner5);
+    }
+
     function newTokenGrant(
-        address beneficiary,
+        address _beneficiary,
         uint64 startTimestamp,
         uint64 durationSeconds,
         uint64 cliffSeconds
@@ -28,7 +34,7 @@ contract TokenGrantTest is BaseTest {
             address(MEZO),
             address(mezoEscrow),
             grantManager,
-            beneficiary,
+            _beneficiary,
             startTimestamp,
             durationSeconds,
             cliffSeconds
@@ -45,7 +51,7 @@ contract TokenGrantTest is BaseTest {
 
     function testCannotConvertIfNotBeneficiary() public {
         TokenGrant grant = newTokenGrant(
-            address(owner5),
+            beneficiary,
             uint64(block.timestamp),
             GRANT_DURATION,
             CLIFF_SECONDS
@@ -58,27 +64,27 @@ contract TokenGrantTest is BaseTest {
 
     function testCannotConvertIfNoTokens() public {
         TokenGrant grant = newTokenGrant(
-            address(owner5),
+            beneficiary,
             uint64(block.timestamp),
             GRANT_DURATION,
             CLIFF_SECONDS
         );
 
-        vm.prank(address(owner5));
+        vm.prank(beneficiary);
         vm.expectRevert(TokenGrant.EmptyGrant.selector);
         grant.convert();
     }
 
     function testConvert() public {
         TokenGrant grant = newTokenGrant(
-            address(owner5),
+            beneficiary,
             uint64(block.timestamp),
             GRANT_DURATION,
             CLIFF_SECONDS
         );
         MEZO.transfer(address(grant), TOKEN_100K);
 
-        vm.prank(address(owner5));
+        vm.prank(beneficiary);
 
         // Skip check for tokenId as it's generated inside the function.
         vm.expectEmit(false, false, false, true);
@@ -99,14 +105,14 @@ contract TokenGrantTest is BaseTest {
 
     function testCannotConvertTwiceIfNoTokens() public {
         TokenGrant grant = newTokenGrant(
-            address(owner5),
+            beneficiary,
             uint64(block.timestamp),
             GRANT_DURATION,
             CLIFF_SECONDS
         );
         MEZO.transfer(address(grant), TOKEN_100K);
 
-        vm.startPrank(address(owner5));
+        vm.startPrank(beneficiary);
         // First conversion works fine and takes all tokens
         grant.convert();
         // Second conversion should fail as no tokens are left
@@ -117,14 +123,14 @@ contract TokenGrantTest is BaseTest {
 
     function testConvertTwiceIfToppedUp() public {
         TokenGrant grant = newTokenGrant(
-            address(owner5),
+            beneficiary,
             uint64(block.timestamp),
             GRANT_DURATION,
             CLIFF_SECONDS
         );
         MEZO.transfer(address(grant), TOKEN_100K);
 
-        vm.startPrank(address(owner5));
+        vm.startPrank(beneficiary);
         uint256 tokenId1 = grant.convert();
         MEZO.transfer(address(grant), TOKEN_10K);
         uint256 tokenId2 = grant.convert();
