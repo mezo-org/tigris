@@ -9,6 +9,7 @@ import "./BaseTest.sol";
 
 contract TokenGrantTest is BaseTest {
     event Converted(uint256 indexed tokenId, uint256 amount);
+    event Revoked(address indexed destination, uint256 amount);
 
     uint64 GRANT_DURATION = 3 * 365 days;
     uint64 MAX_DURATION = 4 * 365 days;
@@ -196,5 +197,94 @@ contract TokenGrantTest is BaseTest {
         // Sanity check conversion works as well for max duration
         MEZO.transfer(address(grant), TOKEN_100K);
         grant.convert();
+    }
+
+    function testCannotRevokeIfNotGrantManager() public {
+        TokenGrant grant = newTokenGrant(
+            beneficiary,
+            uint64(block.timestamp),
+            GRANT_DURATION,
+            CLIFF_SECONDS
+        );
+
+        vm.prank(beneficiary);
+        vm.expectRevert(TokenGrant.NotGrantManager.selector);
+        grant.revoke(address(grantManager));
+    }
+
+    function testCannotRevokeIfNoTokens() public {
+        TokenGrant grant = newTokenGrant(
+            beneficiary,
+            uint64(block.timestamp),
+            GRANT_DURATION,
+            CLIFF_SECONDS
+        );
+
+        vm.prank(address(grantManager));
+        vm.expectRevert(TokenGrant.EmptyGrant.selector);
+        grant.revoke(beneficiary);
+    }
+
+    function testCanRevoke() public {
+        address destination = makeAddr("destination");
+
+        TokenGrant grant = newTokenGrant(
+            beneficiary,
+            uint64(block.timestamp),
+            GRANT_DURATION,
+            CLIFF_SECONDS
+        );
+        MEZO.transfer(address(grant), TOKEN_100K);
+
+        vm.expectEmit(true, false, false, true);
+        emit Revoked(destination, TOKEN_100K);
+
+        vm.prank(address(grantManager));
+        grant.revoke(destination);
+
+        assertEq(MEZO.balanceOf(destination), TOKEN_100K);
+        assertEq(MEZO.balanceOf(address(grant)), 0);
+        assertEq(MEZO.balanceOf(grantManager), 0);
+        // Beneficiary should still have tokens that were minted in test setup initialization.
+        assertEq(MEZO.balanceOf(beneficiary), TOKEN_10M);
+    }
+
+    function testCanRevokeIfPartiallyVested() public {
+        address destination = makeAddr("destination");
+
+        TokenGrant grant = newTokenGrant(
+            beneficiary,
+            uint64(block.timestamp),
+            GRANT_DURATION,
+            CLIFF_SECONDS
+        );
+        MEZO.transfer(address(grant), TOKEN_100K);
+
+        vm.warp(grant.end() - 1);
+
+        vm.prank(address(grantManager));
+        grant.revoke(destination);
+
+        assertEq(MEZO.balanceOf(destination), TOKEN_100K);
+        assertEq(MEZO.balanceOf(address(grant)), 0);
+        assertEq(MEZO.balanceOf(grantManager), 0);
+    }
+
+    function testCannotRevokeIfGrantIsVested() public {
+        address destination = makeAddr("destination");
+
+        TokenGrant grant = newTokenGrant(
+            beneficiary,
+            uint64(block.timestamp),
+            GRANT_DURATION,
+            CLIFF_SECONDS
+        );
+        MEZO.transfer(address(grant), TOKEN_100K);
+
+        vm.warp(grant.end());
+
+        vm.prank(address(grantManager));
+        vm.expectRevert(TokenGrant.GrantAlreadyVested.selector);
+        grant.revoke(destination);
     }
 }

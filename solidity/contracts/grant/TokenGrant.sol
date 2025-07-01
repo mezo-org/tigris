@@ -13,8 +13,10 @@ contract TokenGrant is VestingWalletCliffUpgradeable {
     using SafeERC20 for IERC20;
 
     error NotBeneficiary();
+    error NotGrantManager();
     error EmptyGrant();
     error MaxDurationExceeded();
+    error GrantAlreadyVested();
 
     uint256 internal constant MAX_DURATION = 4 * 365 days;
 
@@ -23,6 +25,7 @@ contract TokenGrant is VestingWalletCliffUpgradeable {
     address public grantManager;
 
     event Converted(uint256 indexed tokenId, uint256 amount);
+    event Revoked(address indexed destination, uint256 amount);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -75,12 +78,36 @@ contract TokenGrant is VestingWalletCliffUpgradeable {
 
         token.forceApprove(address(votingEscrow), amount);
         tokenId = votingEscrow.createGrantLockFor(
-                amount,
-                beneficiary(),
-                grantManager,
-                end()
-            );
+            amount,
+            beneficiary(),
+            grantManager,
+            end()
+        );
 
         emit Converted(tokenId, amount);
+    }
+
+    /// @notice Revokes the grant and transfers the remaining token balance to
+    ///         the destination address. Only grant manager can perform the
+    ///         operation. The function fails if the token balance is zero or
+    ///         if the grant is already vested.
+    /// @param destination The address to transfer the remaining token balance to.
+    function revoke(address destination) external {
+        if (msg.sender != grantManager) {
+            revert NotGrantManager();
+        }
+
+        uint256 amount = token.balanceOf(address(this));
+        if (amount == 0) {
+            revert EmptyGrant();
+        }
+
+        if (block.timestamp >= end()) {
+            revert GrantAlreadyVested();
+        }
+
+        emit Revoked(destination, amount);
+
+        token.safeTransfer(destination, amount);
     }
 }
