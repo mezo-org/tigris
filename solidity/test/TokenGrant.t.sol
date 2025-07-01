@@ -8,6 +8,8 @@ import {TokenGrant} from "contracts/grant/TokenGrant.sol";
 import "./BaseTest.sol";
 
 contract TokenGrantTest is BaseTest {
+    event Converted(uint256 indexed tokenId, uint256 amount);
+
     uint64 GRANT_DURATION = 3 * 365 days;
     uint64 MAX_DURATION = 4 * 365 days;
     uint64 CLIFF_SECONDS = 2 * 365 days;
@@ -77,6 +79,11 @@ contract TokenGrantTest is BaseTest {
         MEZO.transfer(address(grant), TOKEN_100K);
 
         vm.prank(address(owner5));
+
+        // Skip check for tokenId as it's generated inside the function.
+        vm.expectEmit(false, false, false, true);
+        emit Converted(0, TOKEN_100K);
+
         uint256 tokenId = grant.convert();
 
         uint256 vestingEnd = block.timestamp + GRANT_DURATION;

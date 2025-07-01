@@ -22,6 +22,8 @@ contract TokenGrant is VestingWalletCliffUpgradeable {
     IVotingEscrow public votingEscrow;
     address public grantManager;
 
+    event Converted(uint256 indexed tokenId, uint256 amount);
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -72,12 +74,13 @@ contract TokenGrant is VestingWalletCliffUpgradeable {
         }
 
         token.forceApprove(address(votingEscrow), amount);
-        return
-            votingEscrow.createGrantLockFor(
+        tokenId = votingEscrow.createGrantLockFor(
                 amount,
                 beneficiary(),
                 grantManager,
                 end()
             );
+
+        emit Converted(tokenId, amount);
     }
 }
