@@ -119,8 +119,8 @@ For the full list of deployed contracts, see the [deployments](./deployments) di
 
 | Name            | Address                                    |
 | --------------- | ------------------------------------------ |
-| Router          | 0xBb9b1E617d739ec3034537A48f8cB62f80a181C5 |
-| PoolFactory     | 0xc316C9D57ae0966E5155Bf03007464C3F88da4Fe |
-| MUSD/BTC Pool   | 0x7e6d67fD714194127973B7eF4748868a90392916 |
-| MUSD/mUSDC Pool | 0x19916204edb20A46209C7FbEA508CEb292939730 |
-| MUSD/mUSDT Pool | 0xdE1172b6F39712FcecF17edEbE272828f8428c1a |
+| Router          | 0x9a1ff7FE3a0F69959A3fBa1F1e5ee18e1A9CD7E9 |
+| PoolFactory     | 0x4947243CC818b627A5D06d14C4eCe7398A23Ce1A |
+| MUSD/BTC Pool   | 0xd16A5Df82120ED8D626a1a15232bFcE2366d6AA9 |
+| MUSD/mUSDC Pool | 0x525F049A4494dA0a6c87E3C4df55f9929765Dc3e |
+| MUSD/mUSDT Pool | 0x27414B76CF00E24ed087adb56E26bAeEEe93494e |
