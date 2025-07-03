@@ -46,8 +46,10 @@ contract GrantTest is BaseTest {
             TOKEN_1, grantee, grantManager, vestingEnd
         );
 
+        int128 _lockedAmount = escrow.locked(tokenId).amount;
         uint256 _lockEnd = escrow.locked(tokenId).end;
         uint256 _vestingEnd = escrow.vestingEnd(tokenId);
+        assertEq(convert(_lockedAmount), TOKEN_1);
         assertEq(_lockEnd, (vestingEnd / WEEK) * WEEK);
         assertEq(_vestingEnd, vestingEnd);
 

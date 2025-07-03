@@ -31,6 +31,7 @@ import {MezoForwarder} from "contracts/forwarder/MezoForwarder.sol";
 import "forge-std/Script.sol";
 import "forge-std/Test.sol";
 import {VeBTC} from "../contracts/VeBTC.sol";
+import {VeMEZO} from "../contracts/VeMEZO.sol";
 
 /// @notice Base contract used for tests and deployment scripts
 abstract contract Base is Script, Test {
@@ -43,6 +44,7 @@ abstract contract Base is Script, Test {
     Deployment deploymentType;
 
     IERC20 public BTC;
+    IERC20 MEZO;
     address[] public tokens;
 
     /// @dev Core Deployment
@@ -50,6 +52,7 @@ abstract contract Base is Script, Test {
     Pool public implementation;
     Router public router;
     VotingEscrow public escrow;
+    VeMEZO public mezoEscrow;
     PoolFactory public factory;
     FactoryRegistry public factoryRegistry;
     GaugeFactory public gaugeFactory;
@@ -77,19 +80,33 @@ abstract contract Base is Script, Test {
 
         forwarder = new MezoForwarder();
 
-        VeBTC impl = new VeBTC();
-        bytes memory initData = abi.encodeWithSelector(
-            impl.initialize.selector,
+        VeBTC veBTCImpl = new VeBTC();
+        bytes memory initDataBTC = abi.encodeWithSelector(
+            veBTCImpl.initialize.selector,
             address(forwarder),
             address(BTC),
             address(factoryRegistry)
         );
-        TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
-            address(impl),
+        TransparentUpgradeableProxy proxyVeBTC = new TransparentUpgradeableProxy(
+            address(veBTCImpl),
             proxyAdmin,
-            initData
+            initDataBTC
         );
-        escrow = VeBTC(address(proxy));
+        escrow = VeBTC(address(proxyVeBTC));
+
+        VeMEZO veMEZOImpl = new VeMEZO();
+        bytes memory initDataMEZO = abi.encodeWithSelector(
+            veMEZOImpl.initialize.selector,
+            address(forwarder),
+            address(MEZO),
+            address(factoryRegistry)
+        );
+        TransparentUpgradeableProxy proxyVeMEZO = new TransparentUpgradeableProxy(
+            address(veMEZOImpl),
+            proxyAdmin,
+            initDataMEZO
+        );
+        mezoEscrow = VeMEZO(address(proxyVeMEZO));
 
         // Setup voter and distributor
         distributor = new RewardsDistributor(address(escrow));
