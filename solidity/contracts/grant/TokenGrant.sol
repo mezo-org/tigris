@@ -16,6 +16,7 @@ contract TokenGrant is VestingWalletCliffUpgradeable {
     error NotGrantManager();
     error EmptyGrant();
     error MaxDurationExceeded();
+    error NonRevocableGrant();
     error GrantAlreadyVested();
 
     uint256 internal constant MAX_DURATION = 4 * 365 days;
@@ -23,6 +24,7 @@ contract TokenGrant is VestingWalletCliffUpgradeable {
     IERC20 public token;
     IVotingEscrow public votingEscrow;
     address public grantManager;
+    bool public isRevocable;
 
     event Converted(uint256 indexed tokenId, uint256 amount);
     event Revoked(address indexed destination, uint256 amount);
@@ -39,7 +41,8 @@ contract TokenGrant is VestingWalletCliffUpgradeable {
         address _beneficiary,
         uint64 _startTimestamp,
         uint64 _durationSeconds,
-        uint64 _cliffSeconds
+        uint64 _cliffSeconds,
+        bool _isRevocable
     ) external initializer {
         if (_durationSeconds > MAX_DURATION) {
             revert MaxDurationExceeded();
@@ -51,6 +54,7 @@ contract TokenGrant is VestingWalletCliffUpgradeable {
         token = IERC20(_token);
         votingEscrow = IVotingEscrow(_votingEscrow);
         grantManager = _grantManager;
+        isRevocable = _isRevocable;
     }
 
     /// @notice Converts token grant to a veNFT with lock time equal to the
@@ -89,21 +93,23 @@ contract TokenGrant is VestingWalletCliffUpgradeable {
 
     /// @notice Revokes the grant and transfers the remaining token balance to
     ///         the destination address. Only grant manager can perform the
-    ///         operation. The function fails if the token balance is zero or
-    ///         if the grant is already vested.
+    ///         operation. The function fails if the grant is already vested or
+    ///         if the grant is non-revocable.
     /// @param destination The address to transfer the remaining token balance to.
     function revoke(address destination) external {
         if (msg.sender != grantManager) {
             revert NotGrantManager();
         }
+        if (!isRevocable) {
+            revert NonRevocableGrant();
+        }
+        if (block.timestamp >= end()) {
+            revert GrantAlreadyVested();
+        }
 
         uint256 amount = token.balanceOf(address(this));
         if (amount == 0) {
             revert EmptyGrant();
-        }
-
-        if (block.timestamp >= end()) {
-            revert GrantAlreadyVested();
         }
 
         emit Revoked(destination, amount);

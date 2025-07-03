@@ -25,7 +25,8 @@ contract TokenGrantTest is BaseTest {
         address _beneficiary,
         uint64 startTimestamp,
         uint64 durationSeconds,
-        uint64 cliffSeconds
+        uint64 cliffSeconds,
+        bool isRevocable
     ) internal returns (TokenGrant) {
         TokenGrant implementation = new TokenGrant();
         ProxyAdmin proxyAdmin = new ProxyAdmin();
@@ -38,7 +39,8 @@ contract TokenGrantTest is BaseTest {
             _beneficiary,
             startTimestamp,
             durationSeconds,
-            cliffSeconds
+            cliffSeconds,
+            isRevocable
         );
 
         TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
@@ -55,7 +57,8 @@ contract TokenGrantTest is BaseTest {
             beneficiary,
             uint64(block.timestamp),
             GRANT_DURATION,
-            CLIFF_SECONDS
+            CLIFF_SECONDS,
+            true
         );
 
         vm.prank(address(owner2));
@@ -68,7 +71,8 @@ contract TokenGrantTest is BaseTest {
             beneficiary,
             uint64(block.timestamp),
             GRANT_DURATION,
-            CLIFF_SECONDS
+            CLIFF_SECONDS,
+            true
         );
 
         vm.prank(beneficiary);
@@ -81,7 +85,8 @@ contract TokenGrantTest is BaseTest {
             beneficiary,
             uint64(block.timestamp),
             GRANT_DURATION,
-            CLIFF_SECONDS
+            CLIFF_SECONDS,
+            true
         );
         MEZO.transfer(address(grant), TOKEN_100K);
 
@@ -109,7 +114,8 @@ contract TokenGrantTest is BaseTest {
             beneficiary,
             uint64(block.timestamp),
             GRANT_DURATION,
-            CLIFF_SECONDS
+            CLIFF_SECONDS,
+            true
         );
         MEZO.transfer(address(grant), TOKEN_100K);
 
@@ -127,7 +133,8 @@ contract TokenGrantTest is BaseTest {
             beneficiary,
             uint64(block.timestamp),
             GRANT_DURATION,
-            CLIFF_SECONDS
+            CLIFF_SECONDS,
+            true
         );
         MEZO.transfer(address(grant), TOKEN_100K);
 
@@ -167,7 +174,8 @@ contract TokenGrantTest is BaseTest {
                 address(owner),
                 block.timestamp,
                 MAX_DURATION + 1,
-                CLIFF_SECONDS
+                CLIFF_SECONDS,
+                true
             )
         );
     }
@@ -189,7 +197,8 @@ contract TokenGrantTest is BaseTest {
                         address(owner),
                         block.timestamp,
                         MAX_DURATION,
-                        CLIFF_SECONDS
+                        CLIFF_SECONDS,
+                        true
                     )
                 )
             )
@@ -204,7 +213,8 @@ contract TokenGrantTest is BaseTest {
             beneficiary,
             uint64(block.timestamp),
             GRANT_DURATION,
-            CLIFF_SECONDS
+            CLIFF_SECONDS,
+            true
         );
 
         vm.prank(beneficiary);
@@ -212,12 +222,27 @@ contract TokenGrantTest is BaseTest {
         grant.revoke(address(grantManager));
     }
 
+    function testCannotRevokeIfNonRevocable() public {
+        TokenGrant grant = newTokenGrant(
+            beneficiary,
+            uint64(block.timestamp),
+            GRANT_DURATION,
+            CLIFF_SECONDS,
+            false
+        );
+
+        vm.prank(address(grantManager));
+        vm.expectRevert(TokenGrant.NonRevocableGrant.selector);
+        grant.revoke(beneficiary);
+    }
+
     function testCannotRevokeIfNoTokens() public {
         TokenGrant grant = newTokenGrant(
             beneficiary,
             uint64(block.timestamp),
             GRANT_DURATION,
-            CLIFF_SECONDS
+            CLIFF_SECONDS,
+            true
         );
 
         vm.prank(address(grantManager));
@@ -232,7 +257,8 @@ contract TokenGrantTest is BaseTest {
             beneficiary,
             uint64(block.timestamp),
             GRANT_DURATION,
-            CLIFF_SECONDS
+            CLIFF_SECONDS,
+            true
         );
         MEZO.transfer(address(grant), TOKEN_100K);
 
@@ -256,7 +282,8 @@ contract TokenGrantTest is BaseTest {
             beneficiary,
             uint64(block.timestamp),
             GRANT_DURATION,
-            CLIFF_SECONDS
+            CLIFF_SECONDS,
+            true
         );
         MEZO.transfer(address(grant), TOKEN_100K);
 
@@ -277,7 +304,8 @@ contract TokenGrantTest is BaseTest {
             beneficiary,
             uint64(block.timestamp),
             GRANT_DURATION,
-            CLIFF_SECONDS
+            CLIFF_SECONDS,
+            true
         );
         MEZO.transfer(address(grant), TOKEN_100K);
 
