@@ -21,7 +21,7 @@ contract TokenGrantFactory is Ownable2StepUpgradeable {
         bool isRevocable
     );
 
-    event ImplementationUpgraded(
+    event TokenGrantImplementationUpgraded(
         address indexed oldImplementation,
         address indexed newImplementation
     );
@@ -40,12 +40,12 @@ contract TokenGrantFactory is Ownable2StepUpgradeable {
     /// @param _token The ERC20 token to be vested.
     /// @param _votingEscrow The voting escrow contract for conversion.
     /// @param _grantManager The address that can revoke the grant.
-    /// @param _implementation The TokenGrant implementation contract address.
+    /// @param _tokenGrantImplementation The TokenGrant implementation contract address.
     function initialize(
         address _token,
         address _votingEscrow,
         address _grantManager,
-        address _implementation
+        address _tokenGrantImplementation
     ) public initializer {
         __Ownable2Step_init();
         __Ownable_init();
@@ -53,14 +53,14 @@ contract TokenGrantFactory is Ownable2StepUpgradeable {
         if (_token == address(0)) revert ZeroAddress();
         if (_votingEscrow == address(0)) revert ZeroAddress();
         if (_grantManager == address(0)) revert ZeroAddress();
-        if (_implementation == address(0)) revert ZeroAddress();
+        if (_tokenGrantImplementation == address(0)) revert ZeroAddress();
 
         token = _token;
         votingEscrow = _votingEscrow;
         grantManager = _grantManager;
 
         // Create beacon with initial implementation.
-        beacon = new UpgradeableBeacon(_implementation);
+        beacon = new UpgradeableBeacon(_tokenGrantImplementation);
 
         // Transfer beacon ownership to this contract so we can upgrade it.
         beacon.transferOwnership(address(this));
@@ -113,15 +113,17 @@ contract TokenGrantFactory is Ownable2StepUpgradeable {
         );
     }
 
-    /// @notice Upgrade the implementation contract.
-    /// @dev Only callable by owner. ALL existing grants will automatically use the new implementation.
-    /// @param _newImplementation The address of the new implementation contract.
-    function upgradeImplementation(
+    /// @notice Upgrade the TokenGrant implementation contract.
+    /// @dev Only callable by owner. ALL existing grants will automatically use
+    ///      the new implementation.
+    /// @param _newImplementation The address of the new TokenGrant implementation
+    ///      contract.
+    function upgradeTokenGrantImplementation(
         address _newImplementation
     ) external onlyOwner {
         if (_newImplementation == address(0)) revert ZeroAddress();
 
-        emit ImplementationUpgraded(
+        emit TokenGrantImplementationUpgraded(
             beacon.implementation(),
             _newImplementation
         );
