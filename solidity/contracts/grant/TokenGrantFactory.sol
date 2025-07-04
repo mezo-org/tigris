@@ -15,9 +15,9 @@ contract TokenGrantFactory is Ownable2StepUpgradeable {
     event TokenGrantCreated(
         address indexed tokenGrant,
         address indexed beneficiary,
-        uint64 startTimestamp,
-        uint64 durationSeconds,
-        uint64 cliffSeconds,
+        uint256 startTimestamp,
+        uint256 cliffTimestamp,
+        uint256 endTimestamp,
         bool isRevocable
     );
 
@@ -84,7 +84,7 @@ contract TokenGrantFactory is Ownable2StepUpgradeable {
         uint64 _durationSeconds,
         uint64 _cliffSeconds,
         bool _isRevocable
-    ) external returns (address grant) {
+    ) external returns (address) {
         if (_beneficiary == address(0)) revert ZeroAddress();
 
         // Create initialization data.
@@ -101,16 +101,20 @@ contract TokenGrantFactory is Ownable2StepUpgradeable {
         );
 
         // Create beacon proxy instance.
-        grant = address(new BeaconProxy(address(beacon), initData));
+        TokenGrant grant = TokenGrant(
+            payable(address(new BeaconProxy(address(beacon), initData)))
+        );
 
         emit TokenGrantCreated(
-            grant,
-            _beneficiary,
-            _startTimestamp,
-            _durationSeconds,
-            _cliffSeconds,
-            _isRevocable
+            address(grant),
+            grant.beneficiary(),
+            grant.start(),
+            grant.cliff(),
+            grant.end(),
+            grant.isRevocable()
         );
+
+        return address(grant);
     }
 
     /// @notice Upgrade the TokenGrant implementation contract.
