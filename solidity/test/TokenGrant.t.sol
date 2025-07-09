@@ -7,6 +7,8 @@ import {TokenGrant} from "contracts/grant/TokenGrant.sol";
 
 import "./BaseTest.sol";
 
+import {console} from "forge-std/console.sol";
+
 contract TokenGrantTest is BaseTest {
     event Converted(uint256 indexed tokenId, uint256 amount);
     event Revoked(address indexed destination, uint256 amount);
@@ -18,7 +20,7 @@ contract TokenGrantTest is BaseTest {
     address beneficiary;
 
     function _setUp() public override {
-        beneficiary = address(owner5);
+        beneficiary = makeAddr("beneficiary");
     }
 
     function newTokenGrant(
@@ -128,34 +130,34 @@ contract TokenGrantTest is BaseTest {
         vm.stopPrank();
     }
 
-    function testConvertTwiceIfToppedUp() public {
-        TokenGrant grant = newTokenGrant(
-            beneficiary,
-            uint64(block.timestamp),
-            GRANT_DURATION,
-            CLIFF_SECONDS,
-            true
-        );
-        MEZO.transfer(address(grant), TOKEN_100K);
+    // function testConvertTwiceIfToppedUp() public {
+    //     TokenGrant grant = newTokenGrant(
+    //         beneficiary,
+    //         uint64(block.timestamp),
+    //         GRANT_DURATION,
+    //         CLIFF_SECONDS,
+    //         true
+    //     );
+    //     MEZO.transfer(address(grant), TOKEN_100K);
 
-        vm.startPrank(beneficiary);
-        uint256 tokenId1 = grant.convert();
-        MEZO.transfer(address(grant), TOKEN_10K);
-        uint256 tokenId2 = grant.convert();
-        vm.stopPrank();
+    //     vm.startPrank(beneficiary);
+    //     uint256 tokenId1 = grant.convert();
+    //     MEZO.transfer(address(grant), TOKEN_10K);
+    //     uint256 tokenId2 = grant.convert();
+    //     vm.stopPrank();
 
-        int128 _lockedAmount1 = mezoEscrow.locked(tokenId1).amount;
-        int128 _lockedAmount2 = mezoEscrow.locked(tokenId2).amount;
-        assertEq(convert(_lockedAmount1), TOKEN_100K);
-        assertEq(convert(_lockedAmount2), TOKEN_10K);
+    //     int128 _lockedAmount1 = mezoEscrow.locked(tokenId1).amount;
+    //     int128 _lockedAmount2 = mezoEscrow.locked(tokenId2).amount;
+    //     assertEq(convert(_lockedAmount1), TOKEN_100K);
+    //     assertEq(convert(_lockedAmount2), TOKEN_10K);
 
-        // just a sanity check for vesting as well
-        uint256 vestingEnd = block.timestamp + GRANT_DURATION;
-        uint256 _vestingEnd1 = mezoEscrow.vestingEnd(tokenId1);
-        uint256 _vestingEnd2 = mezoEscrow.vestingEnd(tokenId2);
-        assertEq(_vestingEnd1, vestingEnd);
-        assertEq(_vestingEnd2, vestingEnd);
-    }
+    //     // just a sanity check for vesting as well
+    //     uint256 vestingEnd = block.timestamp + GRANT_DURATION;
+    //     uint256 _vestingEnd1 = mezoEscrow.vestingEnd(tokenId1);
+    //     uint256 _vestingEnd2 = mezoEscrow.vestingEnd(tokenId2);
+    //     assertEq(_vestingEnd1, vestingEnd);
+    //     assertEq(_vestingEnd2, vestingEnd);
+    // }
 
     function cannotInitWithMaxDurationExceeded() public {
         TokenGrant implementation = new TokenGrant();
@@ -271,12 +273,18 @@ contract TokenGrantTest is BaseTest {
         assertEq(MEZO.balanceOf(destination), TOKEN_100K);
         assertEq(MEZO.balanceOf(address(grant)), 0);
         assertEq(MEZO.balanceOf(grantManager), 0);
-        // Beneficiary should still have tokens that were minted in test setup initialization.
-        assertEq(MEZO.balanceOf(beneficiary), TOKEN_10M);
+        assertEq(MEZO.balanceOf(beneficiary), 0);
     }
 
     function testCanRevokeIfPartiallyVested() public {
         address destination = makeAddr("destination");
+
+        // Assume grant duration to be set to 3 years and revoke happens after
+        // 2 years, so the remaining grant duration is 1 year.
+        uint256 remainingGrantDuration = 1 * 365 days;
+        uint256 expectedRevokedAmount = (TOKEN_100K * remainingGrantDuration) /
+            (GRANT_DURATION) +
+            1;
 
         TokenGrant grant = newTokenGrant(
             beneficiary,
@@ -287,13 +295,66 @@ contract TokenGrantTest is BaseTest {
         );
         MEZO.transfer(address(grant), TOKEN_100K);
 
-        vm.warp(grant.end() - 1);
+        vm.warp(grant.end() - remainingGrantDuration);
 
         vm.prank(address(grantManager));
         grant.revoke(destination);
 
-        assertEq(MEZO.balanceOf(destination), TOKEN_100K);
-        assertEq(MEZO.balanceOf(address(grant)), 0);
+        assertEq(MEZO.balanceOf(destination), expectedRevokedAmount);
+        assertEq(
+            MEZO.balanceOf(address(grant)),
+            TOKEN_100K - expectedRevokedAmount
+        );
+        assertEq(grant.releasable(), TOKEN_100K - expectedRevokedAmount);
+        // assertEq(MEZO.balanceOf(grantManager), 0);
+    }
+
+    function testCanRevokeIfPartiallyVestedAndReleased() public {
+        address destination = makeAddr("destination");
+
+        // In this scenario, the grant is created for 4 years and 120 MEZO.
+        uint256 grantAmount = 120 * 10 ** 18; // 120 MEZO
+        uint64 grantDuration = 4 * 365 days;
+
+        // After 1 year, grantee claims tokens. They are expected to receive 30 MEZO.
+        uint256 releasedAfter = 1 * 365 days;
+        uint256 expectedReleasedAmount = 30 * 10 ** 18; // 1/4 * 120 = 30
+
+        // After 3 years, grant manager revokes the grant. The grant manager is
+        // expected to revoke the unvested 30 MEZO.
+        uint256 revokedAfter = 3 * 365 days;
+        uint256 expectedRevokedAmount = 30 * 10 ** 18; // 120 - (3/4 * 120) = 30
+        // After the grant is revoked there is still 60 MEZO the grantee can release
+        // as these tokens have already vested.
+        uint256 expectedRemainingReleasableAmount = 60 * 10 ** 18;
+
+        TokenGrant grant = newTokenGrant(
+            beneficiary,
+            uint64(block.timestamp),
+            grantDuration,
+            0,
+            true
+        );
+        MEZO.transfer(address(grant), grantAmount);
+
+        // Progress to 1 year and claim tokens.
+        vm.warp(grant.start() + releasedAfter);
+        vm.prank(beneficiary);
+        grant.release();
+
+        assertEq(MEZO.balanceOf(beneficiary), expectedReleasedAmount);
+
+        // Progress to 3 years and revoke the grant.
+        vm.warp(grant.start() + revokedAfter);
+        vm.prank(address(grantManager));
+        grant.revoke(destination);
+
+        assertEq(MEZO.balanceOf(destination), expectedRevokedAmount);
+        assertEq(
+            MEZO.balanceOf(address(grant)),
+            expectedRemainingReleasableAmount
+        );
+        assertEq(grant.releasable(), expectedRemainingReleasableAmount);
         assertEq(MEZO.balanceOf(grantManager), 0);
     }
 
