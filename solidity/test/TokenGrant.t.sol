@@ -4,6 +4,7 @@ import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.so
 import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
 import {TokenGrant} from "contracts/grant/TokenGrant.sol";
+import {TokenGrantFactory} from "contracts/grant/TokenGrantFactory.sol";
 
 import "./BaseTest.sol";
 
@@ -31,13 +32,16 @@ contract TokenGrantTest is BaseTest {
         bool isRevocable
     ) internal returns (TokenGrant) {
         TokenGrant implementation = new TokenGrant();
-        ProxyAdmin proxyAdmin = new ProxyAdmin();
+        TokenGrantFactory factory = new TokenGrantFactory();
 
-        bytes memory initData = abi.encodeWithSelector(
-            TokenGrant.initialize.selector,
+        factory.initialize(
             address(MEZO),
             address(mezoEscrow),
             grantManager,
+            address(implementation)
+        );
+
+        address tokenGrant = factory.createGrant(
             _beneficiary,
             startTimestamp,
             durationSeconds,
@@ -45,13 +49,7 @@ contract TokenGrantTest is BaseTest {
             isRevocable
         );
 
-        TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
-            address(implementation),
-            address(proxyAdmin),
-            initData
-        );
-
-        return TokenGrant(payable(proxy));
+        return TokenGrant(payable(tokenGrant));
     }
 
     function testCannotConvertIfNotBeneficiary() public {

@@ -39,8 +39,6 @@ abstract contract BaseTest is Base, TestOwner {
     TestOwner owner5;
     address[] owners;
 
-    address grantManager;
-
     IERC20 mUSD;
     IERC20 wtBTC;
     IERC20 LIMPETH;
@@ -109,7 +107,6 @@ abstract contract BaseTest is Base, TestOwner {
         tokens.push(address(LR));
 
         allowedManager = address(owner);
-        grantManager = makeAddr("grantManager");
     }
 
     function _testSetupAfter() public {

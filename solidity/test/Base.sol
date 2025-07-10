@@ -32,6 +32,8 @@ import "forge-std/Script.sol";
 import "forge-std/Test.sol";
 import {VeBTC} from "../contracts/VeBTC.sol";
 import {VeMEZO} from "../contracts/VeMEZO.sol";
+import {TokenGrant} from "contracts/grant/TokenGrant.sol";
+import {TokenGrantFactory} from "contracts/grant/TokenGrantFactory.sol";
 
 /// @notice Base contract used for tests and deployment scripts
 abstract contract Base is Script, Test {
@@ -65,9 +67,11 @@ abstract contract Base is Script, Test {
     Gauge public gauge;
     MezoGovernor public governor;
     EpochGovernor public epochGovernor;
+    TokenGrantFactory public tokenGrantFactory;
 
     /// @dev Global address to set
     address public allowedManager;
+    address public grantManager = makeAddr("grantManager");
 
     /// @dev Dummy address of the proxy admin
     address public constant proxyAdmin = 0x1234567890123456789012345678901234567890;
@@ -128,6 +132,8 @@ abstract contract Base is Script, Test {
 
         /// @dev tokens are already set in the respective setupBefore()
         voter.initialize(tokens, address(chainFeeSplitter));
+
+        deployTokenGrantFactory();
     }
 
     function deployFactories() public {
@@ -143,5 +149,29 @@ abstract contract Base is Script, Test {
             address(gaugeFactory),
             address(managedRewardsFactory)
         );
+    }
+
+    function deployTokenGrantFactory() public {
+        assertNotEq(address(MEZO), address(0));
+        assertNotEq(address(mezoEscrow), address(0));
+        assertNotEq(address(grantManager), address(0));
+        assertNotEq(address(proxyAdmin), address(0));
+
+        TokenGrant tokenGrantImpl = new TokenGrant();
+
+        TokenGrantFactory tokenGrantFactoryImpl = new TokenGrantFactory();
+        bytes memory initDataTokenGrantFactory = abi.encodeWithSelector(
+            tokenGrantFactoryImpl.initialize.selector,
+            address(MEZO),
+            address(mezoEscrow),
+            address(grantManager),
+            address(tokenGrantImpl)
+        );
+        TransparentUpgradeableProxy proxyTokenGrantFactory = new TransparentUpgradeableProxy(
+                address(tokenGrantFactoryImpl),
+                proxyAdmin,
+                initDataTokenGrantFactory
+            );
+        tokenGrantFactory = TokenGrantFactory(address(proxyTokenGrantFactory));
     }
 }
