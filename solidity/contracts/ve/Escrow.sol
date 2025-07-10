@@ -421,6 +421,55 @@ library Escrow {
         emit IERC4906.MetadataUpdate(_tokenId);
     }
 
+    // TODO: This is a copy of the withdraw function, we need to verify what effect
+    // would it have.
+    function revoke(
+        VotingEscrowState.Storage storage self,
+        uint256 _tokenId,
+        address _destination
+    ) external {
+        if (self.grantManager[_tokenId] != self._msgSender())
+            revert IVotingEscrow.NotGrantManager();
+
+        // TODO: Verify all the checks below and see what are important to keep
+        // if (self.voted[_tokenId]) revert IVotingEscrow.AlreadyVoted(); // TODO: Why?
+        // if (self.escrowType[_tokenId] != IVotingEscrow.EscrowType.NORMAL)
+        //     revert IVotingEscrow.NotNormalNFT(); // TODO: Why?
+
+        IVotingEscrow.LockedBalance memory oldLocked = self._locked[_tokenId];
+        // TODO: Verify all the checks below and see what are important to keep
+        // if (oldLocked.isPermanent) revert IVotingEscrow.PermanentLock();
+        // if (block.timestamp < oldLocked.end)
+        //     revert IVotingEscrow.LockNotExpired();
+        uint256 value = oldLocked.amount.toUint256();
+
+        // Burn the NFT
+        self._burn(_tokenId);
+        self._locked[_tokenId] = IVotingEscrow.LockedBalance(0, 0, false);
+        uint256 supplyBefore = self.supply;
+        self.supply = supplyBefore - value;
+
+        // oldLocked can have either expired <= timestamp or zero end
+        // oldLocked has only 0 end
+        // Both can have >= 0 amount
+        _checkpoint(
+            self,
+            _tokenId,
+            oldLocked,
+            IVotingEscrow.LockedBalance(0, 0, false)
+        );
+
+        IERC20(self.token).safeTransfer(_destination, value);
+
+        emit IVotingEscrow.Withdraw(
+            _destination,
+            _tokenId,
+            value,
+            block.timestamp
+        );
+        emit IVotingEscrow.Supply(supplyBefore, supplyBefore - value);
+    }
+
     function withdraw(
         VotingEscrowState.Storage storage self,
         uint256 _tokenId
