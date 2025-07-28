@@ -18,7 +18,7 @@ export default function Bazaar() {
         <header className="border-b bg-[rgb(195,66,87)]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex h-16 items-center justify-between">
-              <span className="text-2xl font-bold text-white">MEZODROME</span>
+              <span className="text-2xl font-bold text-white">TIGRIS</span>
               <ConnectButton />
             </div>
           </div>

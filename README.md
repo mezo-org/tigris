@@ -1,4 +1,4 @@
-# Mezodrome
+# Tigris
 
 Smart contracts powering the Mezo gauge system and DEX, inspired by Solidly.
 

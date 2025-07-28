@@ -27,6 +27,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const escrowDeployment = await deploy("Escrow", deployOptions)
   const managedNFTDeployment = await deploy("ManagedNFT", deployOptions)
   const nftDeployment = await deploy("NFT", deployOptions)
+  const grantDeployment = await deploy("Grant", {
+    libraries: {
+      Escrow: escrowDeployment.address,
+    },
+    ...deployOptions,
+  })
 
   const VeBTC = await deployments.getOrNull("VeBTC")
 
@@ -49,6 +55,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         Escrow: escrowDeployment.address,
         ManagedNFT: managedNFTDeployment.address,
         NFT: nftDeployment.address,
+        Grant: grantDeployment.address,
       },
     },
     proxyOpts: {
@@ -69,6 +76,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await helpers.etherscan.verify(escrowDeployment)
     await helpers.etherscan.verify(managedNFTDeployment)
     await helpers.etherscan.verify(nftDeployment)
+    await helpers.etherscan.verify(grantDeployment)
   }
 }
 

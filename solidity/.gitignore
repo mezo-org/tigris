@@ -15,7 +15,8 @@ node_modules
 
 # Deployments (with exceptions)
 /deployments/*
-!/deployments/matsnet/
+!/deployments/testnet/
+!/deployments/mainnet/
 
 # Foundry
 /out

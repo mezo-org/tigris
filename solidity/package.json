@@ -1,6 +1,6 @@
 {
-  "name": "contracts",
-  "version": "0.1.0",
+  "name": "@mezo-org/tigris-contracts",
+  "version": "1.0.0",
   "packageManager": "pnpm@9.15.1",
   "license": "GPL-3.0",
   "scripts": {
@@ -15,7 +15,7 @@
     "lint:config": "prettier --check '**/*.@(json|md)'",
     "lint:config:fix": "prettier --write '**/*.@(json|md)'",
     "prepare:env": "cp -n .env.example .env || true",
-    "test": "npm run prepare:env && hardhat test && forge test",
+    "test": "npm run prepare:env && hardhat test && forge test --gas-report",
     "test:system": "./system-test/run.sh",
     "node": "hardhat node",
     "deploy": "npm run prepare:env && hardhat deploy",

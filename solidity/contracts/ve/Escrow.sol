@@ -479,6 +479,12 @@ library Escrow {
         IVotingEscrow.LockedBalance memory oldLockedTo = self._locked[_to];
         if (oldLockedTo.end <= block.timestamp && !oldLockedTo.isPermanent)
             revert IVotingEscrow.LockExpired();
+        if (
+            self.vestingEnd[_from] > block.timestamp ||
+            self.vestingEnd[_to] > block.timestamp
+        ) {
+            revert IVotingEscrow.UnvestedGrantNFT();
+        }
 
         IVotingEscrow.LockedBalance memory oldLockedFrom = self._locked[_from];
         if (oldLockedFrom.isPermanent) revert IVotingEscrow.PermanentLock();
@@ -546,6 +552,9 @@ library Escrow {
         if (_splitAmount == 0) revert IVotingEscrow.ZeroAmount();
         if (newLocked.amount <= _splitAmount)
             revert IVotingEscrow.AmountTooBig();
+        if (self.vestingEnd[_from] > block.timestamp) {
+            revert IVotingEscrow.UnvestedGrantNFT();
+        }
 
         // Zero out and burn old veNFT
         self._burn(_from);

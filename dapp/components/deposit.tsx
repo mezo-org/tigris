@@ -72,7 +72,7 @@ const DepositInterface = () => {
           <div className="space-y-6 text-center">
             <h2 className="text-2xl font-bold">Deposit BTC</h2>
             <p className="text-gray-500">
-              Generate a unique Bitcoin address to deposit BTC into Mezodrome
+              Generate a unique Bitcoin address to deposit BTC into Tigris
             </p>
 
             {!depositAddress ? (

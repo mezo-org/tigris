@@ -92,6 +92,6 @@ contract Deployment is BaseSystemTest {
         assertTrue(router.isTrustedForwarder(address(forwarder)), "Router should consider the forwarder as trusted");
         assertEq(router.factoryRegistry(), address(factoryRegistry), "Router factory registry should be properly set");
         assertEq(router.defaultFactory(), address(poolFactory), "Router default pool factory should be properly set");
-        assertEq(router.voter(), address(veBTCVoter), "Router voter should be properly set");
+        assertEq(router.voter(), address(0), "Router voter should not be set");
     }
 }

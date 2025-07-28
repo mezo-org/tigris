@@ -14,6 +14,9 @@ abstract contract BaseTest is Base, TestOwner {
     uint256 constant mUSD_1 = 1e6;
     uint256 constant mUSD_10K = 1e10; // 1e4 = 10K tokens with 6 decimals
     uint256 constant mUSD_100K = 1e11; // 1e5 = 100K tokens with 6 decimals
+    uint256 constant mUSD_1M = 1e12; // 1e6 = 1M tokens with 6 decimals
+    uint256 constant mUSD_100M = 1e14; // 1e8 = 100M tokens with 6 decimals
+    uint256 constant mUSD_10B = 1e16; // 1e10 = 10B tokens with 6 decimals
     uint256 constant TOKEN_1 = 1e18;
     uint256 constant TOKEN_10K = 1e22; // 1e4 = 10K tokens with 18 decimals
     uint256 constant TOKEN_100K = 1e23; // 1e5 = 100K tokens with 18 decimals
@@ -35,6 +38,9 @@ abstract contract BaseTest is Base, TestOwner {
     TestOwner owner4;
     TestOwner owner5;
     address[] owners;
+
+    address grantManager;
+
     IERC20 mUSD;
     IERC20 wtBTC;
     IERC20 LIMPETH;
@@ -43,6 +49,7 @@ abstract contract BaseTest is Base, TestOwner {
     Pool pool;
     Pool pool2;
     Pool pool3;
+    Pool pool4;
 
     FeesVotingReward feesVotingReward;
     BribeVotingReward bribeVotingReward;
@@ -52,6 +59,9 @@ abstract contract BaseTest is Base, TestOwner {
     Gauge gauge3;
     FeesVotingReward feesVotingReward3;
     BribeVotingReward bribeVotingReward3;
+    Gauge gauge4;
+    FeesVotingReward feesVotingReward4;
+    BribeVotingReward bribeVotingReward4;
 
     SigUtils sigUtils;
 
@@ -89,6 +99,7 @@ abstract contract BaseTest is Base, TestOwner {
         amounts[3] = TOKEN_10M;
         amounts[4] = TOKEN_10M;
         mintToken(address(BTC), owners, amounts);
+        mintToken(address(MEZO), owners, amounts);
         mintToken(address(LR), owners, amounts);
 
         tokens.push(address(mUSD));
@@ -98,6 +109,7 @@ abstract contract BaseTest is Base, TestOwner {
         tokens.push(address(LR));
 
         allowedManager = address(owner);
+        grantManager = address(owner5);
     }
 
     function _testSetupAfter() public {
@@ -129,6 +141,11 @@ abstract contract BaseTest is Base, TestOwner {
         feesVotingReward3 = FeesVotingReward(voter.gaugeToFees(address(gauge3)));
         bribeVotingReward3 = BribeVotingReward(voter.gaugeToBribe(address(gauge3)));
 
+        // BTC - mUSD stable
+        gauge4 = Gauge(voter.createGauge(address(factory), address(pool4)));
+        feesVotingReward4 = FeesVotingReward(voter.gaugeToFees(address(gauge4)));
+        bribeVotingReward4 = BribeVotingReward(voter.gaugeToBribe(address(gauge4)));
+
         bytes32 domainSeparator = keccak256(
             abi.encode(
                 escrow.DOMAIN_TYPEHASH(),
@@ -155,6 +172,7 @@ abstract contract BaseTest is Base, TestOwner {
         vm.label(address(pool), "Pool");
         vm.label(address(pool2), "Pool 2");
         vm.label(address(pool3), "Pool 3");
+        vm.label(address(pool4), "Pool 4");
 
         vm.label(address(escrow), "Voting Escrow");
         vm.label(address(gaugeFactory), "Gauge Factory");
@@ -172,6 +190,9 @@ abstract contract BaseTest is Base, TestOwner {
         vm.label(address(gauge3), "Gauge 3");
         vm.label(address(feesVotingReward3), "Fees Voting Reward 3");
         vm.label(address(bribeVotingReward3), "Bribe Voting Reward 3");
+        vm.label(address(gauge4), "Gauge 4");
+        vm.label(address(feesVotingReward4), "Fees Voting Reward 4");
+        vm.label(address(bribeVotingReward4), "Bribe Voting Reward 4");
     }
 
     function deployOwners() public {
@@ -195,6 +216,7 @@ abstract contract BaseTest is Base, TestOwner {
         LIMPETH = IERC20(new MockERC20("LIMPETH", "LIMPETH", 18));
         wtBTC = new MockERC20("wtBTC", "wtBTC", 18);
         BTC = new MockERC20("BTC", "BTC", 18);
+        MEZO = IERC20(new MockERC20("MEZO", "MEZO", 18));
         LR = new MockERC20("LR", "LR", 18);
     }
 
@@ -219,14 +241,17 @@ abstract contract BaseTest is Base, TestOwner {
     }
 
     function deployPoolWithOwner(address _owner) public {
+        uint256 initialBTCBalance = BTC.balanceOf(_owner);
+
         _addLiquidityToPool(_owner, address(router), address(BTC), address(mUSD), false, TOKEN_1, mUSD_1);
         _addLiquidityToPool(_owner, address(router), address(mUSD), address(LIMPETH), false, mUSD_1, TOKEN_1);
         _addLiquidityToPool(_owner, address(router), address(mUSD), address(wtBTC), false, mUSD_1, TOKEN_1);
-        assertEq(factory.allPoolsLength(), 3);
+        _addLiquidityToPool(_owner, address(router), address(BTC), address(mUSD), true, TOKEN_1, mUSD_1);
+        assertEq(factory.allPoolsLength(), 4);
 
         // Mint BTC tokens for the owner again to replenish the tokens used
         // when adding liquidity to the pool. This is needed in certain unit tests.
-        deal(address(BTC), _owner, TOKEN_10M, true);
+        deal(address(BTC), _owner, initialBTCBalance, true);
 
         // last arg default as these are all v2 pools
         address create2address = router.poolFor(address(BTC), address(mUSD), false, address(0));
@@ -236,6 +261,8 @@ abstract contract BaseTest is Base, TestOwner {
         pool2 = Pool(address2);
         address address3 = factory.getPool(address(mUSD), address(wtBTC), false);
         pool3 = Pool(address3);
+        address address4 = factory.getPool(address(BTC), address(mUSD), true);
+        pool4 = Pool(address4);
         assertEq(address(pool), create2address);
     }
 

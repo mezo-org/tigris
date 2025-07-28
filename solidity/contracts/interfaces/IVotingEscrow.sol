@@ -93,6 +93,8 @@ interface IVotingEscrow is IVotes, IERC4906, IERC6372, IERC721Metadata {
     error ZeroAddress();
     error ZeroAmount();
     error ZeroBalance();
+    error NotGrantManager();
+    error UnvestedGrantNFT();
 
     event Deposit(
         address indexed provider,
@@ -163,6 +165,13 @@ interface IVotingEscrow is IVotes, IERC4906, IERC6372, IERC721Metadata {
         uint256 _ts
     );
     event SetAllowedManager(address indexed _allowedManager);
+    event CreateGrant(
+        uint256 indexed _tokenId,
+        address _grantee,
+        address _grantManager,
+        uint256 _vestingEnd
+    );
+    event SetGrantManager(address indexed _grantManager);
 
     // State variables
     /// @notice Address of Meta-tx Forwarder
@@ -449,6 +458,8 @@ interface IVotingEscrow is IVotes, IERC4906, IERC6372, IERC721Metadata {
     /// @notice Merges `_from` into `_to`.
     /// @dev Cannot merge `_from` locks that are permanent or have already voted this epoch.
     ///      Cannot merge `_to` locks that have already expired.
+    ///      Cannot merge if either `_from` or `_to` is veNFT created for
+    ///      a grant that has not fully vested yet.
     ///      This will burn the veNFT. Any rebases or rewards that are unclaimed
     ///      will no longer be claimable. Claim all rebases and rewards prior to calling this.
     /// @param _from VeNFT to merge from.
@@ -602,4 +613,42 @@ interface IVotingEscrow is IVotes, IERC4906, IERC6372, IERC721Metadata {
 
     /// @inheritdoc IERC6372
     function CLOCK_MODE() external view returns (string memory);
+
+    /*///////////////////////////////////////////////////////////////
+                                TOKEN GRANT
+    //////////////////////////////////////////////////////////////*/
+
+    /// @notice Deposit `_value` of tokens as a grant and lock for `_vestingEnd`
+    ///         with the provided `_grantManager`.
+    /// @param _value Amount to deposit
+    /// @param _grantee The grantee's address
+    /// @param _grantManager The grant manager who can revoke the grant
+    /// @param _vestingEnd The end of the vesting schedule. The lock will be
+    ///        rounded down to nearest week but the original vesting end is
+    ///        recorded in the contract.
+    /// @return TokenId of created veNFT
+    function createGrantLockFor(
+        uint256 _value,
+        address _grantee,
+        address _grantManager,
+        uint256 _vestingEnd
+    ) external returns (uint256);
+
+    /// @notice Allows the existing grant manager to set a new grant manager
+    ///         address.
+    /// @param _tokenId tokenId of the veNFT
+    /// @param _newGrantManager The new grant manager address
+    function setGrantManager(
+        uint256 _tokenId,
+        address _newGrantManager
+    ) external;
+
+    /// @notice Returns the grant manager address for the given veNFT
+    /// @param _tokenId tokenId of the veNFT
+    function grantManager(uint256 _tokenId) external view returns (address);
+
+    /// @notice Returns the vesting schedule end for the given veNFT.
+    ///         Zero if the veNFT was not created as a grant.
+    /// @param _tokenId tokenId of the veNFT
+    function vestingEnd(uint256 _tokenId) external view returns (uint256);
 }
