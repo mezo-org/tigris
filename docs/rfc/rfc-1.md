@@ -171,6 +171,11 @@ Important considerations and notes regarding this section:
 - Given the fact that veBTC owner can execute trove manegement actions beyond the `BorrowLocker` contract,
   the `BorrowLocker` contract must track the trove state and ensure all edge cases are handled correctly so
   there is no way the custodied veBTC token remains locked indefinitely.
+- If veBTC is used as collateral, there is always a possibility to create an MUSD loan with high CR,
+  withdraw the excess BTC collateral to circumvent the veBTC lock, and create another veBTC NFT
+  to inflate the voting power. Possible defense mechanism here is blocking collateral withdrawals
+  for MUSD loans backed by veBTC. Alternatively, veBTC-backed loans could have an upper limit on the CR
+  but, this solution just decreases the scale of the issue and does not eliminate it altogether.
 
 #### Participate in Tigris
 
