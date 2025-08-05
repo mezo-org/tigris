@@ -26,10 +26,20 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     return
   }
 
+  // The initial needle should be 60% on real-world chains (mainnet and testnet).
+  // However, we maintain 33% for Hardhat network to not break and modify
+  // the existing (and math-heavy) system tests.
+  const needle = hre.network.name === "hardhat" ? 33 : 60
+
   log("Deploying ChainFeeSplitter contract...")
   const chainFeeSplitterDeployment = await deploy("ChainFeeSplitter", {
     from: deployer,
-    args: [veBTCVoterAddress, veBTCAddress, veBTCRewardsDistributorAddress],
+    args: [
+      veBTCVoterAddress,
+      veBTCAddress,
+      veBTCRewardsDistributorAddress,
+      needle,
+    ],
     log: true,
     waitConfirmations: 1,
   })
