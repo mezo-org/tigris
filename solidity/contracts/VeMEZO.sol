@@ -15,7 +15,13 @@ contract VeMEZO is VotingEscrow {
         address _mezo,
         address _factoryRegistry
     ) external initializer {
-        __VotingEscrow_initialize(_forwarder, _mezo, _factoryRegistry);
+        uint256 _maxLockTime = 4 * 365 * 86400; // 4 years
+        __VotingEscrow_initialize(
+            _forwarder,
+            _mezo,
+            _factoryRegistry,
+            _maxLockTime
+        );
     }
 
     function name() external pure returns (string memory) {

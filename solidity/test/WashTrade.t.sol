@@ -23,7 +23,8 @@ contract WashTradeTest is BaseTest {
             impl.initialize.selector,
             address(forwarder),
             address(BTC),
-            address(factoryRegistry)
+            address(factoryRegistry),
+            TEST_VE_BTC_MAX_LOCK_TIME
         );
         TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
             address(impl),

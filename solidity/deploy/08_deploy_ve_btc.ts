@@ -1,6 +1,9 @@
 import { DeployFunction, DeployOptions } from "hardhat-deploy/dist/types"
 import { HardhatRuntimeEnvironment } from "hardhat/types"
 
+const DAY = 86400
+const YEAR = 365 * DAY
+
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { ethers, deployments, getNamedAccounts, helpers } = hre
   const { deploy, log } = deployments
@@ -44,9 +47,20 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   log("Deploying VeBTC contract...")
 
+  // Originally, veBTC used a 4-year maxLockTime and all math-heavy
+  // system tests rely on this value. Now, real-world veBTC deployments
+  // use a 30-day maxLockTime but, in order to avoid refactoring all
+  // the tests, we still use the 4-year maxLockTime for testing.
+  const maxLockTime = hre.network.name === "hardhat" ? 4 * YEAR : 30 * DAY
+
   const [_, veBTCDeployment] = await helpers.upgrades.deployProxy("VeBTC", {
     contractName: "VeBTC",
-    initializerArgs: [mezoForwarderAddress, btcAddress, factoryRegistryAddress],
+    initializerArgs: [
+      mezoForwarderAddress,
+      btcAddress,
+      factoryRegistryAddress,
+      maxLockTime,
+    ],
     factoryOpts: {
       signer: await ethers.getSigner(deployer),
       libraries: {

@@ -92,6 +92,13 @@ library VotingEscrowState {
         mapping(address => bool) canSplit;
         /// @dev Aggregate permanent locked balances
         uint256 permanentLockBalance;
+        /// @dev Maximum lock time of the veNFT in seconds.
+        ///      This value SHOULD NOT be changed after deployment
+        ///      as it affects the voting power of all existing veNFTs.
+        ///      It is defined here and not as constant because
+        ///      different veNFT implementations have different
+        ///      max lock times.
+        uint256 maxLockTime;
         /*///////////////////////////////////////////////////////////////
                                     DAO VOTING
         //////////////////////////////////////////////////////////////*/
