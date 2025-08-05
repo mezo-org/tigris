@@ -1,5 +1,5 @@
 {
-  "address": "0x08C6F456724a8Fe9C48c20430819c07A2A4b186E",
+  "address": "0xB63fcCd03521Cf21907627bd7fA465C129479231",
   "abi": [
     {
       "inputs": [],
@@ -103,6 +103,11 @@
     },
     {
       "inputs": [],
+      "name": "NotGrantManager",
+      "type": "error"
+    },
+    {
+      "inputs": [],
       "name": "NotLockedNFT",
       "type": "error"
     },
@@ -198,6 +203,11 @@
     },
     {
       "inputs": [],
+      "name": "UnvestedGrantNFT",
+      "type": "error"
+    },
+    {
+      "inputs": [],
       "name": "ZeroAddress",
       "type": "error"
     },
@@ -278,6 +288,37 @@
         }
       ],
       "name": "BatchMetadataUpdate",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "_tokenId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "_grantee",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "_grantManager",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "_vestingEnd",
+          "type": "uint256"
+        }
+      ],
+      "name": "CreateGrant",
       "type": "event"
     },
     {
@@ -570,6 +611,19 @@
         }
       ],
       "name": "SetAllowedManager",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "_grantManager",
+          "type": "address"
+        }
+      ],
+      "name": "SetGrantManager",
       "type": "event"
     },
     {
@@ -995,6 +1049,40 @@
           "type": "uint256"
         },
         {
+          "internalType": "address",
+          "name": "_grantee",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_grantManager",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_vestingEnd",
+          "type": "uint256"
+        }
+      ],
+      "name": "createGrantLockFor",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_value",
+          "type": "uint256"
+        },
+        {
           "internalType": "uint256",
           "name": "_lockDuration",
           "type": "uint256"
@@ -1353,6 +1441,25 @@
           "type": "uint256"
         }
       ],
+      "name": "grantManager",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_tokenId",
+          "type": "uint256"
+        }
+      ],
       "name": "idToManaged",
       "outputs": [
         {
@@ -1416,6 +1523,11 @@
           "internalType": "address",
           "name": "_factoryRegistry",
           "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_maxLockTime",
+          "type": "uint256"
         }
       ],
       "name": "initialize",
@@ -1815,6 +1927,24 @@
       "inputs": [
         {
           "internalType": "uint256",
+          "name": "_tokenId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "_newGrantManager",
+          "type": "address"
+        }
+      ],
+      "name": "setGrantManager",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
           "name": "_mTokenId",
           "type": "uint256"
         },
@@ -2188,6 +2318,25 @@
           "type": "uint256"
         }
       ],
+      "name": "vestingEnd",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_tokenId",
+          "type": "uint256"
+        }
+      ],
       "name": "voted",
       "outputs": [
         {
@@ -2281,15 +2430,16 @@
       "type": "function"
     }
   ],
-  "transactionHash": "0x7879059d4e8126aaaa39d47cd345fdf3892e3242d0ae5edc924e9315dc3fe3f6",
+  "transactionHash": "0x89518d94b3416b9daaef3b2dbd9c50c337cbaabebc1d7abc77ddd7e4bddd2dc8",
   "numDeployments": 1,
   "libraries": {
-    "Balance": "0x93acCF14d143132DA0F592552baad5AF0d14CDF2",
-    "Delegation": "0x85727F4725A4B2834e00Db1AA8e1b843a188162F",
-    "Escrow": "0x04BE8F183572ec802aD26756F3E9398098700E76",
-    "ManagedNFT": "0x31A15e213B59E230b45e8c5c99dAFAc3d1236Ee2",
-    "NFT": "0x43e50B4082568C1A083E02acD41748C2C64041F4"
+    "Balance": "0x799B7BC04b273D2682c1A4074d1B479E84CD6269",
+    "Delegation": "0x8887e1f46a0c8931791f3c148d7B444C30459356",
+    "Escrow": "0x742C32c22Bb30D8660269461aA1883495EF3E077",
+    "ManagedNFT": "0xa97e894396cC9197427ea8C199cd2864dB6060a0",
+    "NFT": "0x47372675f99f327490dF5cdCC125DC40818a8989",
+    "Grant": "0x03e54A7CF45f474DEAe1b7884ba862d2c1B3B833"
   },
-  "implementation": "0x6c76f3e6a6ffA45371835e51e6Bf0dDBE2c1FAFE",
+  "implementation": "0x6BF4894DD2e113682Db9D06555a0bFCa9892917E",
   "devdoc": "Contract deployed as upgradable proxy"
 }
