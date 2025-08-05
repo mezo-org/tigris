@@ -22,15 +22,20 @@ contract ChainFeeSplitter is Splitter {
     /// @notice The address of the Voter contract.
     IVoter public immutable voter;
 
+    /// @notice Constructor to set up the chain fee splitter.
+    /// @param _voter The address of the Voter contract.
+    /// @param _ve The address of the VotingEscrow contract (i.e. the veNFT token contract).
+    /// @param _rewardsDistributor The address of the rewards distributor.
+    /// @param _needle The initial needle position. This is a percentage value directly
+    ///                determining the portion of chain fees that goes to the veBTC holders.
+    ///                The other portion of fees (100% - _needle) goes to the stake gauges.
     constructor(
-        address _voter, // the voting & distribution system
-        address _ve, // the ve(3,3) system that will be locked into
-        address _rewardsDistributor // rewards distributor
+        address _voter,
+        address _ve,
+        address _rewardsDistributor,
+        uint256 _needle
     ) Splitter(_ve) {
-        /// The needle moves between 1 and 100. The default value is 33 to
-        /// simulate ~1/3 of fees going to the veBTC holders and ~2/3 to the
-        /// Stake Gauges.
-        needle = 33;
+        needle = _needle;
         rewardsDistributor = IRewardsDistributor(_rewardsDistributor);
         voter = IVoter(_voter);
         activePeriod = ((block.timestamp) / WEEK) * WEEK;

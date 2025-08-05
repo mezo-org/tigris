@@ -176,7 +176,8 @@ contract PoolTest is BaseTest {
         routerAddLiquidity();
 
         distributor = new RewardsDistributor(address(escrow));
-        chainFeeSplitter = new ChainFeeSplitter(address(voter), address(escrow), address(distributor));
+        uint256 needle = 33;
+        chainFeeSplitter = new ChainFeeSplitter(address(voter), address(escrow), address(distributor), needle);
         distributor.setDepositor(address(chainFeeSplitter));
 
         address[] memory tokens = new address[](5);

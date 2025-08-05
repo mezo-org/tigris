@@ -123,7 +123,8 @@ abstract contract Base is Script, Test {
         );
 
         // Setup fee splitter
-        chainFeeSplitter = new ChainFeeSplitter(address(voter), address(escrow), address(distributor));
+        uint256 needle = 33;
+        chainFeeSplitter = new ChainFeeSplitter(address(voter), address(escrow), address(distributor), needle);
         distributor.setDepositor(address(chainFeeSplitter));
 
         /// @dev tokens are already set in the respective setupBefore()
