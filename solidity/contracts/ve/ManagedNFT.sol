@@ -138,7 +138,7 @@ library ManagedNFT {
             _tokenId
         );
         uint256 _total = _weight + _reward;
-        uint256 _unlockTime = ((block.timestamp + Escrow.MAXTIME) /
+        uint256 _unlockTime = ((block.timestamp + self.maxLockTime) /
             Escrow.WEEK) * Escrow.WEEK;
 
         // claim locked rewards (rebases + compounded reward)

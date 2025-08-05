@@ -22,8 +22,6 @@ library Escrow {
     using VeERC2771Context for VotingEscrowState.Storage;
 
     uint256 internal constant WEEK = 1 weeks;
-    uint256 internal constant MAXTIME = 4 * 365 * 86400;
-    int128 internal constant iMAXTIME = 4 * 365 * 86400;
     uint256 internal constant MULTIPLIER = 1 ether;
 
     function depositFor(
@@ -121,13 +119,13 @@ library Escrow {
             // Calculate slopes and biases
             // Kept at zero when they have to
             if (_oldLocked.end > block.timestamp && _oldLocked.amount > 0) {
-                uOld.slope = _oldLocked.amount / iMAXTIME;
+                uOld.slope = _oldLocked.amount / self.maxLockTime.toInt128();
                 uOld.bias =
                     uOld.slope *
                     (_oldLocked.end - block.timestamp).toInt128();
             }
             if (_newLocked.end > block.timestamp && _newLocked.amount > 0) {
-                uNew.slope = _newLocked.amount / iMAXTIME;
+                uNew.slope = _newLocked.amount / self.maxLockTime.toInt128();
                 uNew.bias =
                     uNew.slope *
                     (_newLocked.end - block.timestamp).toInt128();
@@ -322,7 +320,7 @@ library Escrow {
         if (_value == 0) revert IVotingEscrow.ZeroAmount();
         if (unlockTime <= block.timestamp)
             revert IVotingEscrow.LockDurationNotInFuture();
-        if (unlockTime > block.timestamp + MAXTIME)
+        if (unlockTime > block.timestamp + self.maxLockTime)
             revert IVotingEscrow.LockDurationTooLong();
 
         uint256 _tokenId = ++self.tokenId;
@@ -406,7 +404,7 @@ library Escrow {
         if (oldLocked.amount <= 0) revert IVotingEscrow.NoLockFound();
         if (unlockTime <= oldLocked.end)
             revert IVotingEscrow.LockDurationNotInFuture();
-        if (unlockTime > block.timestamp + MAXTIME)
+        if (unlockTime > block.timestamp + self.maxLockTime)
             revert IVotingEscrow.LockDurationTooLong();
 
         _depositFor(
@@ -657,7 +655,7 @@ library Escrow {
 
         uint256 _amount = _newLocked.amount.toUint256();
         self.permanentLockBalance -= _amount;
-        _newLocked.end = ((block.timestamp + MAXTIME) / WEEK) * WEEK;
+        _newLocked.end = ((block.timestamp + self.maxLockTime) / WEEK) * WEEK;
         _newLocked.isPermanent = false;
         self._delegate(_tokenId, 0);
         _checkpoint(self, _tokenId, self._locked[_tokenId], _newLocked);

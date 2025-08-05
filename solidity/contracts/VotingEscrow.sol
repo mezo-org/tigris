@@ -55,10 +55,12 @@ abstract contract VotingEscrow is
     /// @param _trustedForwarder address of trusted forwarder
     /// @param _token token address
     /// @param _factoryRegistry Factory Registry address
+    /// @param _maxLockTime Maximum lock time of the veNFT in seconds.
     function __VotingEscrow_initialize(
         address _trustedForwarder,
         address _token,
-        address _factoryRegistry
+        address _factoryRegistry,
+        uint256 _maxLockTime
     ) internal {
         __ReentrancyGuard_init();
 
@@ -76,6 +78,8 @@ abstract contract VotingEscrow is
         self.supportedInterfaces[ERC721_METADATA_INTERFACE_ID] = true;
         self.supportedInterfaces[ERC4906_INTERFACE_ID] = true;
         self.supportedInterfaces[ERC6372_INTERFACE_ID] = true;
+
+        self.maxLockTime = _maxLockTime;
 
         // mint-ish
         emit Transfer(address(0), address(this), self.tokenId);

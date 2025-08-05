@@ -13,9 +13,15 @@ contract VeBTC is VotingEscrow {
     function initialize(
         address _forwarder,
         address _btc,
-        address _factoryRegistry
+        address _factoryRegistry,
+        uint256 _maxLockTime
     ) external initializer {
-        __VotingEscrow_initialize(_forwarder, _btc, _factoryRegistry);
+        __VotingEscrow_initialize(
+            _forwarder,
+            _btc,
+            _factoryRegistry,
+            _maxLockTime
+        );
     }
 
     function name() external pure returns (string memory) {

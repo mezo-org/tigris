@@ -39,6 +39,13 @@ abstract contract Base is Script, Test {
         DEFAULT,
         CUSTOM
     }
+
+    /// @dev Originally, veBTC used a 4-year maxLockTime and all math-heavy
+    ///      unit tests rely on this value. Now, real-world veBTC deployments
+    ///      use a 30-day maxLockTime but, in order to avoid refactoring all
+    ///      the tests, we still use the 4-year maxLockTime for testing.
+    uint256 public constant TEST_VE_BTC_MAX_LOCK_TIME = 4 * 365 * 86400; // 4 years
+
     /// @dev Determines whether or not to use the base set up configuration
     ///      Local deployment used by default
     Deployment deploymentType;
@@ -85,7 +92,8 @@ abstract contract Base is Script, Test {
             veBTCImpl.initialize.selector,
             address(forwarder),
             address(BTC),
-            address(factoryRegistry)
+            address(factoryRegistry),
+            TEST_VE_BTC_MAX_LOCK_TIME
         );
         TransparentUpgradeableProxy proxyVeBTC = new TransparentUpgradeableProxy(
             address(veBTCImpl),
