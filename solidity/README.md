@@ -107,13 +107,18 @@ For the full list of deployed contracts, see the [deployments](./deployments) di
 
 ### Mainnet contracts
 
-| Name            | Address                                    |
-| --------------- | ------------------------------------------ |
-| Router          | 0x16A76d3cd3C1e3CE843C6680d6B37E9116b5C706 |
-| PoolFactory     | 0x83FE469C636C4081b87bA5b3Ae9991c6Ed104248 |
-| MUSD/BTC Pool   | 0x52e604c44417233b6CcEDDDc0d640A405Caacefb |
-| MUSD/mUSDC Pool | 0xEd812AEc0Fecc8fD882Ac3eccC43f3aA80A6c356 |
-| MUSD/mUSDT Pool | 0x10906a9E9215939561597b4C8e4b98F93c02031A |
+| Name                    | Address                                    |
+| ----------------------- | ------------------------------------------ |
+| Router                  | 0x16A76d3cd3C1e3CE843C6680d6B37E9116b5C706 |
+| PoolFactory             | 0x83FE469C636C4081b87bA5b3Ae9991c6Ed104248 |
+| MUSD/BTC Pool           | 0x52e604c44417233b6CcEDDDc0d640A405Caacefb |
+| MUSD/mUSDC Pool         | 0xEd812AEc0Fecc8fD882Ac3eccC43f3aA80A6c356 |
+| MUSD/mUSDT Pool         | 0x10906a9E9215939561597b4C8e4b98F93c02031A |
+| VeBTC                   | 0x7D807e9CE1ef73048FEe9A4214e75e894ea25914 |
+| VeBTCVoter              | 0x3A4a6919F70e5b0aA32401747C471eCfe2322C1b |
+| VeBTCRewardsDistributor | 0x535E01F948458E0b64F9dB2A01Da6F32E240140f |
+| VeBTCEpochGovernor      | 0x1494102fa1b240c3844f02e0810002125fb5F054 |
+| ChainFeeSplitter        | 0xcb79aE130b0777993263D0cdb7890e6D9baBE117 |
 
 ### Testnet contracts
 
