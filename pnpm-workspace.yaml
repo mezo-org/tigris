@@ -1,3 +1,4 @@
 packages:
   - dapp/
   - solidity/
+  - infrastructure/cloudflare/fee-splitter/

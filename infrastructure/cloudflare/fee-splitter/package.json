@@ -1,0 +1,25 @@
+{
+  "name": "@mezo-org/tigris-fee-splitter",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "deploy:staging": "wrangler deploy --env staging",
+    "dev": "wrangler dev --test-scheduled",
+    "format": "npm run lint:ts && npm run lint:config",
+    "format:fix": "npm run lint:ts:fix && npm run lint:config:fix",
+    "lint:ts": "eslint .",
+    "lint:ts:fix": "eslint . --fix",
+    "lint:config": "prettier --check '**/*.@(json|jsonc|md)'",
+    "lint:config:fix": "prettier --write '**/*.@(json|jsonc|md)'"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.0.0",
+    "@thesis-co/eslint-config": "^0.6.1",
+    "@types/node": "^22.9.0",
+    "typescript": "^5.0.0",
+    "wrangler": "4.33.2"
+  },
+  "dependencies": {
+    "viem": "^2.21.53"
+  }
+}
