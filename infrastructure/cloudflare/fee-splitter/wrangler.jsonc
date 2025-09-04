@@ -3,6 +3,9 @@
   "main": "src/index.ts",
   "compatibility_date": "2025-09-03",
   "workers_dev": false,
+  "dev": {
+    "port": 8001,
+  },
   "vars": {
     "MEZO_NETWORK": "testnet",
   },

@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "deploy:staging": "wrangler deploy --env staging",
+    "deploy:production": "wrangler deploy --env production",
     "dev": "wrangler dev --test-scheduled",
     "format": "npm run lint:ts && npm run lint:config",
     "format:fix": "npm run lint:ts:fix && npm run lint:config:fix",
