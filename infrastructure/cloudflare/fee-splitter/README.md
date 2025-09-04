@@ -23,7 +23,7 @@ npm run dev
 The component will be available at `http://localhost:8001`. Code changes
 are hot-reloaded by Wrangler.
 
-To trigger the cron got to `http://localhost:8001/__scheduled?cron=<cron>` for example: `http://localhost:8001/__scheduled?cron=0+0+*+*+4`
+To trigger the cron go to `http://localhost:8001/__scheduled?cron=<cron>` for example: `http://localhost:8001/__scheduled?cron=0+0+*+*+4`
 
 ### Deployment
 
