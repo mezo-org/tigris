@@ -1,24 +1,36 @@
 import { privateKeyToAccount } from "viem/accounts"
-import { createWalletClient as viemCreateWalletClient, http } from "viem"
+import {
+  createWalletClient as viemCreateWalletClient,
+  createPublicClient as viemCreatePublicClient,
+  http,
+} from "viem"
 import { Env } from "./types"
 import chain from "./chain"
 
-function createWalletClient(env: Env) {
-  console.log("Creating wallet client...")
+function createChainClients(env: Env) {
+  console.log("Creating Mezo chain clients...")
 
   const account = privateKeyToAccount(
     env.MAINTAINER_PRIVATE_KEY as `0x${string}`,
   )
 
-  const client = viemCreateWalletClient({
-    account,
+  const options = {
     chain: env.MEZO_NETWORK === "mainnet" ? chain.mainnet : chain.testnet,
     transport: http(),
+  }
+
+  const walletClient = viemCreateWalletClient({
+    account,
+    ...options,
   })
 
-  console.log(`Wallet client created for the Mezo ${env.MEZO_NETWORK}`)
+  const publicClient = viemCreatePublicClient({
+    ...options,
+  })
 
-  return client
+  console.log(`Clients created for the Mezo ${env.MEZO_NETWORK}`)
+
+  return { walletClient, publicClient }
 }
 
-export default { createWalletClient }
+export default { createChainClients }
