@@ -7,7 +7,8 @@ export default {
     const url = new URL(request.url)
 
     if (url.pathname === "/metrics") {
-      const timestamp = updatePeriodTracker.getLastSuccessfulTransaction(env)
+      const { timestamp } =
+        await updatePeriodTracker.getLastSuccessfulTransaction(env)
 
       const metrics =
         "# HELP last_update_period Timestamp of the last successfully completed transaction.\n" +

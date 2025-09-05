@@ -21,10 +21,10 @@ async function updateLastSuccessfulTransaction(
 }
 
 async function getLastSuccessfulTransaction(env: Env) {
-  console.log(`Reading the last successful transaction data from KV...`)
+  console.log("Reading the last successful transaction data from KV...")
   const result = await env.UPDATE_TRACKER.getWithMetadata(KEY)
-  console.log(`Successfully fetched data from KV.`)
-  
+  console.log("Successfully fetched data from KV.")
+
   const timestamp = result.value ? Number(result.value) : 0
 
   return { timestamp, metadata: result.metadata }
