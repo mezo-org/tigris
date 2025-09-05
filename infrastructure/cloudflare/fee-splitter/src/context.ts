@@ -30,7 +30,7 @@ function createChainClients(env: Env) {
 
   console.log(`Clients created for the Mezo ${env.MEZO_NETWORK}`)
 
-  return { walletClient, publicClient }
+  return { walletClient, publicClient, account }
 }
 
 export default { createChainClients }

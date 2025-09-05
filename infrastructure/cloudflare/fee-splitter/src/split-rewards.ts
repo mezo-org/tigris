@@ -4,11 +4,10 @@ import ChainFeeSplitter from "./abis/ChainFeeSplitter"
 import updatePeriodTracker from "./update-period-tracker"
 
 export default async function splitRewards(env: Env) {
-  const { walletClient, publicClient } = context.createChainClients(env)
-  const [account] = await walletClient.getAddresses()
-
+  const { walletClient, publicClient, account } =
+    context.createChainClients(env)
   try {
-    console.log("Updating period...")
+    console.log("Simulating `updatePeriod` transaction...")
 
     const { request } = await publicClient.simulateContract({
       account,
@@ -17,13 +16,17 @@ export default async function splitRewards(env: Env) {
       functionName: "updatePeriod",
     })
 
+    console.log("Simulation completed successfully")
+
+    console.log("Updating period...")
+
     const txHash = await walletClient.writeContract(request)
 
-    const timestamp = Math.floor(Date.now() / 1_000) 
-  
+    const timestamp = Math.floor(Date.now() / 1_000)
+
     console.log(`Successfully updated the period; Transaction hash: ${txHash}`)
-    
-    updatePeriodTracker.updateLastSuccessfulTransaction(env, timestamp, txHash)    
+
+    updatePeriodTracker.updateLastSuccessfulTransaction(env, timestamp, txHash)
   } catch (error) {
     console.error("Failed to update the period", error)
     throw error
