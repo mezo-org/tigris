@@ -12,16 +12,34 @@
   "triggers": {
     "crons": ["0 0 * * 4"],
   },
+  "kv_namespaces": [
+    {
+      "binding": "UPDATE_TRACKER",
+      "id": "<BINDING_ID>",
+    },
+  ],
   "env": {
     "staging": {
       "vars": {
         "MEZO_NETWORK": "testnet",
       },
+      "kv_namespaces": [
+        {
+          "binding": "UPDATE_TRACKER",
+          "id": "<BINDING_ID>",
+        },
+      ],
     },
     "production": {
       "vars": {
         "MEZO_NETWORK": "mainnet",
       },
+      "kv_namespaces": [
+        {
+          "binding": "UPDATE_TRACKER",
+          "id": "<BINDING_ID>",
+        },
+      ],
     },
   },
 }
