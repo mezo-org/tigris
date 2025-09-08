@@ -14,6 +14,19 @@ const abi = [
     stateMutability: "nonpayable",
     type: "function",
   },
+  {
+    inputs: [],
+    name: "activePeriod",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
 ] as const
 
 const mainnetAddress: Address = "0xcb79aE130b0777993263D0cdb7890e6D9baBE117"

@@ -16,12 +16,6 @@
     "enabled": true,
     "head_sampling_rate": 1,
   },
-  "kv_namespaces": [
-    {
-      "binding": "UPDATE_TRACKER",
-      "id": "<BINDING_ID>",
-    },
-  ],
   "env": {
     "staging": {
       "vars": {
@@ -33,12 +27,6 @@
           "custom_domain": true,
         },
       ],
-      "kv_namespaces": [
-        {
-          "binding": "UPDATE_TRACKER",
-          "id": "e8a72c7e6750408ea2006a4ce9ddec74",
-        },
-      ],
     },
     "production": {
       "vars": {
@@ -48,12 +36,6 @@
         {
           "pattern": "fee-splitter.mezo.org",
           "custom_domain": true,
-        },
-      ],
-      "kv_namespaces": [
-        {
-          "binding": "UPDATE_TRACKER",
-          "id": "fce0b92e4945413b897803f4cdd28216",
         },
       ],
     },
