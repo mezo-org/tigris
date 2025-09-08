@@ -27,8 +27,8 @@ export default {
   async scheduled(controller: { cron: unknown }, env: Env) {
     try {
       switch (controller.cron) {
-        // Every Thursday at 00:00.
-        case "0 0 * * 4":
+        // Every Thursday at 00:10.
+        case "10 0 * * 4":
           await splitRewards(env)
           break
         default:
