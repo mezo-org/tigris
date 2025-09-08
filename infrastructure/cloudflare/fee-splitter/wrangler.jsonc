@@ -12,6 +12,10 @@
   "triggers": {
     "crons": ["10 0 * * 4"],
   },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+  },
   "kv_namespaces": [
     {
       "binding": "UPDATE_TRACKER",
