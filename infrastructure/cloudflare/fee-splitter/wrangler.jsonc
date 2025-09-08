@@ -27,6 +27,12 @@
       "vars": {
         "MEZO_NETWORK": "testnet",
       },
+      "routes": [
+        {
+          "pattern": "fee-splitter.test.mezo.org",
+          "custom_domain": true,
+        },
+      ],
       "kv_namespaces": [
         {
           "binding": "UPDATE_TRACKER",
@@ -38,6 +44,12 @@
       "vars": {
         "MEZO_NETWORK": "mainnet",
       },
+      "routes": [
+        {
+          "pattern": "fee-splitter.mezo.org",
+          "custom_domain": true,
+        },
+      ],
       "kv_namespaces": [
         {
           "binding": "UPDATE_TRACKER",
