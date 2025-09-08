@@ -1,0 +1,45 @@
+{
+  "name": "tigris-fee-splitter",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-09-03",
+  "workers_dev": false,
+  "dev": {
+    "port": 8001,
+  },
+  "vars": {
+    "MEZO_NETWORK": "testnet",
+  },
+  "triggers": {
+    "crons": ["10 0 * * 4"],
+  },
+  "kv_namespaces": [
+    {
+      "binding": "UPDATE_TRACKER",
+      "id": "<BINDING_ID>",
+    },
+  ],
+  "env": {
+    "staging": {
+      "vars": {
+        "MEZO_NETWORK": "testnet",
+      },
+      "kv_namespaces": [
+        {
+          "binding": "UPDATE_TRACKER",
+          "id": "<BINDING_ID>",
+        },
+      ],
+    },
+    "production": {
+      "vars": {
+        "MEZO_NETWORK": "mainnet",
+      },
+      "kv_namespaces": [
+        {
+          "binding": "UPDATE_TRACKER",
+          "id": "<BINDING_ID>",
+        },
+      ],
+    },
+  },
+}
