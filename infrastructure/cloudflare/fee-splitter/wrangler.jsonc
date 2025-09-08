@@ -30,7 +30,7 @@
       "kv_namespaces": [
         {
           "binding": "UPDATE_TRACKER",
-          "id": "<BINDING_ID>",
+          "id": "e8a72c7e6750408ea2006a4ce9ddec74",
         },
       ],
     },
@@ -41,7 +41,7 @@
       "kv_namespaces": [
         {
           "binding": "UPDATE_TRACKER",
-          "id": "<BINDING_ID>",
+          "id": "fce0b92e4945413b897803f4cdd28216",
         },
       ],
     },
