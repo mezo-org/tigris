@@ -12,6 +12,10 @@
   "triggers": {
     "crons": ["10 0 * * 4"],
   },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+  },
   "kv_namespaces": [
     {
       "binding": "UPDATE_TRACKER",
@@ -23,10 +27,16 @@
       "vars": {
         "MEZO_NETWORK": "testnet",
       },
+      "routes": [
+        {
+          "pattern": "fee-splitter.test.mezo.org",
+          "custom_domain": true,
+        },
+      ],
       "kv_namespaces": [
         {
           "binding": "UPDATE_TRACKER",
-          "id": "<BINDING_ID>",
+          "id": "e8a72c7e6750408ea2006a4ce9ddec74",
         },
       ],
     },
@@ -34,10 +44,16 @@
       "vars": {
         "MEZO_NETWORK": "mainnet",
       },
+      "routes": [
+        {
+          "pattern": "fee-splitter.mezo.org",
+          "custom_domain": true,
+        },
+      ],
       "kv_namespaces": [
         {
           "binding": "UPDATE_TRACKER",
-          "id": "<BINDING_ID>",
+          "id": "fce0b92e4945413b897803f4cdd28216",
         },
       ],
     },
