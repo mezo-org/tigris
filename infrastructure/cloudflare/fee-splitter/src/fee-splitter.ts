@@ -38,7 +38,7 @@ async function getActivePeriod(env: Env) {
   })
 }
 
-export default { 
+export default {
   getActivePeriod,
   splitRewards,
 }

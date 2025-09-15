@@ -6,7 +6,6 @@ export default {
     const url = new URL(request.url)
 
     if (url.pathname === "/metrics") {
-
       const activePeriod = await feeSplitter.getActivePeriod(env)
 
       const metrics =
