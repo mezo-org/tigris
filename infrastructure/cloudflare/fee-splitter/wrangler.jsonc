@@ -10,7 +10,7 @@
     "MEZO_NETWORK": "testnet",
   },
   "triggers": {
-    "crons": ["10 0 * * 4"],
+    "crons": ["10 0 * * 5"],
   },
   "observability": {
     "enabled": true,

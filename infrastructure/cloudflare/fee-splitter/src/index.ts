@@ -27,7 +27,7 @@ export default {
     try {
       switch (controller.cron) {
         // Every Thursday at 00:10.
-        case "10 0 * * 4":
+        case "10 0 * * 5":
           await feeSplitter.splitRewards(env)
           break
         default:
