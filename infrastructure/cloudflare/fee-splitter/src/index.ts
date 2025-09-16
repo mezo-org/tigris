@@ -6,7 +6,6 @@ export default {
     const url = new URL(request.url)
 
     if (url.pathname === "/metrics") {
-
       const activePeriod = await feeSplitter.getActivePeriod(env)
 
       const metrics =
@@ -27,7 +26,7 @@ export default {
     try {
       switch (controller.cron) {
         // Every Thursday at 00:10.
-        case "10 0 * * 4":
+        case "10 0 * * 5":
           await feeSplitter.splitRewards(env)
           break
         default:
