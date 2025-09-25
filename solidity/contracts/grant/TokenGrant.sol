@@ -13,14 +13,20 @@ contract TokenGrant is VestingWalletCliffUpgradeable {
     using SafeERC20 for IERC20;
 
     error NotBeneficiary();
+    error NotGrantManager();
     error EmptyGrant();
     error MaxDurationExceeded();
+    error NonRevocableGrant();
+    error GrantAlreadyVested();
 
     uint256 internal constant MAX_DURATION = 4 * 365 days;
 
-    IERC20 public token;
     IVotingEscrow public votingEscrow;
     address public grantManager;
+    bool public isRevocable;
+
+    event Converted(uint256 indexed tokenId, uint256 amount);
+    event Revoked(address indexed destination, uint256 amount);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -34,18 +40,24 @@ contract TokenGrant is VestingWalletCliffUpgradeable {
         address _beneficiary,
         uint64 _startTimestamp,
         uint64 _durationSeconds,
-        uint64 _cliffSeconds
+        uint64 _cliffSeconds,
+        bool _isRevocable
     ) external initializer {
         if (_durationSeconds > MAX_DURATION) {
             revert MaxDurationExceeded();
         }
 
-        __VestingWallet_init(_beneficiary, _startTimestamp, _durationSeconds);
+        __VestingWallet_init(
+            _beneficiary,
+            _token,
+            _startTimestamp,
+            _durationSeconds
+        );
         __VestingWalletCliff_init(_cliffSeconds);
 
-        token = IERC20(_token);
         votingEscrow = IVotingEscrow(_votingEscrow);
         grantManager = _grantManager;
+        isRevocable = _isRevocable;
     }
 
     /// @notice Converts token grant to a veNFT with lock time equal to the
@@ -66,18 +78,65 @@ contract TokenGrant is VestingWalletCliffUpgradeable {
         // Note we take the current balance of TokenGrant so nothing stops the
         // grantee for converting at any moment, even after they withdrawn
         // some portion of tokens from TokenGrant. This is fine.
-        uint256 amount = token.balanceOf(address(this));
+        uint256 amount = IERC20(token()).balanceOf(address(this));
         if (amount == 0) {
             revert EmptyGrant();
         }
 
-        token.forceApprove(address(votingEscrow), amount);
+        IERC20(token()).forceApprove(address(votingEscrow), amount);
+        tokenId = votingEscrow.createGrantLockFor(
+            amount,
+            beneficiary(),
+            grantManager,
+            end()
+        );
+
+        emit Converted(tokenId, amount);
+    }
+
+    /// @notice Revokes the grant and transfers the unvested tokens to
+    ///         the destination address. Only grant manager can perform the
+    ///         operation. The function fails if the grant is already vested or
+    ///         if the grant is non-revocable.
+    /// @param destination The address to transfer the revoked tokens to.
+    function revoke(address destination) external {
+        if (msg.sender != grantManager) {
+            revert NotGrantManager();
+        }
+        if (!isRevocable) {
+            revert NonRevocableGrant();
+        }
+        if (block.timestamp >= end()) {
+            revert GrantAlreadyVested();
+        }
+
+        if (IERC20(token()).balanceOf(address(this)) == 0) {
+            revert EmptyGrant();
+        }
+
+        uint256 amount = IERC20(token()).balanceOf(address(this)) -
+            releasable();
+
+        revokedAmount = amount;
+
+        emit Revoked(destination, amount);
+
+        IERC20(token()).safeTransfer(destination, amount);
+    }
+
+    uint256 public revokedAmount;
+
+    /// @dev Override the vestedAmount function to add the revoked amount to the
+    ///      total allocation calculations.
+    function vestedAmount(
+        uint64 timestamp
+    ) public view virtual override returns (uint256) {
         return
-            votingEscrow.createGrantLockFor(
-                amount,
-                beneficiary(),
-                grantManager,
-                end()
+            _vestingSchedule(
+                IERC20(token()).balanceOf(address(this)) +
+                    released() +
+                    revokedAmount,
+                timestamp
             );
     }
 }

@@ -3,7 +3,6 @@
 // With the following changes:
 // - The storage structure is aligned with the pattern used in OpenZeppelin Contracts v4:
 //   - Defined _cliff as a variable instead of storage struct.
-// - The `end` function is added to the contract.
 
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v5.1.0) (finance/VestingWalletCliff.sol)
@@ -11,7 +10,7 @@
 pragma solidity ^0.8.20;
 
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import {VestingWalletUpgradeable} from "@openzeppelin/contracts-upgradeable/finance/VestingWalletUpgradeable.sol";
+import {VestingWalletUpgradeable} from "./VestingWalletUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
@@ -79,13 +78,5 @@ abstract contract VestingWalletCliffUpgradeable is
             timestamp < cliff()
                 ? 0
                 : super._vestingSchedule(totalAllocation, timestamp);
-    }
-
-    /**
-     * @dev Getter for the end timestamp.
-     * @dev Added to VestingWalletUpgradeable in OpenZeppelin Contracts v5.
-     */
-    function end() public view returns (uint256) {
-        return start() + duration();
     }
 }
